@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/post_profile"
+        android:layout_width="91dp"
+        android:layout_height="82dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_margin="16dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/post_username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hint_username"
+        app:layout_constraintStart_toEndOf="@+id/post_profile"
+        app:layout_constraintTop_toTopOf="@+id/post_profile" />
+
+    <TextView
+        android:id="@+id/post_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="date"
+        app:layout_constraintStart_toStartOf="@+id/post_username"
+        app:layout_constraintTop_toBottomOf="@+id/post_username"
+        tools:ignore="HardcodedText" />
+
+    <ImageView
+        android:id="@+id/post_picture"
+        android:layout_width="276dp"
+        android:layout_height="184dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.511"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/post_profile"
+        tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
+    <TextView
+        android:id="@+id/post_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/post_picture"
+        app:layout_constraintEnd_toEndOf="@+id/post_picture"
+        app:layout_constraintStart_toStartOf="@+id/post_picture" />
+
+    <TextView
+        android:id="@+id/post_body"
+        android:layout_width="274dp"
+        android:layout_height="24dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="@+id/post_picture"
+        app:layout_constraintStart_toStartOf="@+id/post_picture"
+        app:layout_constraintTop_toBottomOf="@+id/post_picture" />
+</androidx.constraintlayout.widget.ConstraintLayout>

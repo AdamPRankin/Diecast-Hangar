@@ -16,9 +16,7 @@ class MainActivity : AppCompatActivity(), NavigationHost {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
-        val auth: FirebaseAuth = Firebase.auth
-        val currentUser = auth.currentUser
+        val currentUser = Firebase.auth.currentUser
         if(currentUser != null){
            userController.currentUser = currentUser
             supportFragmentManager
