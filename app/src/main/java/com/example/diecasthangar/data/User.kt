@@ -6,6 +6,6 @@ class User (
 
     var username: String,
     var profilePicture: Image?,
-    var id: Int
+    var email: String
 ) {
 }

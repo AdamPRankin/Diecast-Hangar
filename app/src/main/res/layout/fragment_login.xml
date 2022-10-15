@@ -81,8 +81,20 @@
                 android:layout_toStartOf="@id/login_button"
                 android:text="@string/button_cancel" />
 
-        </RelativeLayout>
-    </LinearLayout>
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/recover_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="textEnd"
+                android:layout_below="@id/login_button"
+                android:text="@string/forgot_password"
+                android:textColor="@color/material_dynamic_neutral40"
 
+                />
+
+        </RelativeLayout>
+
+
+    </LinearLayout>
 
 </ScrollView>

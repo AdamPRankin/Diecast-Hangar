@@ -24,7 +24,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val post = posts[position]
-        holder.titleTextView.text = post.title
+        holder.dateTextView.text = post.date.toString()
         holder.bodyTextView.text = post.text
         holder.userTextView.text = post.user.username
         holder.avatarImageView.setImageResource(R.drawable.ic_launcher_foreground)
@@ -36,7 +36,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             View.OnClickListener {
 
         private var view: View = v
-        val titleTextView: TextView = view.findViewById(R.id.post_title)
+        val dateTextView: TextView = view.findViewById(R.id.post_date)
         val avatarImageView: ImageView = view.findViewById(R.id.post_picture)
         val bodyTextView: TextView = view.findViewById(R.id.post_body)
         val userTextView: TextView = view.findViewById(R.id.post_username)

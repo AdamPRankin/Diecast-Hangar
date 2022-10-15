@@ -1,17 +1,27 @@
 package com.example.diecasthangar.onboarding.presentation
 
+import android.app.AlertDialog
 import android.content.ContentValues.TAG
+import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
+import android.text.InputType
+import android.text.Layout
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.OnClickListener
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.diecasthangar.DashboardFragment
 import com.example.diecasthangar.R
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.Task
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -31,6 +41,11 @@ class LoginFragment : Fragment() {
         val emailField = view.findViewById<EditText>(R.id.login_email_edit_text)
         val emailInput = view.findViewById<TextInputLayout>(R.id.login_email_text_input)
 
+        val recoverPasswordTextView: TextView = view.findViewById(R.id.recover_password)
+
+        recoverPasswordTextView.setOnClickListener(){
+            showRecoverPasswordDialog()
+        }
 
         // Set an error if the password is less than 8 characters.
         loginButton.setOnClickListener {
@@ -78,5 +93,48 @@ class LoginFragment : Fragment() {
 
     private fun isPasswordValid(text: Editable?): Boolean {
         return (text != null) && (text.length >= 6)
+    }
+
+    private fun showRecoverPasswordDialog(){
+        val builder: AlertDialog.Builder = AlertDialog.Builder(view?.context)
+        val layout = LinearLayout(view?.context)
+        builder.setTitle("reset password")
+        val emailText = EditText(view?.context)
+        emailText.hint = "email"
+        emailText.inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        emailText.minEms = 10
+
+        layout.addView(emailText)
+        layout.setPadding(10,10,10,10)
+
+        builder.setView(layout)
+        builder.setPositiveButton("send") { dialog, which ->
+            val email: String = emailText.text.toString().trim()
+            beginRecovery(email)
+
+        }
+
+        builder.setNegativeButton("cancel") { dialog, which ->
+            dialog.dismiss()
+        }.create().show()
+
+        }
+
+    fun beginRecovery(email: String){
+        val auth: FirebaseAuth = Firebase.auth
+        auth.sendPasswordResetEmail(email).addOnCompleteListener {
+
+            @Override
+            fun onComplete(e: java.lang.Exception) {
+               Toast.makeText(view?.context,"Email sent",Toast.LENGTH_SHORT).show()
+            }
+        }.addOnFailureListener {
+
+            @Override
+            fun onFailure(e: java.lang.Exception) {
+                Toast.makeText(view?.context,"not sent",Toast.LENGTH_SHORT).show()
+            }
+        }
+
     }
 }
