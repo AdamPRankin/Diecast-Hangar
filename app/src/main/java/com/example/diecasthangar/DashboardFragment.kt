@@ -5,16 +5,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.example.diecasthangar.core.MockPosts
 import com.example.diecasthangar.data.Post
-import com.example.diecasthangar.data.User
-import com.example.diecasthangar.domain.PostRecyclerAdapter
-import com.example.diecasthangar.onboarding.presentation.StartFragment
-import java.util.*
+import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
+import com.example.diecasthangar.domain.usecase.remote.getUserUsername
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.collections.ArrayList
 
 /**
@@ -35,6 +35,18 @@ class DashboardFragment : Fragment() {
         // Inflate the layout for this fragment
         val view: View = inflater.inflate(R.layout.fragment_dashboard, container, false)
         val picView = view.findViewById<ImageView>(R.id.dashboard_profile_pic)
+
+        val usernameTextView = view.findViewById<TextView>(R.id.dashboard_text_username)
+        usernameTextView.text = getUserUsername()
+
+        val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)
+
+        addPostButton.setOnClickListener(){
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container, AddPostFragment())
+                .commit()
+        }
+
         picView.setImageResource(R.drawable.inuit)
 
         picView.setOnClickListener(){
@@ -50,7 +62,6 @@ class DashboardFragment : Fragment() {
 
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
-        postAdapter.notifyItemChanged(0)
 
         val mockList  = MockPosts("s")
         val posts: ArrayList<Post> = mockList.getPosts()

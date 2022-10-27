@@ -1,15 +1,15 @@
 package com.example.diecasthangar.data
 
-import android.media.Image
+import android.net.Uri
+import com.google.firebase.auth.FirebaseUser
 import java.util.Date
 
 class Post(
     var text: String,
-    var images: List<Image>?,
-    var title: String,
-    var user: User,
-    var id: Int,
-    var date: Date?
+    var images: List<Uri>?,
+    var user: FirebaseUser?,
+    var id: String,
+    var date: Date = Date(),
 )
 {
 

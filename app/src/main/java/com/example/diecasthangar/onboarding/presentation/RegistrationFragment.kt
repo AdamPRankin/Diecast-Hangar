@@ -1,6 +1,7 @@
 package com.example.diecasthangar.onboarding.presentation
 
 import android.content.ContentValues.TAG
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.util.Log
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.diecasthangar.DashboardFragment
 import com.example.diecasthangar.MainActivity
@@ -19,6 +21,9 @@ import com.example.diecasthangar.R.*
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.ktx.userProfileChangeRequest
+import com.google.firebase.ktx.Firebase
 
 class RegistrationFragment : Fragment() {
 
@@ -34,6 +39,8 @@ class RegistrationFragment : Fragment() {
         val passwordInput = view.findViewById<TextInputLayout>(R.id.reg_password_text_input)
         val emailInput = view.findViewById<TextInputLayout>(R.id.reg_email_text_input)
         val emailField = view.findViewById<EditText>(R.id.reg_email_edit_text)
+        val usernameInput = view.findViewById<TextInputLayout>(R.id.reg_username_text_input)
+        val usernameField = view.findViewById<EditText>(R.id.reg_username_edit_text)
 
         // Set an error if the password is less than 8 characters.
         registerButton.setOnClickListener {
@@ -59,22 +66,25 @@ class RegistrationFragment : Fragment() {
         registerButton.setOnClickListener {
             val email: String  = emailField.text.toString().trim()
             val password: String = passwordField.text.toString()
+            val username: String = usernameField.text.toString()
 
             if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
                 emailInput.error = "invalid email"
             }
             else {
-                registerUser(email, password,mAuth)
-            }
-        }
+                registerUser(email,password,mAuth)
 
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.container, DashboardFragment())
+                    .commit()
+            }
+
+        }
         cancelButton.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container, StartFragment())
                 .commit()
         }
-
-
 
         return view
     }
@@ -86,6 +96,16 @@ class RegistrationFragment : Fragment() {
                     if (task.isSuccessful) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "createUserWithEmail:success")
+                        val user = Firebase.auth.currentUser
+                        val profileUpdates = userProfileChangeRequest {
+                            val usernameField = view?.findViewById<EditText>(R.id.reg_username_edit_text)
+                            displayName = usernameField!!.text.toString()
+                        }
+                        user!!.updateProfile(profileUpdates).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.d(TAG, "User profile updated.")
+                            }
+                        }
                         parentFragmentManager.beginTransaction()
                             .replace(R.id.container, DashboardFragment())
                             .commit()
@@ -96,6 +116,7 @@ class RegistrationFragment : Fragment() {
                     }
                 }
         }
+
 
 
     }

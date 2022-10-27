@@ -1,14 +1,10 @@
-package com.example.diecasthangar.domain
+package com.example.diecasthangar.domain.adapters
 
-import android.annotation.SuppressLint
-import android.media.Image
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.diecasthangar.R
 import com.example.diecasthangar.core.inflate
 import com.example.diecasthangar.data.Post
@@ -26,7 +22,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         val post = posts[position]
         holder.dateTextView.text = post.date.toString()
         holder.bodyTextView.text = post.text
-        holder.userTextView.text = post.user.username
+        holder.userTextView.text = post.user?.displayName
         holder.avatarImageView.setImageResource(R.drawable.ic_launcher_foreground)
         holder.picImageview.setImageResource(R.drawable.inuit)
 
@@ -42,12 +38,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         val userTextView: TextView = view.findViewById(R.id.post_username)
         val picImageview: ImageView = view.findViewById(R.id.post_picture)
 
-
-
-
         init {
             v.setOnClickListener(this)
-
         }
 
         override fun onClick(v: View?) {

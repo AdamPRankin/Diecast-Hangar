@@ -18,14 +18,13 @@ class MainActivity : AppCompatActivity(), NavigationHost {
 
         val currentUser = Firebase.auth.currentUser
         if(currentUser != null){
-           userController.currentUser = currentUser
             supportFragmentManager
                 .beginTransaction()
                 .add(R.id.container, DashboardFragment())
                 .commit()
         }
 
-        if (savedInstanceState == null) {
+        else {
             supportFragmentManager
                 .beginTransaction()
                 .add(R.id.container, StartFragment())
