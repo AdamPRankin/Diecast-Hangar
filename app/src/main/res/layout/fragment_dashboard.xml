@@ -19,9 +19,9 @@
 
         <ImageView
             android:id="@+id/dashboard_profile_pic"
-            android:layout_width="19dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="fitXY"
             tools:src="@drawable/avatar_default" />
 
         <TextView

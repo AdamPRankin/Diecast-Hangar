@@ -25,7 +25,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.diecasthangar.data.Photo
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.SideScrollImageRecyclerAdapter
-import com.example.diecasthangar.domain.remote.UploadPhoto
+import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FieldValue
@@ -117,7 +117,7 @@ class AddPostFragment : Fragment() {
             if (localUris.size > 0) {
 
                 lifecycleScope.launch {
-                    val uploadPhoto = UploadPhoto(storage,db)
+                    val uploadPhoto = FirestoreRepository(storage,db)
 
                     localUris.map { uri ->
                         async(Dispatchers.IO) {

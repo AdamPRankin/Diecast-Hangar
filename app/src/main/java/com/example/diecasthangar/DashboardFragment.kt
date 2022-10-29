@@ -7,15 +7,24 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
-import com.example.diecasthangar.core.MockPosts
-import com.example.diecasthangar.data.Post
+import com.bumptech.glide.Glide
+import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
+import com.example.diecasthangar.domain.remote.FirestoreRepository
+import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.example.diecasthangar.domain.usecase.remote.getUserUsername
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlin.collections.ArrayList
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.launch
+
 
 /**
  * An example full-screen fragment that shows and hides the system UI (i.e.
@@ -47,7 +56,6 @@ class DashboardFragment : Fragment() {
                 .commit()
         }
 
-        picView.setImageResource(R.drawable.inuit)
 
         picView.setOnClickListener(){
             parentFragmentManager.beginTransaction()
@@ -63,24 +71,52 @@ class DashboardFragment : Fragment() {
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
 
-        val mockList  = MockPosts("s")
-        val posts: ArrayList<Post> = mockList.getPosts()
+        val storage: FirebaseStorage = FirebaseStorage.getInstance()
+        val db: FirebaseFirestore = Firebase.firestore
+        val repository = FirestoreRepository(storage,db)
 
-        postAdapter.posts = posts
-        //postRecyclerView.addOnScrollListener()
+        lifecycleScope.launch {
+
+            when(val response = repository.getPostsFromFireStore()) {
+                is Response.Loading -> {
+                    //TODO display progress bar
+                }
+                is Response.Success -> {
+                    val postsList = response.data!!
+                    postAdapter.posts = postsList
+                    //TODO change to notify tem range changed
+                    postAdapter.notifyItemRangeChanged(
+                        postAdapter.itemCount-10,postAdapter.itemCount)
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+
+            when(val response = repository.getUserAvatar(getUser()!!.uid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val avatarURL = response.data
+                    Glide.with(view.context).load(avatarURL).into(picView)
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+
 
         return view
     }
 
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         super.onCreate(savedInstanceState)
-
-
-
-
 
     }
 
