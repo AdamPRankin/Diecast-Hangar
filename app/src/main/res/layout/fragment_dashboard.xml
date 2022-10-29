@@ -22,14 +22,15 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:scaleType="fitXY"
-            tools:src="@drawable/avatar_default" />
+            tools:src="@drawable/avatar_default"
+            android:contentDescription="@string/profile_picture" />
 
         <TextView
             android:id="@+id/dashboard_text_username"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="username" />
+            android:text="@string/username" />
 
         <Button
             android:id="@+id/button"

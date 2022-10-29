@@ -14,7 +14,8 @@
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
-        tools:src="@drawable/avatar_default" />
+        tools:src="@drawable/avatar_default"
+        android:contentDescription="TODO" />
 
     <TextView
         android:id="@+id/profile_name"
@@ -58,6 +59,7 @@
         android:layout_height="wrap_content"
         android:src="@android:drawable/ic_menu_edit"
         app:layout_constraintEnd_toEndOf="@+id/textView3"
-        app:layout_constraintTop_toTopOf="@+id/profile_avatar" />
+        app:layout_constraintTop_toTopOf="@+id/profile_avatar"
+        android:contentDescription="TODO" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

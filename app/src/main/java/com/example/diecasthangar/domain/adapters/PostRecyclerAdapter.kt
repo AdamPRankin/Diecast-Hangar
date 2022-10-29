@@ -7,15 +7,11 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.core.inflate
 import com.example.diecasthangar.data.Post
-import com.example.diecasthangar.domain.Response
-import com.example.diecasthangar.domain.usecase.remote.getUser
-import kotlinx.coroutines.launch
 
 class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
     var posts =  ArrayList<Post>()

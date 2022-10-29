@@ -101,14 +101,14 @@ class AddPostFragment : Fragment() {
                 addImageAdapter.notifyDataSetChanged()
             }
         }
-        photoImageView.setOnClickListener(){
+        photoImageView.setOnClickListener {
             val intent =
                 Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             launcher.launch(intent)
         }
 
-        addButton.setOnClickListener() {
+        addButton.setOnClickListener {
             val storage: FirebaseStorage = FirebaseStorage.getInstance()
             val db: FirebaseFirestore = Firebase.firestore
             val text = postTextView.text.toString()
@@ -178,7 +178,7 @@ class AddPostFragment : Fragment() {
                 .replace(R.id.container, DashboardFragment())
                 .commit()
         }
-        cancelButton.setOnClickListener() {
+        cancelButton.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container, DashboardFragment())
                 .commit()

@@ -8,9 +8,9 @@ import com.google.firebase.ktx.Firebase
 
 fun registerUser(email: String, password: String,username: String): Boolean {
     val auth = Firebase.auth
-    var complete: Boolean = false
+    var complete = false
     auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener() { task ->
+        .addOnCompleteListener { task ->
         if (task.isSuccessful) {
             complete = true
             Log.d(ContentValues.TAG, "createUserWithEmail:success")

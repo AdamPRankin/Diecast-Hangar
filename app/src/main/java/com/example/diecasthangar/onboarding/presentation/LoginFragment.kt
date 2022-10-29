@@ -2,26 +2,17 @@ package com.example.diecasthangar.onboarding.presentation
 
 import android.app.AlertDialog
 import android.content.ContentValues.TAG
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
-import android.text.Layout
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnClickListener
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import com.example.diecasthangar.DashboardFragment
 import com.example.diecasthangar.R
-import com.google.android.gms.tasks.OnFailureListener
-import com.google.android.gms.tasks.Task
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -43,7 +34,7 @@ class LoginFragment : Fragment() {
 
         val recoverPasswordTextView: TextView = view.findViewById(R.id.recover_password)
 
-        recoverPasswordTextView.setOnClickListener(){
+        recoverPasswordTextView.setOnClickListener {
             showRecoverPasswordDialog()
         }
 
@@ -120,7 +111,7 @@ class LoginFragment : Fragment() {
 
         }
 
-    fun beginRecovery(email: String){
+    private fun beginRecovery(email: String){
         val auth: FirebaseAuth = Firebase.auth
         auth.sendPasswordResetEmail(email).addOnCompleteListener {
 

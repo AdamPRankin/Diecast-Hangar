@@ -3,14 +3,11 @@ package com.example.diecasthangar
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.example.diecasthangar.core.UserController
 import com.example.diecasthangar.onboarding.presentation.StartFragment
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 class MainActivity : AppCompatActivity(), NavigationHost {
-    val userController: UserController = UserController(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

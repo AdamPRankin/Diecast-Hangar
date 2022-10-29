@@ -1,7 +1,6 @@
 package com.example.diecasthangar.onboarding.presentation
 
 import android.content.ContentValues.TAG
-import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.util.Log
@@ -11,14 +10,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.diecasthangar.DashboardFragment
-import com.example.diecasthangar.MainActivity
 import com.example.diecasthangar.NavigationHost
 import com.example.diecasthangar.R
-import com.example.diecasthangar.R.*
-import com.google.android.material.snackbar.Snackbar
+import com.example.diecasthangar.R.layout
+import com.example.diecasthangar.R.string
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth

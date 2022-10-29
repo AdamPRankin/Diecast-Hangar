@@ -8,7 +8,6 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -39,7 +38,7 @@ class ProfileFragment : Fragment() {
 
         val profileUsername: TextView = view.findViewById(R.id.profile_name)
 
-        val launcher = registerForActivityResult<Intent, ActivityResult>(
+        val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK

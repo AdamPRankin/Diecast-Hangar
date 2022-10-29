@@ -8,7 +8,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
@@ -50,14 +49,14 @@ class DashboardFragment : Fragment() {
 
         val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)
 
-        addPostButton.setOnClickListener(){
+        addPostButton.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container, AddPostFragment())
                 .commit()
         }
 
 
-        picView.setOnClickListener(){
+        picView.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container, ProfileFragment())
                 .commit()
@@ -66,7 +65,7 @@ class DashboardFragment : Fragment() {
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.post_recycler_view)
         val postAdapter = PostRecyclerAdapter()
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
-        var isLoading: Boolean = false
+        var isLoading = false
 
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter

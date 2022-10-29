@@ -36,7 +36,8 @@
         android:layout_width="276dp"
         android:layout_height="184dp"
         tools:srcCompat="@tools:sample/backgrounds/scenic"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:contentDescription="TODO" />
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_post_img_right"
         android:layout_width="36dp"
@@ -65,7 +66,8 @@
                 android:id="@+id/post_avatar"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                tools:srcCompat="@drawable/img" />
+                tools:srcCompat="@drawable/img"
+                android:contentDescription="TODO" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -112,12 +114,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:text="comment"
+            android:text="@string/comment"
             />
         <com.google.android.material.button.MaterialButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="like"
+            android:text="@string/react"
             style="?attr/borderlessButtonStyle"
             />
     </LinearLayout>
