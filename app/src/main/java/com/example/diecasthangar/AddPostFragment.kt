@@ -56,9 +56,8 @@ class AddPostFragment : Fragment() {
         val photos: ArrayList<Photo> = ArrayList()
         val localUris = ArrayList<Uri>()
 
-
-        val storageReference = FirebaseStorage.getInstance().reference
-        val userDbRef = FirebaseDatabase.getInstance().getReference("Users")
+        val storage: FirebaseStorage = FirebaseStorage.getInstance()
+        val db: FirebaseFirestore = Firebase.firestore
 
         val photoImageView: ImageView = view.findViewById(R.id.add_post_placeholder_picture)
         val addButton: Button = view.findViewById(R.id.add_post_btn_add)
@@ -72,7 +71,7 @@ class AddPostFragment : Fragment() {
         addImageRecyclerView.layoutManager = addImageLayoutManager
         addImageRecyclerView.adapter = addImageAdapter
 
-        addImageAdapter.localUris = localUris
+        val repository = FirestoreRepository(storage,db)
 
         val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -109,19 +108,18 @@ class AddPostFragment : Fragment() {
         }
 
         addButton.setOnClickListener {
-            val storage: FirebaseStorage = FirebaseStorage.getInstance()
-            val db: FirebaseFirestore = Firebase.firestore
+
             val text = postTextView.text.toString()
             val remoteUris = arrayListOf<Uri>()
 
-            if (localUris.size > 0) {
+            if (localUris.isNotEmpty()) {
 
                 lifecycleScope.launch {
-                    val uploadPhoto = FirestoreRepository(storage,db)
+                    val uploadPhoto = FirestoreRepository(storage, db)
 
                     localUris.map { uri ->
                         async(Dispatchers.IO) {
-                            when(val result = uploadPhoto.addPostToFireStore(uri)) {
+                            when (val result = uploadPhoto.addPostToFireStore(uri)) {
                                 is Response.Loading -> {
                                     //TODO display progress bar
                                 }
@@ -145,17 +143,19 @@ class AddPostFragment : Fragment() {
                         "id" to newPostKey,
                         "images" to remoteUris,
                         "user" to getUser()!!.uid,
-                        "date" to FieldValue.serverTimestamp()
+                        "date" to FieldValue.serverTimestamp(),
+                        "username" to getUser()!!.displayName,
+                        "avatar" to "https://cdn5.vectorstock.com/i/1000x1000/53/69/pilot-black-icon-silhouette-vector-21485369.jpg"
                     )
                     db.collection("posts").add(hashPost)
                         .addOnSuccessListener {
                             Log.d(ContentValues.TAG, "post  added")
                         }.addOnFailureListener { e ->
                             Log.e(ContentValues.TAG, "error adding document")
-                        }.await()
-
+                        }.addOnSuccessListener {
+                            parentFragmentManager.popBackStack()
+                        }
                 }
-
             }
 
             else if (localUris.isEmpty()){
@@ -165,23 +165,23 @@ class AddPostFragment : Fragment() {
                 val hashPost = hashMapOf(
                     "text" to text,
                     "id" to newPostKey,
+                    "images" to remoteUris,
                     "user" to getUser()!!.uid,
-                    "date" to FieldValue.serverTimestamp()
+                    "date" to FieldValue.serverTimestamp(),
+                    "username" to getUser()!!.displayName,
+                    "avatar" to "https://cdn5.vectorstock.com/i/1000x1000/53/69/pilot-black-icon-silhouette-vector-21485369.jpg"
                 )
                 db.collection("posts").add(hashPost).addOnSuccessListener {
                     Log.d(ContentValues.TAG,"post  added")
                 }.addOnFailureListener { e ->
                     Log.e(ContentValues.TAG,"error adding document")
-                }
+                }.addOnSuccessListener {
+                    parentFragmentManager.popBackStack() }
             }
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.container, DashboardFragment())
-                .commit()
+
         }
         cancelButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.container, DashboardFragment())
-                .commit()
+            parentFragmentManager.popBackStack()
         }
         return view
     }

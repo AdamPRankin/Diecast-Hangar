@@ -16,11 +16,15 @@ import com.example.diecasthangar.NavigationHost
 import com.example.diecasthangar.R
 import com.example.diecasthangar.R.layout
 import com.example.diecasthangar.R.string
+import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 
 class RegistrationFragment : Fragment() {
 
@@ -29,6 +33,7 @@ class RegistrationFragment : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(layout.fragment_register, container, false)
         val mAuth: FirebaseAuth = FirebaseAuth.getInstance()
+
 
         val cancelButton = view.findViewById<Button>(R.id.btn_cancel_register)
         val registerButton = view.findViewById<Button>(R.id.btn_register)
@@ -88,6 +93,8 @@ class RegistrationFragment : Fragment() {
 
     private fun registerUser(email: String, password: String,mAuth: FirebaseAuth) {
         activity?.let {
+            val storage: FirebaseStorage = FirebaseStorage.getInstance()
+            val db: FirebaseFirestore = Firebase.firestore
             mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(it) { task ->
                     if (task.isSuccessful) {
@@ -96,7 +103,9 @@ class RegistrationFragment : Fragment() {
                         val user = Firebase.auth.currentUser
                         val profileUpdates = userProfileChangeRequest {
                             val usernameField = view?.findViewById<EditText>(R.id.reg_username_edit_text)
-                            displayName = usernameField!!.text.toString()
+                            val displayName = usernameField!!.text.toString()
+                            val repository = FirestoreRepository(storage, db)
+                            repository.addUserInfoToDatabase(user!!.uid,"",displayName)
                         }
                         user!!.updateProfile(profileUpdates).addOnCompleteListener { task ->
                             if (task.isSuccessful) {

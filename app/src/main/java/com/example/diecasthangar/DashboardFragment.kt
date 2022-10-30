@@ -51,14 +51,14 @@ class DashboardFragment : Fragment() {
 
         addPostButton.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .replace(R.id.container, AddPostFragment())
+                .add(R.id.container, AddPostFragment()).addToBackStack("home")
                 .commit()
         }
 
 
         picView.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .replace(R.id.container, ProfileFragment())
+                .add(R.id.container, ProfileFragment()).addToBackStack("home")
                 .commit()
         }
 
