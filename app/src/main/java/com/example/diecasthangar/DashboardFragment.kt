@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +44,7 @@ class DashboardFragment : Fragment() {
         // Inflate the layout for this fragment
         val view: View = inflater.inflate(R.layout.fragment_dashboard, container, false)
         val picView = view.findViewById<ImageView>(R.id.dashboard_profile_pic)
+        val postLoadingProgressBar: ProgressBar = view.findViewById(R.id.dashboard_progress_bar)
 
         val usernameTextView = view.findViewById<TextView>(R.id.dashboard_text_username)
         usernameTextView.text = getUserUsername()
@@ -78,12 +80,11 @@ class DashboardFragment : Fragment() {
 
             when(val response = repository.getPostsFromFireStore()) {
                 is Response.Loading -> {
-                    //TODO display progress bar
+                    //TODO progress bar
                 }
                 is Response.Success -> {
                     val postsList = response.data!!
                     postAdapter.posts = postsList
-                    //TODO change to notify tem range changed
                     postAdapter.notifyItemRangeChanged(
                         postAdapter.itemCount-10,postAdapter.itemCount)
                 }
@@ -107,11 +108,8 @@ class DashboardFragment : Fragment() {
                 }
             }
         }
-
-
         return view
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -125,7 +123,6 @@ class DashboardFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
-
     }
 
     override fun onDestroy() {

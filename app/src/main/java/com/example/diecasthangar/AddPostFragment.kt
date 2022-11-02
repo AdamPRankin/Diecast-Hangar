@@ -146,6 +146,9 @@ class AddPostFragment : Fragment() {
                         "date" to FieldValue.serverTimestamp(),
                         "username" to getUser()!!.displayName,
                         "avatar" to "https://cdn5.vectorstock.com/i/1000x1000/53/69/pilot-black-icon-silhouette-vector-21485369.jpg"
+                        //TODO grab this data
+                        //TODO factor out
+                        //TODO add hashmap to Post class/ vice versa helper functions
                     )
                     db.collection("posts").add(hashPost)
                         .addOnSuccessListener {

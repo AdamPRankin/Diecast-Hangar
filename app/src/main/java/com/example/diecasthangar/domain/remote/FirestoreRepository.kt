@@ -1,9 +1,11 @@
 package com.example.diecasthangar.domain.remote
 
 import android.net.Uri
+import com.example.diecasthangar.data.Comment
 import com.example.diecasthangar.data.Post
+import com.example.diecasthangar.data.Reaction
+import com.example.diecasthangar.data.Reactions
 import com.example.diecasthangar.domain.Response
-import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.google.firebase.Timestamp
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FieldValue
@@ -12,7 +14,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
-import java.util.*
+import kotlin.collections.ArrayList
 
 
 open class FirestoreRepository (
@@ -21,6 +23,7 @@ open class FirestoreRepository (
     private val db: FirebaseFirestore = Firebase.firestore
 
     )  {
+
     suspend fun addPostToFireStore(imageUri: Uri): Response<Uri> {
 
         return try {
@@ -42,8 +45,6 @@ open class FirestoreRepository (
             Response.Failure(e)
         }
 
-
-
     }
 
     suspend fun getPostsFromFireStore(): Response<kotlin.collections.ArrayList<Post>> {
@@ -56,12 +57,18 @@ open class FirestoreRepository (
         for (post in posts){
             val imageUris: ArrayList<String> = post.get("images") as ArrayList<String>
             val text: String = post.get("text") as String
-            val timestamp: Timestamp = post.get("date") as Timestamp
+            val timestamp: Timestamp = post.getTimestamp("date") as Timestamp
             val user: String = post.get("user").toString()
             val username : String = post.get("username").toString()
             val avatar: String = post.get("avatar").toString()
+            val id = post.id
+            val comments: ArrayList<Comment> = ArrayList()
+            //TODO implement
+            val reactions: MutableMap<String,Int> = post.get("reactions") as MutableMap<String, Int>
 
-            val newPost = Post(text, imageUris, user, timestamp.toDate(),username,avatar)
+
+
+            val newPost = Post(text, imageUris, user, timestamp.toDate(),username,avatar,id,comments,reactions)
 
             postsList.add(newPost)
         }
@@ -92,6 +99,15 @@ open class FirestoreRepository (
 
 
     }
+    suspend fun addReaction(reaction: String, id: String) : Response<Boolean> {
+        return try {
+            db.collection("posts").document(id).update(
+                "reactions.$reaction",FieldValue.increment(1)).await()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
 
     fun addUserInfoToDatabase(userID: String, avatarUri: String, username: String): Response<Boolean>{
         return try {
@@ -106,4 +122,5 @@ open class FirestoreRepository (
             Response.Failure(e)
         }
     }
+
 }
