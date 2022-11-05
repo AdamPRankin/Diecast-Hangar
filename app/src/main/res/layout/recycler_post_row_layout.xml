@@ -7,6 +7,23 @@
     android:layout_height="wrap_content"
     android:layout_margin="8dp">
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/post_btn_edit_popup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:backgroundTint="@android:color/transparent"
+        app:rippleColor="@android:color/transparent"
+        android:contentDescription="@string/options"
+        android:src="@drawable/ic_dots_horizontal_black_36dp"
+        android:layout_gravity="end"
+        android:outlineProvider="none"
+        app:tint="@color/material_dynamic_tertiary60"
+        android:visibility="gone">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -36,8 +53,7 @@
         android:layout_width="276dp"
         android:layout_height="184dp"
         tools:srcCompat="@tools:sample/backgrounds/scenic"
-        android:layout_gravity="center"
-        android:contentDescription="TODO" />
+        android:layout_gravity="center" />
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_post_img_right"
         android:layout_width="36dp"
@@ -67,11 +83,16 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 tools:srcCompat="@drawable/img"
-                android:contentDescription="TODO" />
+                android:contentDescription="@null" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
+
 
             <TextView
                 android:id="@+id/post_username"
@@ -89,7 +110,11 @@
                 android:layout_marginStart="8dp"
                 tools:ignore="HardcodedText" />
 
+
             </LinearLayout>
+            </LinearLayout>
+
+
         </LinearLayout>
 
         <TextView
@@ -146,13 +171,12 @@
                     android:id="@+id/post_reacts_1"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    tools:ignore="ContentDescription"
-                    android:src="@drawable/ic_airplane_black_48dp"
                     app:tint="@color/material_dynamic_tertiary40">
                 </ImageView>
                 <FrameLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    >
 
                     <TextView
                         android:id="@+id/post_reaction1_number"
@@ -171,13 +195,13 @@
                     android:id="@+id/post_reacts_2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    tools:ignore="ContentDescription"
                     app:tint="@color/material_dynamic_tertiary40">
 
                 </ImageView>
                 <FrameLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+>
 
                     <TextView
                         android:id="@+id/post_reaction2_number"
@@ -195,7 +219,6 @@
                     android:id="@+id/post_reacts_3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    tools:ignore="ContentDescription"
                     app:tint="@color/material_dynamic_tertiary40">
 
                 </ImageView>
@@ -207,8 +230,6 @@
                         android:id="@+id/post_reaction3_number"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1"
-                        tools:ignore="HardcodedText"
                         android:textColor="@color/material_dynamic_tertiary30">
 
                     </TextView>
@@ -220,6 +241,8 @@
 
 
 </LinearLayout>
+
+
 
     <FrameLayout
         android:id="@+id/reactionsFrameLayout"

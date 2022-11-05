@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,7 +19,9 @@ import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.example.diecasthangar.domain.usecase.remote.getUserUsername
+import com.example.diecasthangar.profile.presentation.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -42,9 +45,11 @@ class DashboardFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
+        //val viewModel = ViewModelProvider(this)[DashboardViewModel::class.java]
         val view: View = inflater.inflate(R.layout.fragment_dashboard, container, false)
         val picView = view.findViewById<ImageView>(R.id.dashboard_profile_pic)
-        val postLoadingProgressBar: ProgressBar = view.findViewById(R.id.dashboard_progress_bar)
+        val postLoadingCircle: ProgressBar = view.findViewById(R.id.dashboard_progress_indicator)
+        var loading = true
 
         val usernameTextView = view.findViewById<TextView>(R.id.dashboard_text_username)
         usernameTextView.text = getUserUsername()
@@ -57,7 +62,6 @@ class DashboardFragment : Fragment() {
                 .commit()
         }
 
-
         picView.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, ProfileFragment()).addToBackStack("home")
@@ -68,6 +72,7 @@ class DashboardFragment : Fragment() {
         val postAdapter = PostRecyclerAdapter()
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
         var isLoading = false
+        var snapshot: DocumentSnapshot? = null
 
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
@@ -78,15 +83,17 @@ class DashboardFragment : Fragment() {
 
         lifecycleScope.launch {
 
-            when(val response = repository.getPostsFromFireStore()) {
+            when(val response = repository.loadNextPagePosts(snapshot)) {
                 is Response.Loading -> {
-                    //TODO progress bar
+
                 }
                 is Response.Success -> {
-                    val postsList = response.data!!
-                    postAdapter.posts = postsList
+                    val (postsList,newSnap) = response.data!!
+                    snapshot = newSnap
+                    postAdapter.posts.addAll(postsList)
                     postAdapter.notifyItemRangeChanged(
                         postAdapter.itemCount-10,postAdapter.itemCount)
+                    postLoadingCircle.visibility = View.GONE
                 }
                 is Response.Failure -> {
                     print(response.e)
@@ -108,6 +115,40 @@ class DashboardFragment : Fragment() {
                 }
             }
         }
+
+
+        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (!recyclerView.canScrollVertically(1) && dy > 0 && loading) {
+                    lifecycleScope.launch {
+                        when(val response = repository.loadNextPagePosts(snapshot)) {
+                            is Response.Loading -> {
+
+                            }
+                            is Response.Success -> {
+                                val (postsList,newSnap) = response.data!!
+                                // if document snapshot is the same, then there are no more posts
+                                // to load, so set loading to false
+                                if (newSnap == snapshot){
+                                    loading = false
+                                }
+                                snapshot = newSnap
+                                postAdapter.posts.addAll(postsList)
+                                postAdapter.notifyItemRangeChanged(
+                                    postAdapter.itemCount-10,postAdapter.itemCount)
+                            }
+                            is Response.Failure -> {
+                                print(response.e)
+                            }
+                        }
+                    }
+
+                } else if (!recyclerView.canScrollVertically(-1) && dy < 0) {
+                    //scrolled to TOP
+                }
+            }
+        })
+
         return view
     }
 

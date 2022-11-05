@@ -2,39 +2,33 @@ package com.example.diecasthangar
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.diecasthangar.data.Photo
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.SideScrollImageRecyclerAdapter
 import com.example.diecasthangar.domain.remote.FirestoreRepository
-import com.example.diecasthangar.domain.usecase.remote.getUser
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
-import kotlinx.coroutines.tasks.await
 
 
 class AddPostFragment : Fragment() {
@@ -58,20 +52,20 @@ class AddPostFragment : Fragment() {
 
         val storage: FirebaseStorage = FirebaseStorage.getInstance()
         val db: FirebaseFirestore = Firebase.firestore
+        val repository = FirestoreRepository()
 
         val photoImageView: ImageView = view.findViewById(R.id.add_post_placeholder_picture)
         val addButton: Button = view.findViewById(R.id.add_post_btn_add)
         val cancelButton: Button = view.findViewById(R.id.add_post_btn_cancel)
         val postTextView: TextView = view.findViewById(R.id.add_post_text_field)
         val addImageRecyclerView: RecyclerView = view.findViewById(R.id.add_post_img_recycler)
-
+        val addPostProgressBar: ProgressBar = view.findViewById(R.id.add_post_progress_bar)
         val addImageLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(
             view.context,LinearLayoutManager.HORIZONTAL, false)
         val addImageAdapter = SideScrollImageRecyclerAdapter()
         addImageRecyclerView.layoutManager = addImageLayoutManager
         addImageRecyclerView.adapter = addImageAdapter
 
-        val repository = FirestoreRepository(storage,db)
 
         val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -108,20 +102,19 @@ class AddPostFragment : Fragment() {
         }
 
         addButton.setOnClickListener {
-
+            addPostProgressBar.visibility = View.VISIBLE
             val text = postTextView.text.toString()
             val remoteUris = arrayListOf<Uri>()
 
-            if (localUris.isNotEmpty()) {
 
-                lifecycleScope.launch {
-                    val uploadPhoto = FirestoreRepository(storage, db)
+
+            CoroutineScope(Dispatchers.IO).launch {
+                    if (localUris.isNotEmpty()) {
 
                     localUris.map { uri ->
                         async(Dispatchers.IO) {
-                            when (val result = uploadPhoto.addPostToFireStore(uri)) {
+                            when (val result = repository.addImageToStorage(uri)) {
                                 is Response.Loading -> {
-                                    //TODO display progress bar
                                 }
                                 is Response.Success -> {
                                     val remoteUri = result.data!!
@@ -135,53 +128,31 @@ class AddPostFragment : Fragment() {
                         }
                         // waiting for all request to finish executing in parallel
                     }.awaitAll()
-                    val rootRef = FirebaseDatabase.getInstance().reference
 
-                    val newPostKey = rootRef.ref.child("posts").push().key
-                    val hashPost = hashMapOf(
-                        "text" to text,
-                        "id" to newPostKey,
-                        "images" to remoteUris,
-                        "user" to getUser()!!.uid,
-                        "date" to FieldValue.serverTimestamp(),
-                        "username" to getUser()!!.displayName,
-                        "avatar" to "https://cdn5.vectorstock.com/i/1000x1000/53/69/pilot-black-icon-silhouette-vector-21485369.jpg"
-                        //TODO grab this data
-                        //TODO factor out
-                        //TODO add hashmap to Post class/ vice versa helper functions
-                    )
-                    db.collection("posts").add(hashPost)
-                        .addOnSuccessListener {
-                            Log.d(ContentValues.TAG, "post  added")
-                        }.addOnFailureListener { e ->
-                            Log.e(ContentValues.TAG, "error adding document")
-                        }.addOnSuccessListener {
-                            parentFragmentManager.popBackStack()
+                        when (val result = repository.addPostToFirestore(text,remoteUris)) {
+                            is Response.Loading -> {
+                            }
+                            is Response.Success -> {
+                                parentFragmentManager.popBackStack()
+                            }
+                            is Response.Failure -> {
+                                print(result.e)
+                            }
                         }
                 }
+                    else if (localUris.isEmpty()){
+                        when (val result = repository.addPostToFirestore(text,remoteUris)) {
+                            is Response.Loading -> {
+                            }
+                            is Response.Success -> {
+                                parentFragmentManager.popBackStack()
+                            }
+                            is Response.Failure -> {
+                                print(result.e)
+                            }
+                        }
+                    }
             }
-
-            else if (localUris.isEmpty()){
-                val rootRef = FirebaseDatabase.getInstance().reference
-
-                val newPostKey = rootRef.ref.child("posts").push().key
-                val hashPost = hashMapOf(
-                    "text" to text,
-                    "id" to newPostKey,
-                    "images" to remoteUris,
-                    "user" to getUser()!!.uid,
-                    "date" to FieldValue.serverTimestamp(),
-                    "username" to getUser()!!.displayName,
-                    "avatar" to "https://cdn5.vectorstock.com/i/1000x1000/53/69/pilot-black-icon-silhouette-vector-21485369.jpg"
-                )
-                db.collection("posts").add(hashPost).addOnSuccessListener {
-                    Log.d(ContentValues.TAG,"post  added")
-                }.addOnFailureListener { e ->
-                    Log.e(ContentValues.TAG,"error adding document")
-                }.addOnSuccessListener {
-                    parentFragmentManager.popBackStack() }
-            }
-
         }
         cancelButton.setOnClickListener {
             parentFragmentManager.popBackStack()
@@ -189,3 +160,4 @@ class AddPostFragment : Fragment() {
         return view
     }
 }
+

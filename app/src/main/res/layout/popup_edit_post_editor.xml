@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -13,28 +12,28 @@
         android:orientation="vertical">
 
 
-         <LinearLayout
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             android:orientation="vertical"
-             android:gravity="center"
-             >
-             <androidx.recyclerview.widget.RecyclerView
-                 android:layout_width="match_parent"
-                 android:layout_height="250dp"
-                 android:id="@+id/add_post_img_recycler"
-                 android:orientation="horizontal"
-                 android:scrollbars="horizontal"
-                 android:visibility="gone"
-                 />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            >
+            <androidx.recyclerview.widget.RecyclerView
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:id="@+id/edit_post_img_recycler"
+                android:orientation="horizontal"
+                android:scrollbars="horizontal"
+                android:visibility="gone"
+                />
 
-             <ImageView
-                 android:id="@+id/add_post_placeholder_picture"
-                 android:layout_width="match_parent"
-                 android:layout_height="184dp"
-                 android:background="@drawable/post_shadow"
-                 android:layout_gravity="center"
-                 android:contentDescription="TODO" />
+            <ImageView
+                android:id="@+id/edit_post_placeholder_picture"
+                android:layout_width="match_parent"
+                android:layout_height="184dp"
+                android:background="@drawable/post_shadow"
+                android:layout_gravity="center"
+                android:contentDescription="TODO" />
         </LinearLayout>
 
 
@@ -44,16 +43,19 @@
             android:orientation="vertical"
             android:padding="16dp">
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/add_post_text_layout"
+                android:id="@+id/edit_post_text_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="4dp"
                 android:hint="@string/post">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/add_post_text_field"
+                    android:id="@+id/edit_post_text_field"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:focusableInTouchMode="true"
+                    android:focusable="true"
+                    android:inputType="text"/>
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
@@ -64,21 +66,21 @@
             android:layout_margin="8dp"
             android:orientation="horizontal">
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/add_post_btn_add"
+                android:id="@+id/edit_post_btn_edit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:text="@string/add"
+                android:text="@string/edit"
                 />
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/add_post_btn_cancel"
+                android:id="@+id/edit_post_btn_cancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/cancel"
                 style="?attr/borderlessButtonStyle"
                 />
             <com.google.android.material.progressindicator.CircularProgressIndicator
-                android:id="@+id/add_post_progress_bar"
+                android:id="@+id/edit_post_progress_bar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:indeterminate="true"

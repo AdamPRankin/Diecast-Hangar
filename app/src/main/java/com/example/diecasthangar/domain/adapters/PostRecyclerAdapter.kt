@@ -6,25 +6,35 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.MeasureSpec
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.core.inflate
+import com.example.diecasthangar.core.util.parseDate
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
+import com.example.diecasthangar.databinding.PopupEditPostBinding
+import com.example.diecasthangar.databinding.PopupEditPostEditorBinding
 import com.example.diecasthangar.domain.remote.FirestoreRepository
+import com.example.diecasthangar.domain.usecase.remote.getUser
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
     var posts =  ArrayList<Post>()
-    val firestoreRepository = FirestoreRepository()
+    private val firestoreRepository = FirestoreRepository()
 
 
 
@@ -38,14 +48,15 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val post = posts[position]
         var currentImagePosition = 0
-        holder.dateTextView.text = post.date.toString()
+
+
+        val displayDateString = parseDate(post.date)
+        holder.dateTextView.text = displayDateString
         holder.bodyTextView.text = post.text
         holder.userTextView.text = post.username
 
-
-        val testPaint: Paint = Paint();
+        val testPaint = Paint();
         testPaint.set(holder.bodyTextView.paint)
-        var isMarquee = true
         val textWidth =  testPaint.measureText(holder.bodyTextView.text.toString())
         //TODO fix this check
         if (textWidth > 250){
@@ -67,6 +78,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         if (post.images.isEmpty()){
             holder.postImageHolder.visibility = View.GONE
         }
+        //remove scroll buttons if only one image
         if (post.images.size < 2) {
             holder.leftImageButton.visibility = View.GONE
             holder.rightImageButton.visibility = View.GONE
@@ -96,7 +108,6 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         }
         holder.reactButton.setOnClickListener {
 
-            //TODO fix window not showing for last item in recycler
             val context = holder.itemView.context
             val inflater: LayoutInflater  =
                     context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
@@ -162,30 +173,139 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         val planeReacts = reacts["plane"]!!.toInt()
         val landingReacts = reacts["landing"]!!.toInt()
         val takeoffReacts = reacts["takeoff"]!!.toInt()
-       //TODO logic to display top X reactions in initial snippet
+        //TODO logic to display top X reactions in initial snippet
+        // TODO add new reaction to map if null
 
 
-        if ((planeReacts != null) && (planeReacts > 0) ) {
+        if (planeReacts > 0 ) {
             holder.reactIcon1.setImageResource(R.drawable.ic_airplane_black_48dp)
             if (planeReacts > 1){
                 holder.reactNumber1.text = planeReacts.toString()
             }
         }
-        if ((landingReacts != null) && (landingReacts > 0) ) {
+        else {
+            holder.reactNumber1.text = ""
+            holder.reactIcon1.setImageResource(0)
+        }
+        if (landingReacts > 0) {
             holder.reactIcon2.setImageResource(R.drawable.ic_airplane_landing_black_48dp)
             if (landingReacts > 1){
                 holder.reactNumber2.text = landingReacts.toString()
             }
         }
-        if ((takeoffReacts != null) && (takeoffReacts > 0) ) {
+        else {
+            holder.reactNumber2.text = ""
+            holder.reactIcon2.setImageResource(0)
+        }
+        if (takeoffReacts > 0) {
             holder.reactIcon3.setImageResource(R.drawable.ic_airplane_takeoff_black_48dp)
             if (takeoffReacts > 1){
                 holder.reactNumber3.text = takeoffReacts.toString()
             }
         }
+        else {
+            holder.reactNumber3.text = ""
+            holder.reactIcon3.setImageResource(0)
+        }
+
+        if (post.user == getUser()?.uid) {
+            holder.editPostPopupButton.visibility = View.VISIBLE
+            holder.editPostPopupButton.setOnClickListener {
+
+                val context = holder.itemView.context
+                val inflater: LayoutInflater  =
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
+                val binding = PopupEditPostBinding.inflate(inflater)
+                val popup = PopupWindow(
+                    binding.root,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                )
+                // Closes the popup window when touch outside.
+                popup.isOutsideTouchable = true;
+                popup.isFocusable = true;
+                // Removes default background.
+                popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+                popup.showAsDropDown(holder.editPostPopupButton, 0, 0)
+                binding.postOptionsBtnDelete.setOnClickListener {
+                    CoroutineScope(Dispatchers.IO).launch{
+                        firestoreRepository.deletePostFromFirestore(post.id!!)
+                        posts.removeAt(position)
+                    }
+                    notifyItemRemoved(position)
+                    popup.dismiss()
+
+                }
+                binding.postOptionsBtnEdit.setOnClickListener {
+                    //construct popup for editing
+
+                        val inflater: LayoutInflater  =
+                            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
+                        val editorBinding = PopupEditPostEditorBinding.inflate(inflater)
+                        val editorPopup = PopupWindow(
+                            editorBinding.root,
+                            WindowManager.LayoutParams.MATCH_PARENT,
+                            WindowManager.LayoutParams.MATCH_PARENT
+                        )
+
+                    editorBinding.editPostTextField.setText(post.text)
+                    //todo fix edit text not working
+                    editorBinding.editPostTextField.isFocusable = true
+                    editorBinding.editPostTextField.setTextIsSelectable(true);
+                    popup.dismiss()
+                    editorPopup.showAsDropDown(holder.commentButton)
+
+
+                    editorBinding.editPostBtnEdit.setOnClickListener {
+                            val newText = editorBinding.editPostTextField.text.toString()
+                            post.text = newText
+                            //TODO edit image array
+                            CoroutineScope(Dispatchers.IO).launch {
+                                firestoreRepository.editFirestorePost(post.id, newText)
+                            }
+                            editorPopup.dismiss()
+                        }
+                    editorBinding.editPostBtnCancel.setOnClickListener {
+                        editorPopup.dismiss()
+                    }
+
+
+                    notifyItemChanged(position)
+                    popup.dismiss()
+                }
+
+
+
+                //check if the popup is below the screen, if so, adjust upwards
+                val displayMetrics = context.resources.displayMetrics
+                val height = displayMetrics.heightPixels
+
+                val values = IntArray(2)
+                holder.editPostPopupButton.getLocationOnScreen(values)
+                val positionOfIcon = values[1]
+
+                //TODO fix the offset by using actual height of window
+                if (positionOfIcon >= (height  - 48)) {
+                    val popupHeight = popup.height
+                    val yOffset =  -48
+                    popup.update(holder.editPostPopupButton, 0, yOffset, popup.width, popup.height)
+
+                }
+
+            }
+        }
+        else {
+            holder.editPostPopupButton.visibility = View.GONE
+        }
+
+
 
 
     }
+
+
+
 
     inner class ViewHolder(v: View): RecyclerView.ViewHolder(v),
             View.OnClickListener {
@@ -208,6 +328,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         val reactNumber1: TextView = view.findViewById(R.id.post_reaction1_number)
         val reactNumber2: TextView = view.findViewById(R.id.post_reaction2_number)
         val reactNumber3: TextView = view.findViewById(R.id.post_reaction3_number)
+        val editPostPopupButton: FloatingActionButton = view.findViewById(R.id.post_btn_edit_popup)
+
 
         init {
             v.setOnClickListener(this)

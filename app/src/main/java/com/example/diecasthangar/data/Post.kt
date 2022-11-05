@@ -9,7 +9,7 @@ class Post(
     var date: Date = Date(),
     var username: String,
     var avatar: String = "",
-    val id: String?,
+    val id: String = "",
     val comments: ArrayList<Comment>,
     val reactions: MutableMap<String, Int>
 )
