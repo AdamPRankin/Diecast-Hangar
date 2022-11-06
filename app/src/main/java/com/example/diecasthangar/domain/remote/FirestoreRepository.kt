@@ -48,7 +48,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun getPostsFromFireStore(): Response<kotlin.collections.ArrayList<Post>> {
+    suspend fun getPostsFromFireStore(): Response<ArrayList<Post>> {
 
         val posts =     db.collection("posts")
             .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING).limit(10)

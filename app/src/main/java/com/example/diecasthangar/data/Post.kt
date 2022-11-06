@@ -12,5 +12,12 @@ class Post(
     val id: String = "",
     val comments: ArrayList<Comment>,
     val reactions: MutableMap<String, Int>
-)
+){
+    fun addReact(name: String, number: Int = 1){
+        if (reactions.containsKey(name)) {
+            reactions[name] = (reactions[name]!!.plus(number))
+        }
+    }
+
+}
 

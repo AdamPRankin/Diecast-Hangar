@@ -44,6 +44,11 @@ android {
     buildFeatures {
         viewBinding true
     }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -90,4 +95,11 @@ dependencies {
 // optional - Test helpers for LiveData
     testImplementation "androidx.arch.core:core-testing:2.1.0"
 
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    //Mockk
+    testImplementation "io.mockk:mockk:1.12.4"
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:rules:1.4.0'
+
 }
+

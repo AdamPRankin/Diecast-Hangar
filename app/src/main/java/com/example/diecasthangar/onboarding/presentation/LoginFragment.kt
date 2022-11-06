@@ -42,7 +42,10 @@ class LoginFragment : Fragment() {
         loginButton.setOnClickListener {
             val email = emailField.text.toString().trim()
             val password = passwordField.text.toString()
-            loginUser(email,password,passwordInput)
+
+            if ((password.length > 5) && (email.length > 3)) {
+                loginUser(email, password, passwordInput)
+            }
         }
 
         // Clear the error once more than 8 characters are typed.
