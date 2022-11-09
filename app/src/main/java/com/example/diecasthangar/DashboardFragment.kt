@@ -8,12 +8,12 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.bumptech.glide.Glide
+import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.remote.FirestoreRepository
@@ -26,7 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 
 /**
@@ -89,6 +89,9 @@ class DashboardFragment : Fragment() {
                 }
                 is Response.Success -> {
                     val (postsList,newSnap) = response.data!!
+
+                    //val postsList = addCommentsToPosts(repository,noCommentsPostList,3)
+
                     snapshot = newSnap
                     postAdapter.posts.addAll(postsList)
                     postAdapter.notifyItemRangeChanged(
@@ -127,6 +130,7 @@ class DashboardFragment : Fragment() {
                             }
                             is Response.Success -> {
                                 val (postsList,newSnap) = response.data!!
+                                //val postsList = addCommentsToPosts(repository,noCommentsPostList,3)
                                 // if document snapshot is the same, then there are no more posts
                                 // to load, so set loading to false
                                 if (newSnap == snapshot){
@@ -168,6 +172,35 @@ class DashboardFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    private fun addCommentsToPosts(repository: FirestoreRepository, posts: ArrayList<Post>, number: Int = 3): ArrayList<Post> {
+        lateinit var commentedPosts: ArrayList<Post>
+        CoroutineScope(Dispatchers.IO).launch {
+            commentedPosts = ArrayList()
+                posts.map { post ->
+                    async(Dispatchers.IO) {
+                        if (post.comments != null && post.comments!!.size < number) {
+                            when (val result = repository.getTopRatedComments(post.id, 3)) {
+                                is Response.Loading -> {
+                                }
+                                is Response.Success -> {
+                                    val comments = result.data!!
+                                    post.comments = comments
+                                    commentedPosts.add(post)
+                                }
+                                is Response.Failure -> {
+                                    print(result.e)
+                                }
+                            }
+                        }
+
+                    }
+                }.joinAll()
+        }
+        return commentedPosts
+
+
     }
 
 }

@@ -15,6 +15,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.example.diecasthangar.R
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
 class ProfileFragment : Fragment() {
@@ -31,7 +32,7 @@ class ProfileFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
         // Inflate the layout for this fragment
 
-        val saveProfileButton: ImageButton = view.findViewById(R.id.btn_profile_save)
+        val saveProfileButton: FloatingActionButton = view.findViewById(R.id.profile_btn_edit_profile)
         saveProfileButton.visibility = View.GONE
 
         val profileImage: ImageView = view.findViewById(R.id.profile_avatar)
@@ -62,7 +63,6 @@ class ProfileFragment : Fragment() {
 
         return view
     }
-
 
     override fun onPause() {
         super.onPause()

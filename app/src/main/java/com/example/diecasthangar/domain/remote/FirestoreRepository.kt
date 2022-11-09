@@ -8,19 +8,14 @@ import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.data.getReacts
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.usecase.remote.getUser
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
 import com.google.firebase.Timestamp
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.Query
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firestore.v1.Cursor
 import kotlinx.coroutines.tasks.await
 
 
@@ -206,8 +201,7 @@ open class FirestoreRepository (
             val posts = postsQuery.get().addOnSuccessListener { documentSnapshot ->
                 if (documentSnapshot.documents.isNotEmpty()) {
                     queryCursor = documentSnapshot.documents[documentSnapshot.size() - 1]
-                }
-                else if (documentSnapshot.documents.isEmpty()){
+                } else if (documentSnapshot.documents.isEmpty()) {
                     queryCursor = lastVisible!!
                 }
 
@@ -222,7 +216,18 @@ open class FirestoreRepository (
                 val username: String = post.get("username").toString()
                 val avatar: String = post.get("avatar").toString()
                 val id = post.id
-                val comments: ArrayList<Comment> = ArrayList()
+                var comments: ArrayList<Comment>? = ArrayList()
+                when(val response = getTopRatedComments(post.id,3)) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        comments = response.data
+
+                    }
+                    is Response.Failure -> {
+                        print(response.e)
+                    }
+                }
                 //TODO implement
                 val reactions: MutableMap<String, Int> =
                     post.get("reactions") as MutableMap<String, Int>
@@ -235,20 +240,146 @@ open class FirestoreRepository (
             }
             val pair: Pair<ArrayList<Post>, DocumentSnapshot> = postsList to queryCursor
             return Response.Success(pair)
-        } catch (e: ArrayIndexOutOfBoundsException){
+        } catch (e: ArrayIndexOutOfBoundsException) {
             Response.Failure(e)
         } catch (e: Exception) {
             Response.Failure(e)
 
         }
-
-
-
-
-
-
-
     }
+
+    suspend fun addFirestoreComment(pid: String, text: String, uid: String) : Response<Boolean> {
+        return try {
+            var avatarUri = ""
+
+            when(val response = getUserAvatar(getUser()!!.uid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    avatarUri = response.data.toString()
+
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+
+            var username = ""
+            when(val response = getUserUserName(getUser()!!.uid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    username = response.data.toString()
+
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+
+            val hashComment = hashMapOf(
+                "avatar" to avatarUri,
+                "date" to FieldValue.serverTimestamp(),
+                "post" to pid,
+                "text" to text,
+                "user" to uid,
+                "username" to username,
+                "reactions" to getReacts(),
+                "total-reacts" to 0
+            )
+
+            db.collection("comments").add(hashComment).addOnSuccessListener {
+                Log.d(ContentValues.TAG, "comment added")
+            }.addOnFailureListener { e ->
+                Log.e(ContentValues.TAG, "error adding document")
+            }
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun getFireStoreCommentsPage(pid: String,lastVisible: DocumentSnapshot? = null)
+    : Response<Pair<ArrayList<Comment>,DocumentSnapshot>> {
+        return try {
+            lateinit var queryCursor: DocumentSnapshot
+
+            val commentsQuery = if (lastVisible != null) {
+                db.collection("comments").whereEqualTo("post",pid)
+                    .startAfter(lastVisible).limit(10)
+            } else {
+                db.collection("comments").whereEqualTo("post",pid).limit(10)
+            }
+
+            val comments = commentsQuery.get().addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.documents.isNotEmpty()) {
+                    queryCursor = documentSnapshot.documents[documentSnapshot.size() - 1]
+                } else if (documentSnapshot.documents.isEmpty()) {
+                    queryCursor = lastVisible!!
+                }
+            }.await()
+
+            val commentsList = arrayListOf<Comment>()
+            for (comment in comments) {
+                val text: String = comment.get("text") as String
+                val timestamp: Timestamp = comment.getTimestamp("date") as Timestamp
+                val user: String = comment.get("user").toString()
+                val username: String = comment.get("username").toString()
+                val avatar: String = comment.get("avatar").toString()
+                val id = comment.id
+                val postId: String = comment.get("post") as String
+                val reactions: MutableMap<String, Int> = comment.get("reactions")
+                        as MutableMap<String, Int>
+
+                val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
+
+                commentsList.add(newComment)
+            }
+            val pair: Pair<ArrayList<Comment>, DocumentSnapshot> = commentsList to queryCursor
+
+            Response.Success(pair)
+        } catch (e: Exception) {
+            Response.Failure(e)
+
+        }
+    }
+
+    suspend fun getTopRatedComments(pid: String,number: Int)
+            : Response<ArrayList<Comment>> {
+        return try {
+            lateinit var queryCursor: DocumentSnapshot
+
+            val commentsQuery =
+                db.collection("comments").whereEqualTo("post",pid)
+                    .limit(number.toLong())
+
+            val comments = commentsQuery.get().addOnSuccessListener {}.await()
+
+            val commentsList = arrayListOf<Comment>()
+            for (comment in comments) {
+                val text: String = comment.get("text") as String
+                val timestamp: Timestamp = comment.getTimestamp("date") as Timestamp
+                val user: String = comment.get("user").toString()
+                val username: String = comment.get("username").toString()
+                val avatar: String = comment.get("avatar").toString()
+                val id = comment.id
+                val postId: String = comment.get("post") as String
+                val reactions: MutableMap<String, Int> = comment.get("reactions")
+                        as MutableMap<String, Int>
+
+                val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
+
+                commentsList.add(newComment)
+            }
+
+            Response.Success(commentsList)
+        } catch (e: Exception) {
+            Response.Failure(e)
+
+        }
+    }
+
+
 
 
 }

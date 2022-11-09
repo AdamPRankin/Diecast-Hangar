@@ -1,65 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/material_dynamic_primary90"
     tools:context=".profile.presentation.ProfileFragment">
 
-    <ImageView
-        android:id="@+id/profile_avatar"
-        android:layout_width="148dp"
-        android:layout_height="145dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
-        tools:src="@drawable/avatar_default"
-        android:contentDescription="TODO" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/profile_name"
+        <LinearLayout
+            android:id="@+id/profile_lay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/profile_avatar"
+                android:layout_width="109dp"
+                android:layout_height="108dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:contentDescription="@string/user_avatar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:src="@drawable/avatar_default" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/profile_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp"
+                        android:text="Kolby ML"
+                        android:textSize="24sp" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/profile_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp"
+                        android:text="High Flyer"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/textView3"
+                    android:layout_width="256dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:text="NFT's for sale"
+                    android:textSize="14sp"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_lay" />
+
+
+    </LinearLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_edit_profile"
+        android:layout_width="wrap_content"
+        android:layout_height="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:clickable="true"
+        android:contentDescription="@string/edit_profile"
+        android:focusable="true"
+        android:src="@drawable/add_48"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/dash_btn_add_post"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="1dp"
-        android:text="Kolby ML"
-        android:textSize="24sp"
-        android:layout_marginStart="16dp"
-        app:layout_constraintStart_toEndOf="@+id/profile_avatar"
-        app:layout_constraintTop_toTopOf="@+id/profile_avatar"
-        tools:ignore="HardcodedText" />
-
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="224dp"
-        android:layout_height="87dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"
-        android:text="NFT's for sale"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="@+id/profile_avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/profile_avatar"
-        app:layout_constraintTop_toBottomOf="@+id/profile_name"
-        app:layout_constraintVertical_bias="1.0" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="409dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:clickable="true"
+        android:src="@drawable/add_48"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_avatar" />
-
-    <ImageButton
-        android:id="@+id/btn_profile_save"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@android:drawable/ic_menu_edit"
-        app:layout_constraintEnd_toEndOf="@+id/textView3"
-        app:layout_constraintTop_toTopOf="@+id/profile_avatar"
-        android:contentDescription="TODO" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:focusable="true"
+        android:contentDescription="@string/new_post"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"/>
+</com.google.android.material.card.MaterialCardView>

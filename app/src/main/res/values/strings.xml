@@ -64,4 +64,6 @@
     <string name="avatar">avatar</string>
     <string name="options">options</string>
     <string name="editC">Edit</string>
+    <string name="user_avatar">user avatar</string>
+    <string name="edit_profile">edit profile</string>
 </resources>
