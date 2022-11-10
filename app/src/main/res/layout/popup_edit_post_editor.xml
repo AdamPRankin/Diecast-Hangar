@@ -54,8 +54,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:focusableInTouchMode="true"
-                    android:focusable="true"
-                    android:inputType="text"/>
+                    android:focusable="true" />
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>

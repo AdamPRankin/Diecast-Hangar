@@ -3,6 +3,7 @@ package com.example.diecasthangar.profile.presentation
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.remote.FirestoreRepository
@@ -12,15 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class ProfileViewModel: ViewModel() {
-    private val loadingPost: Post = Post("Squeek is loading the posts as fast as he can...",
-        java.util.ArrayList(),"Mr. Loading",
-        Date() ,"Flyin' Squeek The Post Loader",
-        "https://i.gyazo.com/02b2c623a812f221477160f3041f486a.png"
-        ,"123",
-        java.util.ArrayList(),hashMapOf())
+    private val loadingPost: Post = loadingDummyPost()
     private val postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData(arrayListOf(loadingPost))
     private val postsArrayList: ArrayList<Post> = ArrayList()
     private val repository = FirestoreRepository()
@@ -39,13 +36,12 @@ class ProfileViewModel: ViewModel() {
         CoroutineScope(Dispatchers.IO).launch {
             when(val response = repository.loadNextPagePostsFromUser(userId = getUser()!!.uid)) {
                 is Response.Loading -> {
-
                 }
                 is Response.Success -> {
                     val (postsList,newSnap) = response.data!!
                     snapshot = newSnap
-                    postsLiveData.postValue(postsList)
 
+                    postsLiveData.postValue(postsList)
                 }
                 is Response.Failure -> {
                     print(response.e)
@@ -62,7 +58,10 @@ class ProfileViewModel: ViewModel() {
                 is Response.Success -> {
                     val (postsList,newSnap) = response.data!!
                     snapshot = newSnap
-                    postsLiveData.postValue(postsList)
+                    val newList = ArrayList<Post>()
+                    newList.addAll(postsLiveData.value!!)
+                    newList.addAll(postsList)
+                    postsLiveData.postValue(newList)
                     //if these are equal then there are no more posts to load
                     if (newSnap == snapshot){
                         isLoading = false
@@ -74,5 +73,4 @@ class ProfileViewModel: ViewModel() {
             }
         }
     }
-
 }

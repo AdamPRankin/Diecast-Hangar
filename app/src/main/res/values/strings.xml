@@ -69,4 +69,5 @@
     <string name="app_logo">app logo</string>
     <string name="models">models</string>
     <string name="posts">posts</string>
+    <string name="welcome">Welcome</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.example.diecasthangar
 
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -15,38 +16,18 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), NavigationHost {
-    var username : String = "test"
-    var avatarUri: String = "none"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val storage: FirebaseStorage = FirebaseStorage.getInstance()
-        val db: FirebaseFirestore = Firebase.firestore
-        val repository = FirestoreRepository(storage,db)
-
+        val userViewModel: UserViewModel by viewModels()
 
         val currentUser = Firebase.auth.currentUser
         if(currentUser != null){
-            lifecycleScope.launch {
-
-                when(val response = repository.getUserInfo(currentUser.uid)) {
-                    is Response.Loading -> {
-                    }
-                    is Response.Success -> {
-                        val (avatar,user) = response.data!!
-                        avatarUri = avatar
-                        username = user
-                        supportFragmentManager
-                            .beginTransaction()
-                            .add(R.id.container, DashboardFragment())
-                            .commit()
-                    }
-                    is Response.Failure -> {
-                        print(response.e)
-                    }
-                }
-            }
+            userViewModel.getUserData()
+            supportFragmentManager
+                .beginTransaction()
+                .add(R.id.container, DashboardFragment())
+                .commit()
         }
         else {
             supportFragmentManager

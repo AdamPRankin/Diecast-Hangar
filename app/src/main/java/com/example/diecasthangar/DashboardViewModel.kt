@@ -19,51 +19,30 @@ import kotlinx.coroutines.launch
 
 class DashboardViewModel: ViewModel() {
 
-    var isLoading = false
-    var posts: MutableLiveData<ArrayList<Post>> = MutableLiveData()
-    val storage: FirebaseStorage = FirebaseStorage.getInstance()
-    val db: FirebaseFirestore = Firebase.firestore
-    val repository = FirestoreRepository(storage,db)
-    var userAvatarUri: String = ""
-    val postAdapter = PostRecyclerAdapter()
-    var snapshot: DocumentSnapshot? = null
+    var isLoading = true
+    private var postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData(arrayListOf())
+    private val repository = FirestoreRepository()
+    var latestSnapshot: DocumentSnapshot? = null
 
     init {
+        initialLoad()
+    }
+    fun getPostMutableLiveData(): MutableLiveData<ArrayList<Post>> {
+        return postsLiveData
+    }
 
-        val loadingPost = loadingDummyPost()
-        val list = arrayListOf(loadingPost)
-        posts.value = list
-
-
+    private fun initialLoad(){
         CoroutineScope(Dispatchers.IO).launch {
 
-            when(val response = repository.loadNextPagePosts(snapshot)) {
+            when(val response = repository.loadNextPagePosts(latestSnapshot)) {
                 is Response.Loading -> {
 
                 }
                 is Response.Success -> {
                     val (postsList,newSnap) = response.data!!
-
-                    //val postsList = addCommentsToPosts(repository,noCommentsPostList,3)
-
-                    snapshot = newSnap
+                    latestSnapshot = newSnap
                     val newPosts = (postsList) as ArrayList<Post>?
-                    posts.postValue(newPosts!!)
-
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
-
-            when(val response = repository.getUserAvatar(getUser()!!.uid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    userAvatarUri = response.data.toString()
+                    postsLiveData.postValue(newPosts!!)
 
                 }
                 is Response.Failure -> {
@@ -73,23 +52,21 @@ class DashboardViewModel: ViewModel() {
         }
     }
 
-    suspend fun scrollLoadMorePosts(snap: DocumentSnapshot, loading: Boolean = isLoading){
-        when(val response = repository.loadNextPagePosts(snapshot)) {
+    suspend fun loadMorePosts(snap: DocumentSnapshot? = latestSnapshot, loading: Boolean = isLoading){
+        when(val response = repository.loadNextPagePosts(snap)) {
             is Response.Loading -> {
 
             }
             is Response.Success -> {
                 val (postsList,newSnap) = response.data!!
-                //val postsList = addCommentsToPosts(repository,noCommentsPostList,3)
                 // if document snapshot is the same, then there are no more posts
                 // to load, so set loading to false
-                if (newSnap == snapshot){
+                if (newSnap == snap){
                     isLoading = false
                 }
-                snapshot = newSnap
-                val newPosts = posts.value?.plus(postsList) as ArrayList<Post>?
-                posts.postValue(newPosts!!)
-
+                latestSnapshot = newSnap
+                val newPosts = postsLiveData.value?.plus(postsList) as ArrayList<Post>?
+                postsLiveData.postValue(newPosts!!)
             }
             is Response.Failure -> {
                 print(response.e)

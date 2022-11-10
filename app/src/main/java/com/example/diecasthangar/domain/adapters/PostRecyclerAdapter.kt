@@ -58,7 +58,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         val textWidth =  testPaint.measureText(holder.bodyTextView.text.toString())
 
         //TODO fix this check
-        if (textWidth > 250){
+        if (textWidth > 2500){
             holder.showMoreButton.visibility = View.VISIBLE
             holder.showMoreButton.setOnClickListener{
                 holder.bodyTextView.maxHeight = 9000
@@ -308,7 +308,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                 binding.postOptionsBtnEdit.setOnClickListener {
                     //construct popup for editing
                         val editInflater: LayoutInflater  =
-                            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                            holder.itemView.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
                     val editorBinding = PopupEditPostEditorBinding.inflate(editInflater)
                         val editorPopup = PopupWindow(
                             editorBinding.root,

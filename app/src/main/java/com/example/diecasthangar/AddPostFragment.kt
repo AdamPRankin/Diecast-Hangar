@@ -45,8 +45,6 @@ class AddPostFragment : Fragment() {
         val photos: ArrayList<Photo> = ArrayList()
         val localUris = ArrayList<Uri>()
 
-        val storage: FirebaseStorage = FirebaseStorage.getInstance()
-        val db: FirebaseFirestore = Firebase.firestore
         val repository = FirestoreRepository()
 
         val photoImageView: ImageView = view.findViewById(R.id.add_post_placeholder_picture)
@@ -102,7 +100,7 @@ class AddPostFragment : Fragment() {
             val remoteUris = arrayListOf<Uri>()
 
 
-
+            //TODO move to viewmodel
             CoroutineScope(Dispatchers.IO).launch {
                     if (localUris.isNotEmpty()) {
 

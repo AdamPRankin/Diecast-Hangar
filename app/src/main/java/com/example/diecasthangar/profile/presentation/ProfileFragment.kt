@@ -1,5 +1,6 @@
 package com.example.diecasthangar.profile.presentation
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.MainActivity
 import com.example.diecasthangar.R
+import com.example.diecasthangar.UserViewModel
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -33,15 +36,13 @@ class ProfileFragment: Fragment(), LifecycleOwner {
         // Inflate the layout for this fragment
 
         val saveProfileButton: FloatingActionButton = view.findViewById(R.id.profile_btn_edit_profile)
-        saveProfileButton.visibility = View.GONE
-
-        val main = (activity as MainActivity)
+        val userViewModel: UserViewModel by activityViewModels()
         val profileImageView: ImageView = view.findViewById(R.id.profile_avatar)
-
         val profileUsername: TextView = view.findViewById(R.id.profile_name)
 
-        Glide.with(view).load(main.avatarUri).into(profileImageView)
-        profileUsername.text = main.username
+        Glide.with(view).load(userViewModel
+            .getAvatarUri()).into(profileImageView)
+        profileUsername.text = userViewModel.getUsername()
 
 /*        val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -61,8 +62,7 @@ class ProfileFragment: Fragment(), LifecycleOwner {
         }*/
 
         saveProfileButton.setOnClickListener {
-            val username = profileUsername.text.toString()
-            //val photo = profileImage.id
+
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
@@ -77,6 +77,7 @@ class ProfileFragment: Fragment(), LifecycleOwner {
 
         viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
             // update UI
+            postAdapter.notifyItemRemoved(0)
             val prevSize = postAdapter.posts.size
             postAdapter.posts = postList
             //X previous posts, so we want to update from index X onwards
