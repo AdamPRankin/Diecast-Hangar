@@ -18,7 +18,7 @@ fun parseDate(date: Date, fullDateFlag: Boolean = false,now: LocalDateTime = Loc
        return localDateTime.format(DateTimeFormatter.ofPattern("H:mm a"))
     }
     else if ((localDateTime.month == now.month)&&(localDateTime.year==now.year)) {
-        return localDateTime.format(DateTimeFormatter.ofPattern("EE MM dd"))
+        return localDateTime.format(DateTimeFormatter.ofPattern("EE MMMM dd"))
     }
     else if (localDateTime.year == now.year) {
         return localDateTime.format(DateTimeFormatter.ofPattern("MMMM dd"))

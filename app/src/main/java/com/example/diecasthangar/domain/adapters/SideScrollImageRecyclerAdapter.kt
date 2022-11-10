@@ -19,7 +19,6 @@ class SideScrollImageRecyclerAdapter: RecyclerView.Adapter<SideScrollImageRecycl
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
             holder.photoImageView.setImageURI(localUris[position])
-
     }
 
     inner class ViewHolder(v: View): RecyclerView.ViewHolder(v),

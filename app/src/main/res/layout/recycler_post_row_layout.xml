@@ -252,8 +252,7 @@
         android:id="@+id/post_comment1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:orientation="vertical">
 
 
 
@@ -265,7 +264,7 @@
                 <ImageView
                     android:id="@+id/post_comment1_avatar"
                     android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_height="match_parent"
                     tools:srcCompat="@drawable/img"
                     android:contentDescription="@null" />
 
@@ -275,7 +274,9 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-
+                    <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
                         <TextView
                             android:id="@+id/post_comment1_username"
                             android:layout_width="wrap_content"
@@ -284,28 +285,29 @@
                             android:textSize="18sp"
                             android:layout_marginStart="8dp"
                             tools:ignore="HardcodedText" />
+
                         <TextView
                             android:id="@+id/post_comment1_date"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="October 14th, 2022"
                             android:layout_marginStart="8dp"
+                            android:text="October 14th, 2022"
                             tools:ignore="HardcodedText" />
-
-
+                    </LinearLayout>
+                        <TextView
+                            android:id="@+id/post_comment1_body"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginBottom="8dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxHeight="250dp"
+                            android:text="@string/comment" />
                     </LinearLayout>
 
 
 
             </LinearLayout>
-        <TextView
-            android:id="@+id/post_comment1_body"
-            android:layout_marginStart="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxHeight="250dp"
-            android:text="@string/comment" />
+
     </LinearLayout>
        </com.google.android.material.card.MaterialCardView>
 
@@ -341,7 +343,9 @@
                    android:layout_height="wrap_content"
                    android:orientation="vertical">
 
-
+                   <LinearLayout
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content">
                    <TextView
                        android:id="@+id/post_comment2_username"
                        android:layout_width="wrap_content"
@@ -357,20 +361,21 @@
                        android:text="October 14th, 2022"
                        android:layout_marginStart="8dp"
                        tools:ignore="HardcodedText" />
-
+                   </LinearLayout>
+                   <TextView
+                       android:id="@+id/post_comment2_body"
+                       android:layout_marginStart="8dp"
+                       android:layout_width="match_parent"
+                       android:layout_height="wrap_content"
+                       android:maxHeight="250dp"
+                       android:text="@string/comment" />
 
                </LinearLayout>
 
 
 
            </LinearLayout>
-           <TextView
-               android:id="@+id/post_comment2_body"
-               android:layout_marginStart="8dp"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:maxHeight="250dp"
-               android:text="@string/comment" />
+
        </LinearLayout>
        </com.google.android.material.card.MaterialCardView>
 
@@ -403,7 +408,9 @@
                    android:layout_height="wrap_content"
                    android:orientation="vertical">
 
-
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
                    <TextView
                        android:id="@+id/post_comment3_username"
                        android:layout_width="wrap_content"
@@ -414,8 +421,14 @@
                        android:id="@+id/post_comment3_date"
                        android:layout_width="wrap_content"
                        android:layout_height="wrap_content"
-                       android:layout_marginStart="8dp"
- />
+                       android:layout_marginStart="8dp" />
+            </LinearLayout>
+        <TextView
+                   android:id="@+id/post_comment3_body"
+                   android:layout_marginStart="8dp"
+                   android:layout_width="match_parent"
+                   android:layout_height="wrap_content"
+                   android:maxHeight="250dp" />
 
 
                </LinearLayout>
@@ -423,12 +436,7 @@
 
 
            </LinearLayout>
-           <TextView
-               android:id="@+id/post_comment3_body"
-               android:layout_marginStart="8dp"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:maxHeight="250dp" />
+
        </LinearLayout>
        </com.google.android.material.card.MaterialCardView>
 

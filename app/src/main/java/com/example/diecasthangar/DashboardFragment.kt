@@ -18,7 +18,6 @@ import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
-import com.example.diecasthangar.domain.usecase.remote.getUserUsername
 import com.example.diecasthangar.profile.presentation.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.DocumentSnapshot
@@ -27,6 +26,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.*
+import java.util.*
 
 
 /**
@@ -52,7 +52,11 @@ class DashboardFragment : Fragment() {
         var loading = true
 
         val usernameTextView = view.findViewById<TextView>(R.id.dashboard_text_username)
-        usernameTextView.text = getUserUsername()
+        val main = (activity as MainActivity)
+        usernameTextView.text = main.username
+
+        Glide.with(view).load(main.avatarUri).into(picView)
+
 
         val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)
 
@@ -70,12 +74,17 @@ class DashboardFragment : Fragment() {
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.post_recycler_view)
         val postAdapter = PostRecyclerAdapter()
+        //postAdapter.posts = viewModel.posts.value as ArrayList<Post>
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
-        var isLoading = false
         var snapshot: DocumentSnapshot? = null
 
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
+        val loadingPost: Post = Post("Squeek is loading the posts as fast as he can...",ArrayList(),"Mr. Loading",
+            Date() ,"Flyin' Squeek The Post Loader",
+            "https://i.gyazo.com/02b2c623a812f221477160f3041f486a.png"
+            ,"123",ArrayList(),hashMapOf())
+        postAdapter.posts.add(loadingPost)
 
         val storage: FirebaseStorage = FirebaseStorage.getInstance()
         val db: FirebaseFirestore = Firebase.firestore
@@ -89,11 +98,12 @@ class DashboardFragment : Fragment() {
                 }
                 is Response.Success -> {
                     val (postsList,newSnap) = response.data!!
+                    //postAdapter.posts.removeAt(0)
 
                     //val postsList = addCommentsToPosts(repository,noCommentsPostList,3)
 
                     snapshot = newSnap
-                    postAdapter.posts.addAll(postsList)
+                    postAdapter.posts = postsList
                     postAdapter.notifyItemRangeChanged(
                         postAdapter.itemCount-10,postAdapter.itemCount)
                     postLoadingCircle.visibility = View.GONE
@@ -104,20 +114,6 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        lifecycleScope.launch {
-
-            when(val response = repository.getUserAvatar(getUser()!!.uid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val avatarURL = response.data
-                    Glide.with(view.context).load(avatarURL).into(picView)
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
-        }
 
 
         postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -173,34 +169,4 @@ class DashboardFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
     }
-
-    private fun addCommentsToPosts(repository: FirestoreRepository, posts: ArrayList<Post>, number: Int = 3): ArrayList<Post> {
-        lateinit var commentedPosts: ArrayList<Post>
-        CoroutineScope(Dispatchers.IO).launch {
-            commentedPosts = ArrayList()
-                posts.map { post ->
-                    async(Dispatchers.IO) {
-                        if (post.comments != null && post.comments!!.size < number) {
-                            when (val result = repository.getTopRatedComments(post.id, 3)) {
-                                is Response.Loading -> {
-                                }
-                                is Response.Success -> {
-                                    val comments = result.data!!
-                                    post.comments = comments
-                                    commentedPosts.add(post)
-                                }
-                                is Response.Failure -> {
-                                    print(result.e)
-                                }
-                            }
-                        }
-
-                    }
-                }.joinAll()
-        }
-        return commentedPosts
-
-
-    }
-
 }

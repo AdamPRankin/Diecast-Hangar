@@ -3,6 +3,7 @@ package com.example.diecasthangar.domain.remote
 import android.content.ContentValues
 import android.net.Uri
 import android.util.Log
+import com.example.diecasthangar.core.util.commentMapToClass
 import com.example.diecasthangar.data.Comment
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.data.getReacts
@@ -90,9 +91,19 @@ open class FirestoreRepository (
         } catch (e: Exception) {
             Response.Failure(e)
         }
-
-
     }
+
+    suspend fun getUserInfo(userId: String): Response<Pair<String,String>> {
+        return try {
+            val userData = db.collection("userdata").document(userId).get().await().data
+            val avatarUri = userData!!["avatar"].toString()
+            val username = userData["username"].toString()
+            Response.Success(Pair(avatarUri,username))
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
     suspend fun addReaction(reaction: String, id: String) : Response<Boolean> {
         return try {
             db.collection("posts").document(id).update(
@@ -182,7 +193,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun loadNextPagePosts(lastVisible: DocumentSnapshot? = null):
+    suspend fun loadNextPagePosts(lastVisible: DocumentSnapshot? = null,limit: Long  = 10):
             Response<Pair<ArrayList<Post>,DocumentSnapshot>> {
         return try {
             lateinit var queryCursor: DocumentSnapshot
@@ -191,11 +202,11 @@ open class FirestoreRepository (
             val postsQuery = if (lastVisible != null) {
                 db.collection("posts")
                     .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                    .startAfter(lastVisible).limit(10)
+                    .startAfter(lastVisible).limit(limit)
             } else {
                 db.collection("posts")
                     .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                    .limit(10)
+                    .limit(8)
             }
 
             val posts = postsQuery.get().addOnSuccessListener { documentSnapshot ->
@@ -217,7 +228,7 @@ open class FirestoreRepository (
                 val avatar: String = post.get("avatar").toString()
                 val id = post.id
                 var comments: ArrayList<Comment>? = ArrayList()
-                when(val response = getTopRatedComments(post.id,3)) {
+                when(val response = getTopRatedComments(post.id,8)) {
                     is Response.Loading -> {
                     }
                     is Response.Success -> {
@@ -228,7 +239,70 @@ open class FirestoreRepository (
                         print(response.e)
                     }
                 }
-                //TODO implement
+                val reactions: MutableMap<String, Int> =
+                    post.get("reactions") as MutableMap<String, Int>
+
+                val newPost = Post(
+                    text, imageUris, user, timestamp.toDate(), username, avatar, id,
+                    comments, reactions
+                )
+                postsList.add(newPost)
+            }
+            val pair: Pair<ArrayList<Post>, DocumentSnapshot> = postsList to queryCursor
+            return Response.Success(pair)
+        } catch (e: ArrayIndexOutOfBoundsException) {
+            Response.Failure(e)
+        } catch (e: Exception) {
+            Response.Failure(e)
+
+        }
+    }
+
+    suspend fun loadNextPagePostsFromUser(lastVisible: DocumentSnapshot? = null,limit: Long  = 10,userId: String):
+            Response<Pair<ArrayList<Post>,DocumentSnapshot>> {
+        return try {
+            lateinit var queryCursor: DocumentSnapshot
+
+            val postsQuery = if (lastVisible != null) {
+                db.collection("posts").whereEqualTo("user",userId)
+                    .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                    .startAfter(lastVisible).limit(limit)
+            } else {
+                db.collection("posts").whereEqualTo("user",userId)
+                    .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                    .limit(8)
+            }
+
+            val posts = postsQuery.get().addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.documents.isNotEmpty()) {
+                    queryCursor = documentSnapshot.documents[documentSnapshot.size() - 1]
+                } else if (documentSnapshot.documents.isEmpty()) {
+                    //queryCursor = lastVisible!!
+                }
+
+            }.await()
+
+            val postsList = arrayListOf<Post>()
+            for (post in posts) {
+                val imageUris: ArrayList<String> = post.get("images") as ArrayList<String>
+                val text: String = post.get("text") as String
+                val timestamp: Timestamp = post.getTimestamp("date") as Timestamp
+                val user: String = post.get("user").toString()
+                val username: String = post.get("username").toString()
+                val avatar: String = post.get("avatar").toString()
+                val id = post.id
+                var comments: ArrayList<Comment>? = ArrayList()
+                when(val response = getTopRatedComments(post.id,8)) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        comments = response.data
+
+                    }
+                    is Response.Failure -> {
+                        print(response.e)
+                    }
+                }
                 val reactions: MutableMap<String, Int> =
                     post.get("reactions") as MutableMap<String, Int>
 
@@ -251,25 +325,15 @@ open class FirestoreRepository (
     suspend fun addFirestoreComment(pid: String, text: String, uid: String) : Response<Boolean> {
         return try {
             var avatarUri = ""
-
-            when(val response = getUserAvatar(getUser()!!.uid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    avatarUri = response.data.toString()
-
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
-
             var username = ""
-            when(val response = getUserUserName(getUser()!!.uid)) {
+
+            when(val response = getUserInfo(getUser()!!.uid)) {
                 is Response.Loading -> {
                 }
                 is Response.Success -> {
-                    username = response.data.toString()
+                    val (av,usr) = response.data!!
+                    avatarUri = av
+                    username = usr
 
                 }
                 is Response.Failure -> {
@@ -321,6 +385,7 @@ open class FirestoreRepository (
 
             val commentsList = arrayListOf<Comment>()
             for (comment in comments) {
+/*
                 val text: String = comment.get("text") as String
                 val timestamp: Timestamp = comment.getTimestamp("date") as Timestamp
                 val user: String = comment.get("user").toString()
@@ -332,7 +397,9 @@ open class FirestoreRepository (
                         as MutableMap<String, Int>
 
                 val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
+*/
 
+                val newComment = commentMapToClass(comment)
                 commentsList.add(newComment)
             }
             val pair: Pair<ArrayList<Comment>, DocumentSnapshot> = commentsList to queryCursor
@@ -351,13 +418,14 @@ open class FirestoreRepository (
 
             val commentsQuery =
                 db.collection("comments").whereEqualTo("post",pid)
+
                     .limit(number.toLong())
 
             val comments = commentsQuery.get().addOnSuccessListener {}.await()
 
             val commentsList = arrayListOf<Comment>()
             for (comment in comments) {
-                val text: String = comment.get("text") as String
+/*                val text: String = comment.get("text") as String
                 val timestamp: Timestamp = comment.getTimestamp("date") as Timestamp
                 val user: String = comment.get("user").toString()
                 val username: String = comment.get("username").toString()
@@ -365,13 +433,12 @@ open class FirestoreRepository (
                 val id = comment.id
                 val postId: String = comment.get("post") as String
                 val reactions: MutableMap<String, Int> = comment.get("reactions")
-                        as MutableMap<String, Int>
+                        as MutableMap<String, Int>*/
 
-                val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
-
+                //val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
+                val newComment = commentMapToClass(comment)
                 commentsList.add(newComment)
             }
-
             Response.Success(commentsList)
         } catch (e: Exception) {
             Response.Failure(e)

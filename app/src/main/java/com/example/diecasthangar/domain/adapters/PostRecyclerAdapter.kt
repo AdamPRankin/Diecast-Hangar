@@ -2,22 +2,19 @@ package com.example.diecasthangar.domain.adapters
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
-import android.os.Build
 import android.util.TypedValue
 import android.view.*
 import android.widget.*
-import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.core.inflate
 import com.example.diecasthangar.core.util.parseDate
-import com.example.diecasthangar.data.Comment
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.databinding.PopupAddCommentBinding
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
@@ -28,10 +25,6 @@ import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 
@@ -53,7 +46,6 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         addCommentsToPosts(firestoreRepository,10)
         var currentImagePosition = 0
 
-
         val displayDateString = parseDate(post.date)
         holder.dateTextView.text = displayDateString
         holder.bodyTextView.text = post.text
@@ -62,6 +54,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         val testPaint = Paint();
         testPaint.set(holder.bodyTextView.paint)
         val textWidth =  testPaint.measureText(holder.bodyTextView.text.toString())
+
         //TODO fix this check
         if (textWidth > 250){
             holder.showMoreButton.visibility = View.VISIBLE
@@ -233,9 +226,23 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
 
         }
         val reacts: Map<String,Int> = post.reactions
-        val planeReacts = reacts["plane"]!!.toInt()
-        val landingReacts = reacts["landing"]!!.toInt()
-        val takeoffReacts = reacts["takeoff"]!!.toInt()
+
+        val planeReacts = if (reacts["plane"] != null) {
+            reacts["plane"]!!.toInt()
+        } else {
+            0
+        }
+        val landingReacts = if (reacts["landing"] != null) {
+            reacts["landing"]!!.toInt()
+        } else {
+            0
+        }
+        val takeoffReacts = if (reacts["takeoff"] != null) {
+            reacts["takeoff"]!!.toInt()
+        } else {
+            0
+        }
+
         //TODO logic to display top X reactions in initial snippet
         // TODO add new reaction to map if null
 
@@ -269,11 +276,9 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             holder.reactNumber3.text = ""
             holder.reactIcon3.setImageResource(0)
         }
-
         if (post.user == getUser()?.uid) {
             holder.editPostPopupButton.visibility = View.VISIBLE
             holder.editPostPopupButton.setOnClickListener {
-
                 val context = holder.itemView.context
                 val inflater: LayoutInflater  =
                     context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
@@ -297,11 +302,9 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                     }
                     notifyItemRemoved(position)
                     popup.dismiss()
-
                 }
                 binding.postOptionsBtnEdit.setOnClickListener {
                     //construct popup for editing
-
                         val editInflater: LayoutInflater  =
                             context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
                         val editorBinding = PopupEditPostEditorBinding.inflate(editInflater)
@@ -310,14 +313,12 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                             WindowManager.LayoutParams.MATCH_PARENT,
                             WindowManager.LayoutParams.MATCH_PARENT
                         )
-
                     editorBinding.editPostTextField.setText(post.text)
                     //todo fix edit text not working
                     editorBinding.editPostTextField.isFocusable = true
                     editorBinding.editPostTextField.setTextIsSelectable(true);
                     popup.dismiss()
                     editorPopup.showAsDropDown(holder.commentButton)
-
 
                     editorBinding.editPostBtnEdit.setOnClickListener {
                             val newText = editorBinding.editPostTextField.text.toString()
@@ -341,48 +342,50 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         }
 
         val comments = post.comments
-
-
         if (comments.isNullOrEmpty()){
             holder.comment1.visibility = View.GONE
             holder.comment2.visibility = View.GONE
             holder.comment3.visibility = View.GONE
         }
-        else if (comments != null){
-            if (comments!!.isNotEmpty()){
-                val comment = comments!![0]
+        else {
+            if (comments.isNotEmpty()){
+                val comment = comments[0]
                 holder.comment1.visibility = View.VISIBLE
                 holder.comment1Text.text = comment.text
                 holder.comment1Username.text = comment.username
-                val commentDateString = parseDate(comment.Date)
+                val commentDateString = parseDate(comment.date)
                 holder.comment1Date.text = commentDateString
                 Glide.with(holder.itemView.context).load(post.avatar)
                     .into(holder.comment1Avatar)
-
             }
-            if (comments!!.size >=2 ){
-                val comment = comments!![1]
+            if (comments.size >=2 ){
+                val comment = comments[1]
                 holder.comment2.visibility = View.VISIBLE
                 holder.comment2Text.text = comment.text
                 holder.comment2Username.text = comment.username
-                val commentDateString = parseDate(comment.Date)
+                val commentDateString = parseDate(comment.date)
                 holder.comment2Date.text = commentDateString
                 Glide.with(holder.itemView.context).load(post.avatar)
                     .into(holder.comment2Avatar)
             }
-            if (comments!!.size >= 3){
-                val comment = comments!![2]
+            if (comments.size >= 3){
+                val comment = comments[2]
                 holder.comment3.visibility = View.VISIBLE
                 holder.comment3Text.text = comment.text
                 holder.comment3Username.text = comment.username
-                val commentDateString = parseDate(comment.Date)
+                val commentDateString = parseDate(comment.date)
                 holder.comment3Date.text = commentDateString
                 Glide.with(holder.itemView.context).load(post.avatar)
                     .into(holder.comment3Avatar)
             }
         }
 
-
+        //disable buttons if post is dummy
+        if (post.id == "123"){
+            holder.commentButton.isClickable = false
+            holder.reactButton.isClickable = false
+            holder.showMoreButton.visibility = View.GONE
+        }
     }
 
     inner class ViewHolder(v: View): RecyclerView.ViewHolder(v),

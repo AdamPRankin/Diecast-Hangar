@@ -8,17 +8,29 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
+import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.diecasthangar.MainActivity
 import com.example.diecasthangar.R
+import com.example.diecasthangar.data.Post
+import com.example.diecasthangar.domain.Response
+import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.launch
 
 
-class ProfileFragment : Fragment() {
+class ProfileFragment: Fragment(), LifecycleOwner {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,11 +47,15 @@ class ProfileFragment : Fragment() {
         val saveProfileButton: FloatingActionButton = view.findViewById(R.id.profile_btn_edit_profile)
         saveProfileButton.visibility = View.GONE
 
-        val profileImage: ImageView = view.findViewById(R.id.profile_avatar)
+        val main = (activity as MainActivity)
+        val profileImageView: ImageView = view.findViewById(R.id.profile_avatar)
 
         val profileUsername: TextView = view.findViewById(R.id.profile_name)
 
-        val launcher = registerForActivityResult(
+        Glide.with(view).load(main.avatarUri).into(profileImageView)
+        profileUsername.text = main.username
+
+/*        val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK
@@ -54,20 +70,44 @@ class ProfileFragment : Fragment() {
             val intent =
                 Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             launcher.launch(intent)
-        }
+        }*/
 
         saveProfileButton.setOnClickListener {
             val username = profileUsername.text.toString()
-            val photo = profileImage.id
+            //val photo = profileImage.id
         }
 
+        val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
+        val postAdapter = PostRecyclerAdapter()
+        val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
+        postRecyclerView.layoutManager = postLayoutManager
+        postRecyclerView.adapter = postAdapter
+
+
+        val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
+        postAdapter.posts = viewModel.getPostMutableLiveData().value!!
+
+        viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
+            // update UI
+            val prevSize = postAdapter.posts.size
+            postAdapter.posts = postList
+            //X previous posts, so we want to update from index X onwards
+            postAdapter.notifyItemRangeChanged(prevSize,postAdapter.itemCount)
+        }
+
+        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (!recyclerView.canScrollVertically(1) && dy > 0 && viewModel.isLoading) {
+                    viewModel.loadMorePosts()
+                }
+            }
+        })
         return view
     }
 
     override fun onPause() {
         super.onPause()
         //TODO save profile data
-
     }
 
 }
