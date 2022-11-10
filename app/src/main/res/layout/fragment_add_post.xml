@@ -34,7 +34,7 @@
                  android:layout_height="184dp"
                  android:background="@drawable/post_shadow"
                  android:layout_gravity="center"
-                 android:contentDescription="TODO" />
+                 android:contentDescription="@null" />
         </LinearLayout>
 
 

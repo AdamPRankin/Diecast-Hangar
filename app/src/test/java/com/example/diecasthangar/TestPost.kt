@@ -8,13 +8,11 @@ import kotlin.collections.ArrayList
 import kotlin.test.assertEquals
 
 
-class TestPost(
-
-) {
+class TestPost {
     @Test
     fun testPost() {
         val date = Date()
-        val post: Post = Post(
+        val post = Post(
             text = "hello",
             images = ArrayList(),
             user = "s2sd4af372rh35435",
@@ -22,7 +20,7 @@ class TestPost(
             username = "jimmy",
             avatar = "www.fake-image.com/img",
             id = "345",
-            comments = ArrayList<Comment>(),
+            comments = ArrayList(),
             reactions = hashMapOf(
                 "plane" to 0,
                 "takeoff" to 0,
@@ -49,7 +47,7 @@ class TestPost(
     @Test
     fun testAddReaction(){
         val date = Date()
-        val post: Post = Post(
+        val post = Post(
             text = "hello",
             images = ArrayList(),
             user = "s2sd4af372rh35435",
@@ -57,7 +55,7 @@ class TestPost(
             username = "jimmy",
             avatar = "www.fake-image.com/img",
             id = "345",
-            comments = ArrayList<Comment>(),
+            comments = ArrayList(),
             reactions = hashMapOf(
                 "plane" to 0,
                 "takeoff" to 0,

@@ -23,7 +23,7 @@
             android:layout_marginTop="48dp"
             android:layout_marginBottom="16dp"
             app:srcCompat="@color/material_dynamic_primary40"
-            android:contentDescription="TODO" />
+            android:contentDescription="@string/app_logo" />
 
         <TextView
             android:layout_width="wrap_content"

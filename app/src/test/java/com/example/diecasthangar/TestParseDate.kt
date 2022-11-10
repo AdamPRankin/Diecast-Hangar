@@ -1,8 +1,6 @@
 package com.example.diecasthangar
 
-import android.icu.text.SimpleDateFormat
 import com.example.diecasthangar.core.util.parseDate
-import com.google.type.Date
 import org.junit.Test
 import java.time.LocalDateTime
 import java.util.*

@@ -1,11 +1,8 @@
 package com.example.diecasthangar.profile.presentation
 
-import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.bumptech.glide.Glide.init
-import com.example.diecasthangar.MainActivity
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.remote.FirestoreRepository
@@ -15,7 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class ProfileViewModel: ViewModel() {
@@ -34,7 +30,6 @@ class ProfileViewModel: ViewModel() {
     init {
         initialLoad()
     }
-    val postValue : LiveData<ArrayList<Post>> get() = postsLiveData
 
     fun getPostMutableLiveData(): MutableLiveData<ArrayList<Post>> {
         return postsLiveData
@@ -67,7 +62,7 @@ class ProfileViewModel: ViewModel() {
                 is Response.Success -> {
                     val (postsList,newSnap) = response.data!!
                     snapshot = newSnap
-                    postsLiveData!!.postValue(postsList)
+                    postsLiveData.postValue(postsList)
                     //if these are equal then there are no more posts to load
                     if (newSnap == snapshot){
                         isLoading = false

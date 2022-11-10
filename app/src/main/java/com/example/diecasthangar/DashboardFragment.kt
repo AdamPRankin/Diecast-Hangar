@@ -13,11 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.bumptech.glide.Glide
-import com.example.diecasthangar.data.Post
+import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.remote.FirestoreRepository
-import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.example.diecasthangar.profile.presentation.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.DocumentSnapshot
@@ -25,8 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.launch
 
 
 /**
@@ -80,10 +78,7 @@ class DashboardFragment : Fragment() {
 
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
-        val loadingPost: Post = Post("Squeek is loading the posts as fast as he can...",ArrayList(),"Mr. Loading",
-            Date() ,"Flyin' Squeek The Post Loader",
-            "https://i.gyazo.com/02b2c623a812f221477160f3041f486a.png"
-            ,"123",ArrayList(),hashMapOf())
+        val loadingPost = loadingDummyPost()
         postAdapter.posts.add(loadingPost)
 
         val storage: FirebaseStorage = FirebaseStorage.getInstance()
@@ -142,7 +137,6 @@ class DashboardFragment : Fragment() {
                             }
                         }
                     }
-
                 } else if (!recyclerView.canScrollVertically(-1) && dy < 0) {
                     //scrolled to TOP
                 }

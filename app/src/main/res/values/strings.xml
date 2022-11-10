@@ -66,4 +66,7 @@
     <string name="editC">Edit</string>
     <string name="user_avatar">user avatar</string>
     <string name="edit_profile">edit profile</string>
+    <string name="app_logo">app logo</string>
+    <string name="models">models</string>
+    <string name="posts">posts</string>
 </resources>

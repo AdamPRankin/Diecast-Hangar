@@ -1,10 +1,8 @@
 package com.example.diecasthangar
 
 import com.example.diecasthangar.data.Comment
-import com.example.diecasthangar.data.Post
 import org.junit.Test
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.test.assertEquals
 
 class TestComment {
@@ -12,7 +10,7 @@ class TestComment {
     @Test
     fun testComment() {
         val date = Date()
-        val comment: Comment = Comment(
+        val comment = Comment(
             text = "hello",
             user = "s2sd4af372rh35435",
             username = "jimmy",
@@ -46,7 +44,7 @@ class TestComment {
     @Test
     fun testAddReaction(){
         val date = Date()
-        val comment: Comment = Comment(
+        val comment = Comment(
             text = "hello",
             user = "s2sd4af372rh35435",
             username = "jimmy",

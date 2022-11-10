@@ -4,11 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.util.TypedValue
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -51,7 +53,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
         holder.bodyTextView.text = post.text
         holder.userTextView.text = post.username
 
-        val testPaint = Paint();
+        val testPaint = Paint()
         testPaint.set(holder.bodyTextView.paint)
         val textWidth =  testPaint.measureText(holder.bodyTextView.text.toString())
 
@@ -114,7 +116,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             val context = holder.itemView.context
 
             val inflater: LayoutInflater  =
-                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val binding = PopupAddReactionBinding.inflate(inflater)
             val popup = PopupWindow(
                 binding.root,
@@ -122,8 +124,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                 WindowManager.LayoutParams.WRAP_CONTENT
             )
             // Closes the popup window when touch outside.
-            popup.isOutsideTouchable = true;
-            popup.isFocusable = true;
+            popup.isOutsideTouchable = true
+            popup.isFocusable = true
             // Removes default background.
             popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
@@ -132,7 +134,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             binding.reactionLanding.isFocusable = false
             binding.reactionPlane.setOnClickListener {
                 CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addReaction("plane",post.id!!)
+                    firestoreRepository.addReaction("plane",post.id)
                 }
                 post.reactions["plane"] = post.reactions["plane"]!!.plus(1)
                 notifyItemChanged(position)
@@ -140,7 +142,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             }
             binding.reactionLanding.setOnClickListener {
                 CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addReaction("landing",post.id!!)
+                    firestoreRepository.addReaction("landing",post.id)
                 }
                 post.reactions["landing"] = post.reactions["landing"]!!.plus(1)
                 notifyItemChanged(position)
@@ -148,7 +150,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             }
             binding.reactionTakeoff.setOnClickListener {
                 CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addReaction("takeoff",post.id!!)
+                    firestoreRepository.addReaction("takeoff",post.id)
                 }
                 post.reactions["takeoff"] = post.reactions["takeoff"]!!.plus(1)
                 notifyItemChanged(position)
@@ -180,7 +182,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
 
             val context = holder.itemView.context
             val inflater: LayoutInflater  =
-                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
+                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val binding = PopupAddCommentBinding.inflate(inflater)
             val popup = PopupWindow(
                 binding.root,
@@ -188,8 +190,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                 WindowManager.LayoutParams.WRAP_CONTENT
             )
             // Closes the popup window when touch outside.
-            popup.isOutsideTouchable = true;
-            popup.isFocusable = true;
+            popup.isOutsideTouchable = true
+            popup.isFocusable = true
             // Removes default background.
             popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
@@ -281,7 +283,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             holder.editPostPopupButton.setOnClickListener {
                 val context = holder.itemView.context
                 val inflater: LayoutInflater  =
-                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
                 val binding = PopupEditPostBinding.inflate(inflater)
                 val popup = PopupWindow(
                     binding.root,
@@ -289,8 +291,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                     WindowManager.LayoutParams.WRAP_CONTENT
                 )
                 // Closes the popup window when touch outside.
-                popup.isOutsideTouchable = true;
-                popup.isFocusable = true;
+                popup.isOutsideTouchable = true
+                popup.isFocusable = true
                 // Removes default background.
                 popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
@@ -306,8 +308,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                 binding.postOptionsBtnEdit.setOnClickListener {
                     //construct popup for editing
                         val editInflater: LayoutInflater  =
-                            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
-                        val editorBinding = PopupEditPostEditorBinding.inflate(editInflater)
+                            context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                    val editorBinding = PopupEditPostEditorBinding.inflate(editInflater)
                         val editorPopup = PopupWindow(
                             editorBinding.root,
                             WindowManager.LayoutParams.MATCH_PARENT,
@@ -316,7 +318,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
                     editorBinding.editPostTextField.setText(post.text)
                     //todo fix edit text not working
                     editorBinding.editPostTextField.isFocusable = true
-                    editorBinding.editPostTextField.setTextIsSelectable(true);
+                    editorBinding.editPostTextField.setTextIsSelectable(true)
                     popup.dismiss()
                     editorPopup.showAsDropDown(holder.commentButton)
 
