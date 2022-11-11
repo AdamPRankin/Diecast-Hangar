@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.core.util.loadingDummyPost
+import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.remote.FirestoreRepository
@@ -57,8 +58,9 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
-        val loadingPost = loadingDummyPost()
-        postAdapter.posts.add(loadingPost)
+        //val loadingPost = loadingDummyPost()
+        //postAdapter.posts.add(loadingPost)
+        //postAdapter.notifyItemInserted(0)
 
         // Using the activityViewModels() Kotlin property delegate from the
         // fragment-ktx artifact to retrieve the ViewModel in the activity scope
@@ -69,21 +71,22 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
 
         userViewModel.isDataLoaded().observe(viewLifecycleOwner) { userViewModel.isDataLoaded()
-            if (loading) {
-                loading = false
-                //remove loading Ui elements
-                postLoadingCircle.visibility = View.GONE
-                postAdapter.posts.removeAt(0)
-                postAdapter.notifyItemRemoved(0)
-            }
             usernameTextView.text = userViewModel.getUsername()
             Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
         }
 
         dashViewModel.getPostMutableLiveData().observe(viewLifecycleOwner) {
+            if (loading) {
+                loading = false
+                //remove loading Ui elements
+                postLoadingCircle.visibility = View.GONE
+            }
             val end = postAdapter.posts.size
-            postAdapter.posts.addAll(it)
+
+            postAdapter.posts = it
+            postAdapter.notifyItemChanged(0)
             postAdapter.notifyItemRangeChanged(end,postAdapter.posts.size)
+
         }
 
         val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)
@@ -102,7 +105,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
 
         postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (!recyclerView.canScrollVertically(1) && dy > 0 && loading) {
+                if (!recyclerView.canScrollVertically(1) && dy > 0 && dashViewModel.isLoading) {
                     CoroutineScope(Dispatchers.IO).launch {
                         dashViewModel.loadMorePosts()
                     }

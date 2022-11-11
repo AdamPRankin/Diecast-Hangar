@@ -18,9 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class DashboardViewModel: ViewModel() {
-
+    val loadingPost = loadingDummyPost()
     var isLoading = true
-    private var postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData(arrayListOf())
+    private var postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData(arrayListOf(loadingPost))
     private val repository = FirestoreRepository()
     var latestSnapshot: DocumentSnapshot? = null
 
@@ -39,10 +39,11 @@ class DashboardViewModel: ViewModel() {
 
                 }
                 is Response.Success -> {
+                    postsLiveData.postValue(arrayListOf())
                     val (postsList,newSnap) = response.data!!
                     latestSnapshot = newSnap
-                    val newPosts = (postsList) as ArrayList<Post>?
-                    postsLiveData.postValue(newPosts!!)
+                    val newPosts = (postsList)
+                    postsLiveData.postValue(newPosts)
 
                 }
                 is Response.Failure -> {
@@ -52,7 +53,7 @@ class DashboardViewModel: ViewModel() {
         }
     }
 
-    suspend fun loadMorePosts(snap: DocumentSnapshot? = latestSnapshot, loading: Boolean = isLoading){
+    suspend fun loadMorePosts(snap: DocumentSnapshot? = latestSnapshot){
         when(val response = repository.loadNextPagePosts(snap)) {
             is Response.Loading -> {
 

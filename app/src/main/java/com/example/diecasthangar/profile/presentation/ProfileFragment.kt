@@ -1,6 +1,5 @@
 package com.example.diecasthangar.profile.presentation
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,23 +8,26 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.diecasthangar.MainActivity
 import com.example.diecasthangar.R
 import com.example.diecasthangar.UserViewModel
+import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
+import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
-class ProfileFragment: Fragment(), LifecycleOwner {
-
+open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), LifecycleOwner {
+    private val currentUserId = uid
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
     }
 
     override fun onCreateView(
@@ -39,10 +41,8 @@ class ProfileFragment: Fragment(), LifecycleOwner {
         val userViewModel: UserViewModel by activityViewModels()
         val profileImageView: ImageView = view.findViewById(R.id.profile_avatar)
         val profileUsername: TextView = view.findViewById(R.id.profile_name)
+        val profileBioText: TextView = view.findViewById(R.id.profile_text_bio)
 
-        Glide.with(view).load(userViewModel
-            .getAvatarUri()).into(profileImageView)
-        profileUsername.text = userViewModel.getUsername()
 
 /*        val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -71,11 +71,19 @@ class ProfileFragment: Fragment(), LifecycleOwner {
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
 
+        var loading = true
+        val loadingPost = loadingDummyPost()
+        postAdapter.posts.add(loadingPost)
 
-        val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
-        postAdapter.posts = viewModel.getPostMutableLiveData().value!!
-
+        val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(currentUserId) }
+        //val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
         viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
+            if (loading) {
+                loading = false
+                //remove loading Ui elements
+                postAdapter.posts.removeAt(0)
+                postAdapter.notifyItemRemoved(0)
+            }
             // update UI
             postAdapter.notifyItemRemoved(0)
             val prevSize = postAdapter.posts.size
@@ -84,9 +92,19 @@ class ProfileFragment: Fragment(), LifecycleOwner {
             postAdapter.notifyItemRangeChanged(prevSize,postAdapter.itemCount)
         }
 
+        viewModel.getUserBioMutableLiveData().observe(viewLifecycleOwner) { bio->
+            profileBioText.text = bio
+        }
+        viewModel.getUsernameMutableLiveData().observe(viewLifecycleOwner) { name->
+            profileUsername.text = name
+        }
+        viewModel.getAvatarMutableLiveData().observe(viewLifecycleOwner) { uri->
+            Glide.with(view).load(uri).into(profileImageView)
+        }
+
         postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (!recyclerView.canScrollVertically(1) && dy > 0 && viewModel.isLoading) {
+                if (!recyclerView.canScrollVertically(1) && dy > 0 && viewModel.postsLoading) {
                     viewModel.loadMorePosts()
                 }
             }
@@ -98,5 +116,4 @@ class ProfileFragment: Fragment(), LifecycleOwner {
         super.onPause()
         //TODO save profile data
     }
-
 }

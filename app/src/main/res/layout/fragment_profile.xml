@@ -51,7 +51,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
-                        android:text="Kolby ML"
                         android:textSize="24sp" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -65,13 +64,12 @@
                 </LinearLayout>
 
                 <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/textView3"
+                    android:id="@+id/profile_text_bio"
                     android:layout_width="256dp"
                     android:layout_height="54dp"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="16dp"
-                    android:text="NFT's for sale"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
             </LinearLayout>

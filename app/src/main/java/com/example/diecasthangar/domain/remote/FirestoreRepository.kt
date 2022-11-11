@@ -116,15 +116,43 @@ open class FirestoreRepository (
         }
     }
 
-    fun addUserInfoToDatabase(userID: String, avatarUri: String, username: String): Response<Boolean>{
+    fun addUserInfoToDatabase(userId: String, avatarUri: String, username: String): Response<Boolean>{
         return try {
-            val userDataRef = db.collection("userdata").document(userID)
+            val userDataRef = db.collection("userdata").document(userId)
             val newUserData = hashMapOf(
                 "avatar" to avatarUri,
                 "username" to username
             )
             userDataRef.set(newUserData)
             Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    fun updateUserBio(userId: String, text: String): Response<Boolean> {
+        return try {
+            val userDataRef = db.collection("userdata").document(userId)
+            userDataRef.update("bio",text)
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun getUserBio(userId: String): Response<String> {
+        return try {
+            val userData = db.collection("userdata").document(userId).get().await()
+
+            val bio =
+            if(userData.get("bio") != null){
+                userData.get("bio") as String
+            }
+            else {
+                 "This user has not written anything for their bio yet"
+            }
+
+            Response.Success(bio)
         } catch (e: Exception) {
             Response.Failure(e)
         }
@@ -142,7 +170,6 @@ open class FirestoreRepository (
                 }
                 is Response.Success -> {
                     avatarUri = response.data.toString()
-
                 }
                 is Response.Failure -> {
                     print(response.e)

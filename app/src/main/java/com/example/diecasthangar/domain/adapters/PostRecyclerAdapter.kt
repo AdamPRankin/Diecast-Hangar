@@ -12,6 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
@@ -25,6 +27,7 @@ import com.example.diecasthangar.databinding.PopupEditPostEditorBinding
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
+import com.example.diecasthangar.profile.presentation.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
 import kotlin.math.roundToInt
@@ -71,6 +74,7 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
 
         val avatarUri = post.avatar
         Glide.with(holder.itemView.context).load(avatarUri).into(holder.avatarImageView)
+
 
         if (post.images.isNotEmpty()){
             val firstImageUri: Uri = Uri.parse(post.images[0])
@@ -384,9 +388,10 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
 
         //disable buttons if post is dummy
         if (post.id == "123"){
-            holder.commentButton.isClickable = false
-            holder.reactButton.isClickable = false
+            holder.commentButton.visibility = View.GONE
+            holder.reactButton.visibility = View.GONE
             holder.showMoreButton.visibility = View.GONE
+
         }
     }
 
@@ -394,6 +399,8 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
             View.OnClickListener {
 
         private var view: View = v
+
+        //todo use binding
         val dateTextView: TextView = view.findViewById(R.id.post_date)
         val avatarImageView: ImageView = view.findViewById(R.id.post_avatar)
         val bodyTextView: TextView = view.findViewById(R.id.post_body)
