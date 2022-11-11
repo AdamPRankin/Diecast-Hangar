@@ -33,9 +33,12 @@ import kotlinx.coroutines.*
 import kotlin.math.roundToInt
 
 
-class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
+class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
     var posts =  ArrayList<Post>()
     private val firestoreRepository = FirestoreRepository()
+
+
+
 
 
 
@@ -74,6 +77,10 @@ class PostRecyclerAdapter: RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>(
 
         val avatarUri = post.avatar
         Glide.with(holder.itemView.context).load(avatarUri).into(holder.avatarImageView)
+
+        holder.avatarImageView.setOnClickListener {
+            onItemClicked(post)
+        }
 
 
         if (post.images.isNotEmpty()){

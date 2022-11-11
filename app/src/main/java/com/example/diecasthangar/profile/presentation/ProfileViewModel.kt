@@ -91,6 +91,8 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 }
                 is Response.Success -> {
                     val (avatar, name) = (response.data!!)
+                    avatarUri.postValue(avatar)
+                    username.postValue(name)
 
                 }
                 is Response.Failure -> {

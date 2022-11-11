@@ -38,7 +38,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         // Inflate the layout for this fragment
 
         val saveProfileButton: FloatingActionButton = view.findViewById(R.id.profile_btn_edit_profile)
-        val userViewModel: UserViewModel by activityViewModels()
         val profileImageView: ImageView = view.findViewById(R.id.profile_avatar)
         val profileUsername: TextView = view.findViewById(R.id.profile_name)
         val profileBioText: TextView = view.findViewById(R.id.profile_text_bio)
@@ -66,7 +65,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
-        val postAdapter = PostRecyclerAdapter()
+        val postAdapter = PostRecyclerAdapter{
+        }
         val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
@@ -88,6 +88,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             postAdapter.notifyItemRemoved(0)
             val prevSize = postAdapter.posts.size
             postAdapter.posts = postList
+            postAdapter.notifyDataSetChanged()
             //X previous posts, so we want to update from index X onwards
             postAdapter.notifyItemRangeChanged(prevSize,postAdapter.itemCount)
         }

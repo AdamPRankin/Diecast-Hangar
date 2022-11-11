@@ -304,7 +304,9 @@ open class FirestoreRepository (
                 if (documentSnapshot.documents.isNotEmpty()) {
                     queryCursor = documentSnapshot.documents[documentSnapshot.size() - 1]
                 } else if (documentSnapshot.documents.isEmpty()) {
-                    queryCursor = lastVisible!!
+                    if (lastVisible != null) {
+                        queryCursor = lastVisible
+                    }
                 }
 
             }.await()

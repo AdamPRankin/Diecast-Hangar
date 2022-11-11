@@ -54,7 +54,12 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         var loading = true
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.post_recycler_view)
-        val postAdapter = PostRecyclerAdapter()
+        val postAdapter = PostRecyclerAdapter { post ->
+            val uid = post.user
+            parentFragmentManager.beginTransaction()
+                .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
+                .commit()
+        }
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
