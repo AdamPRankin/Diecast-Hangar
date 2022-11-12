@@ -80,6 +80,10 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
         }
 
+        userViewModel.getAvatarUri().observe(viewLifecycleOwner) { uri ->
+            Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
+        }
+
         dashViewModel.getPostMutableLiveData().observe(viewLifecycleOwner) {
             if (loading) {
                 loading = false

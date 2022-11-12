@@ -8,21 +8,22 @@
     tools:context=".profile.presentation.ProfileFragment">
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/profile_layout"
         >
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
         <LinearLayout
             android:id="@+id/profile_lay"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
             <ImageView
@@ -35,9 +36,21 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:src="@drawable/avatar_default" />
+            <ImageView
+                android:id="@+id/profile_edit_avatar"
+                android:layout_width="109dp"
+                android:layout_height="108dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:contentDescription="@string/user_avatar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/material_dynamic_tertiary60"
+                tools:src="@drawable/image_edit"
+                android:visibility="gone"/>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
@@ -51,7 +64,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
-                        android:textSize="24sp" />
+                        android:textSize="24sp"
+                        android:hint="Bungus"/>
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/profile_title"
@@ -65,13 +79,22 @@
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/profile_text_bio"
-                    android:layout_width="256dp"
-                    android:layout_height="54dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="16dp"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/profile_edit_text__bio"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:textSize="14sp"
+                    android:visibility="gone"/>
             </LinearLayout>
 
         </LinearLayout>
@@ -121,7 +144,43 @@
         android:focusable="true"
         android:contentDescription="@string/new_post"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:backgroundTint="@android:color/transparent"
+        app:rippleColor="@android:color/transparent"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/ic_account_edit_black_48dp"
+        android:layout_gravity="end"
+        android:outlineProvider="none"
+        app:tint="@color/material_dynamic_tertiary60"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:backgroundTint="@android:color/transparent"
+        app:rippleColor="@android:color/transparent"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/content_save"
+        android:layout_gravity="end"
+        android:outlineProvider="none"
+        app:tint="@color/material_dynamic_tertiary60"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

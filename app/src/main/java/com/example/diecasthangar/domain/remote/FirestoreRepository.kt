@@ -1,6 +1,8 @@
 package com.example.diecasthangar.domain.remote
 
+import android.R.attr.bitmap
 import android.content.ContentValues
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import com.example.diecasthangar.core.util.commentMapToClass
@@ -17,7 +19,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import io.grpc.Compressor
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 
 open class FirestoreRepository (
@@ -91,6 +96,21 @@ open class FirestoreRepository (
         } catch (e: Exception) {
             Response.Failure(e)
         }
+    }
+
+    suspend fun updateUserAvatar(imageUri: Uri, userId: String): Response<Uri> {
+        return try {
+
+            val remoteUri = FirebaseStorage.getInstance().reference.child(
+                "images/avatars").child("$userId.jpg").putFile(imageUri)
+                .await().storage.downloadUrl.await()
+            val userDataRef = db.collection("userdata").document(userId)
+            userDataRef.update("avatar",remoteUri)
+            Response.Success(remoteUri)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+
     }
 
     suspend fun getUserInfo(userId: String): Response<Pair<String,String>> {

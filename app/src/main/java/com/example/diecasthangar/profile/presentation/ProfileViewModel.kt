@@ -1,5 +1,6 @@
 package com.example.diecasthangar.profile.presentation
 
+import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -124,6 +125,41 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 }
             }
         }
+    }
+
+    fun updateBio(text: String) {
+        if (profileUid == getUser()!!.uid) {
+            CoroutineScope(Dispatchers.IO).launch {
+                when (val response = repository.updateUserBio(profileUid, text)) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+
+                    }
+                    is Response.Failure -> {
+                        print(response.e)
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateAvatar(uri: Uri = Uri.parse(avatarUri.value), userId: String = profileUid) {
+        if (profileUid == getUser()!!.uid) {
+            CoroutineScope(Dispatchers.IO).launch {
+                when (val response = repository.updateUserAvatar(uri,profileUid)) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+
+                    }
+                    is Response.Failure -> {
+                        print(response.e)
+                    }
+                }
+            }
+        }
+
     }
 
     //use this to create a viewModel with uid parameter

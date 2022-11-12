@@ -6,8 +6,8 @@ import java.util.*
 fun loadingDummyPost(): Post {
 
     return Post(
-        "Squeek is loading the posts as fast as he can...", ArrayList(), "Mr. Loading",
+        "Squeek is loading the posts as fast as he can...", arrayListOf(), "Mr. Loading",
         Date(), "Flyin' Squeek The Post Loader",
-        "https://i.gyazo.com/02b2c623a812f221477160f3041f486a.png", "123", ArrayList(), hashMapOf()
+        "https://i.gyazo.com/02b2c623a812f221477160f3041f486a.png", "123", arrayListOf(), hashMapOf()
     )
 }

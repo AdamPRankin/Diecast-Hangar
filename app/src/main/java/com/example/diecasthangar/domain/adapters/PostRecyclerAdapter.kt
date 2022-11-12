@@ -51,7 +51,7 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
     @SuppressLint("InflateParams")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val post = posts[position]
-        addCommentsToPosts(firestoreRepository,10)
+        //addCommentsToPosts(firestoreRepository,10)
         var currentImagePosition = 0
 
         val displayDateString = parseDate(post.date)
@@ -392,13 +392,16 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
                     .into(holder.comment3Avatar)
             }
         }
-
         //disable buttons if post is dummy
         if (post.id == "123"){
             holder.commentButton.visibility = View.GONE
             holder.reactButton.visibility = View.GONE
             holder.showMoreButton.visibility = View.GONE
-
+        }
+        else{
+            holder.commentButton.visibility = View.VISIBLE
+            holder.reactButton.visibility = View.VISIBLE
+            holder.showMoreButton.visibility = View.VISIBLE
         }
     }
 
@@ -442,49 +445,14 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
         val comment2Username: TextView = view.findViewById(R.id.post_comment2_username)
         val comment3Username: TextView = view.findViewById(R.id.post_comment3_username)
 
-
-
-
         init {
             v.setOnClickListener(this)
         }
-
         override fun onClick(v: View?) {
-
         }
     }
 
     override fun getItemCount(): Int {
         return posts.size
     }
-
-    private fun addCommentsToPosts
-                (repository: FirestoreRepository, number: Int = 3) {
-        CoroutineScope(Dispatchers.IO).launch {
-            posts.map { post ->
-                async(Dispatchers.IO) {
-                    if (post.comments != null && post.comments!!.size < number) {
-                        when (val result = repository.getTopRatedComments(post.id, 3)) {
-                            is Response.Loading -> {
-                            }
-                            is Response.Success -> {
-                                val comments = result.data!!
-                                post.comments = comments
-                            }
-                            is Response.Failure -> {
-                                print(result.e)
-                            }
-                        }
-                    }
-
-                }
-            }.awaitAll()
-
-        }
-
-
-    }
-
-
-
 }

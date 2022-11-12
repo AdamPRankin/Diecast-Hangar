@@ -1,5 +1,6 @@
 package com.example.diecasthangar
 
+import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
 class UserViewModel: ViewModel() {
 
     private var username: String = ""
-    private var avatarUri: String = ""
+    private var avatarUri: MutableLiveData<String> = MutableLiveData("")
+
 
     private val repository = FirestoreRepository()
     private var user = Firebase.auth.currentUser
@@ -34,8 +36,12 @@ class UserViewModel: ViewModel() {
         return username
     }
 
-    fun getAvatarUri(): String {
+    fun getAvatarUri(): MutableLiveData<String> {
         return avatarUri
+    }
+
+    fun setAvatarUri(uri: Uri) {
+        avatarUri.value = uri.toString()
     }
 
     fun getUserData(){
@@ -47,7 +53,7 @@ class UserViewModel: ViewModel() {
                 }
                 is Response.Success -> {
                     val (avatar,user) = response.data!!
-                    avatarUri = avatar
+                    avatarUri.postValue(avatar)
                     username = user
                     dataLoaded.postValue(true)
                 }
