@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class UserViewModel: ViewModel() {
 
     private var username: String = ""
-    private var avatarUri: MutableLiveData<String> = MutableLiveData("")
+    private val avatarUri: MutableLiveData<String> = MutableLiveData("")
 
 
     private val repository = FirestoreRepository()

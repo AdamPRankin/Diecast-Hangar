@@ -54,12 +54,23 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         var loading = true
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.post_recycler_view)
-        val postAdapter = PostRecyclerAdapter { post ->
+        val postAdapter = PostRecyclerAdapter(
+            // avatar clicked, go to user profile
+            { post ->
             val uid = post.user
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
                 .commit()
-        }
+        },
+            // post edited, go to post fragment
+            { post ->
+            parentFragmentManager.beginTransaction()
+                .add(R.id.container, AddPostFragment(post, true)).addToBackStack("home")
+                .commit()
+                //TODO hide dash fragment
+        })
+
+
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
@@ -72,16 +83,14 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         val userViewModel: UserViewModel by activityViewModels()
         val dashViewModel = ViewModelProvider(this)[DashboardViewModel::class.java]
 
-        usernameTextView.text = userViewModel.getUsername()
-        Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
 
         userViewModel.isDataLoaded().observe(viewLifecycleOwner) { userViewModel.isDataLoaded()
             usernameTextView.text = userViewModel.getUsername()
-            Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
         }
 
         userViewModel.getAvatarUri().observe(viewLifecycleOwner) { uri ->
-            Glide.with(view).load(userViewModel.getAvatarUri()).into(picView)
+            val avatarUri = uri.toString()
+            Glide.with(view).load(avatarUri).into(picView)
         }
 
         dashViewModel.getPostMutableLiveData().observe(viewLifecycleOwner) {

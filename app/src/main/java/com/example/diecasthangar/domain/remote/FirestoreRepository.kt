@@ -7,6 +7,7 @@ import android.net.Uri
 import android.util.Log
 import com.example.diecasthangar.core.util.commentMapToClass
 import com.example.diecasthangar.data.Comment
+import com.example.diecasthangar.data.Photo
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.data.getReacts
 import com.example.diecasthangar.domain.Response
@@ -222,6 +223,9 @@ open class FirestoreRepository (
 
     suspend fun deletePostFromFirestore(pid: String): Response<Boolean> {
         return try {
+            //TODO clean up photos from storage
+            val images = db.collection("posts").document(pid).get().await().data?.get("image") ?: ArrayList<String>()
+            //delete images from storage
             db.collection("posts").document(pid).delete().await()
             Response.Success(true)
         } catch (e: Exception) {
@@ -229,9 +233,20 @@ open class FirestoreRepository (
         }
     }
 
-    fun editFirestorePost(id: String, text: String) : Response<Boolean> {
+    fun editFirestorePostText(pid: String, text: String) : Response<Boolean> {
         return try {
-            db.collection("posts").document(id).update("text",text)
+            db.collection("posts").document(pid).update("text",text)
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+
+        }
+    }
+
+    fun editFirestorePostPhotos(id: String, photos: ArrayList<Uri>) : Response<Boolean> {
+        return try {
+            db.collection("posts").document(id).update("images",photos)
 
             Response.Success(true)
         } catch (e: Exception) {

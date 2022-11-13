@@ -5,11 +5,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.core.inflate
+import com.example.diecasthangar.data.Photo
 
 class SideScrollImageRecyclerAdapter: RecyclerView.Adapter<SideScrollImageRecyclerAdapter.ViewHolder>() {
-    var localUris = ArrayList<Uri>()
+    var photos = ArrayList<Photo>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflatedView = parent.inflate(R.layout.recycler_horizontal_image_row_layout, false)
@@ -17,8 +19,20 @@ class SideScrollImageRecyclerAdapter: RecyclerView.Adapter<SideScrollImageRecycl
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val photo = photos[position]
+        if (photo.localUri != null) {
+            holder.photoImageView.setImageURI(photos[position].localUri)
+        }
+        else if (photo.localUri == null){
+            val uri = Uri.parse(photo.remoteUri).toString()
 
-            holder.photoImageView.setImageURI(localUris[position])
+            val testUri = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSA9aI8EAgPJ4asWVG6oI99tIz-vHI4aii73P6mcAVAkoICUw1OvCEDLIIeG-YzmyPwhEY&usqp=CAU"
+            //this line does not load anything
+            Glide.with(holder.itemView.context)
+                .load(uri)
+                .placeholder(R.drawable.ic_airplane_black_48dp)
+                .into(holder.photoImageView)
+        }
     }
 
     inner class ViewHolder(v: View): RecyclerView.ViewHolder(v),
@@ -36,7 +50,7 @@ class SideScrollImageRecyclerAdapter: RecyclerView.Adapter<SideScrollImageRecycl
     }
 
     override fun getItemCount(): Int {
-        return localUris.size
+        return photos.size
     }
 
 

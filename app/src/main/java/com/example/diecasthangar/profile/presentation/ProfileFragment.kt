@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.diecasthangar.AddPostFragment
 import com.example.diecasthangar.R
 import com.example.diecasthangar.UserViewModel
 import com.example.diecasthangar.core.util.loadingDummyPost
@@ -71,8 +72,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
-        val postAdapter = PostRecyclerAdapter{
-        }
+        val postAdapter = PostRecyclerAdapter( { post ->
+            val uid = post.user
+            parentFragmentManager.beginTransaction()
+                .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
+                .commit()
+        }, {
+                post ->
+            parentFragmentManager.beginTransaction()
+                .add(R.id.container, AddPostFragment(post, true)).addToBackStack("home")
+                .commit()
+        })
         val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
@@ -105,7 +115,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             profileUsername.text = name
         }
         viewModel.getAvatarMutableLiveData().observe(viewLifecycleOwner) { uri->
-            //Glide.with(view).load(uri).into(profileEditAvatar)
             Glide.with(view).load(uri).into(profileImageView)
 
 
@@ -139,8 +148,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     val options = UCrop.Options()
 
                     //TODO add dark theme support
-                    val lightColor = ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_tertiary60)
-                    val darkColor = ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_tertiary40)
+                    val lightColor = ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_primary60)
+                    val darkColor = ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_primary40)
                     options.setCropGridColor(lightColor)
                     options.setCropFrameColor(lightColor)
                     options.setToolbarColor(darkColor)

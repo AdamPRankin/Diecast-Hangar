@@ -33,14 +33,9 @@ import kotlinx.coroutines.*
 import kotlin.math.roundToInt
 
 
-class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
+class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit, private val onItemEdited: (Post) -> Unit): RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
     var posts =  ArrayList<Post>()
     private val firestoreRepository = FirestoreRepository()
-
-
-
-
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflatedView = parent.inflate(R.layout.recycler_post_row_layout, false)
@@ -81,6 +76,8 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
         holder.avatarImageView.setOnClickListener {
             onItemClicked(post)
         }
+
+
 
 
         if (post.images.isNotEmpty()){
@@ -318,7 +315,7 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
                 }
                 binding.postOptionsBtnEdit.setOnClickListener {
                     //construct popup for editing
-                        val editInflater: LayoutInflater  =
+/*                        val editInflater: LayoutInflater  =
                             holder.itemView.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
                     val editorBinding = PopupEditPostEditorBinding.inflate(editInflater)
                         val editorPopup = PopupWindow(
@@ -346,6 +343,8 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
                         editorPopup.dismiss()
                     }
                     notifyItemChanged(position)
+                    popup.dismiss()*/
+                    onItemEdited(post)
                     popup.dismiss()
                 }
             }
@@ -401,7 +400,6 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit): RecyclerVi
         else{
             holder.commentButton.visibility = View.VISIBLE
             holder.reactButton.visibility = View.VISIBLE
-            holder.showMoreButton.visibility = View.VISIBLE
         }
     }
 
