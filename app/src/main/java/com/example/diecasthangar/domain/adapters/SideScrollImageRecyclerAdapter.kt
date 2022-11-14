@@ -26,8 +26,7 @@ class SideScrollImageRecyclerAdapter: RecyclerView.Adapter<SideScrollImageRecycl
         else if (photo.localUri == null){
             val uri = Uri.parse(photo.remoteUri).toString()
 
-            val testUri = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSA9aI8EAgPJ4asWVG6oI99tIz-vHI4aii73P6mcAVAkoICUw1OvCEDLIIeG-YzmyPwhEY&usqp=CAU"
-            //this line does not load anything
+            //must use placeholder so glide can get the dimensions of imageView
             Glide.with(holder.itemView.context)
                 .load(uri)
                 .placeholder(R.drawable.ic_airplane_black_48dp)

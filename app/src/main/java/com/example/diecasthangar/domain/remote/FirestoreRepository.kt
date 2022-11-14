@@ -13,6 +13,7 @@ import com.example.diecasthangar.data.getReacts
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -29,7 +30,7 @@ import java.io.IOException
 open class FirestoreRepository (
 
     private val storage: FirebaseStorage = FirebaseStorage.getInstance(),
-    private val db: FirebaseFirestore = Firebase.firestore
+    private val db: FirebaseFirestore = Firebase.firestore,
 
     )  {
 
@@ -37,8 +38,6 @@ open class FirestoreRepository (
 
         return try {
             val rootRef = FirebaseDatabase.getInstance().reference
-            val postRef = rootRef.child("posts")
-            val remoteUris = arrayListOf<Uri>()
             val newPostKey = rootRef.ref.child("posts").push().key
             val filename: String = newPostKey + "_"
             val remoteUri = FirebaseStorage.getInstance().reference.child(
@@ -81,7 +80,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun getUserUserName(userId: String) : Response<String> {
+    suspend fun getUserUsername(userId: String) : Response<String> {
         return try {
             val userData = db.collection("userdata").document(userId).get().await().data
             Response.Success(userData!!["username"].toString())
@@ -179,32 +178,21 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addPostToFirestore(text:String, remoteUris: ArrayList<Uri>): Response<Boolean> {
+    suspend fun addPostToFirestore(text:String, remoteUris: ArrayList<Uri>, username: String, avatarUri: String?): Response<Boolean> {
 
         return try {
             val rootRef = FirebaseDatabase.getInstance().reference
-            val uid = getUser()!!.uid
-            var avatarUri = ""
+            val avatar = avatarUri ?: ""
 
-            when(val response = getUserAvatar(getUser()!!.uid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    avatarUri = response.data.toString()
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
             val newPostKey = rootRef.ref.child("posts").push().key
             val hashPost = hashMapOf(
                 "text" to text,
                 "id" to newPostKey,
                 "images" to remoteUris,
-                "user" to uid,
+                "user" to getUser()!!.uid,
                 "date" to FieldValue.serverTimestamp(),
-                "username" to getUser()!!.displayName,
-                "avatar" to avatarUri,
+                "username" to username,
+                "avatar" to avatar,
                 "reactions" to getReacts()
                 //TODO add hashmap to Post class/ vice versa helper functions
             )
@@ -224,7 +212,15 @@ open class FirestoreRepository (
     suspend fun deletePostFromFirestore(pid: String): Response<Boolean> {
         return try {
             //TODO clean up photos from storage
-            val images = db.collection("posts").document(pid).get().await().data?.get("image") ?: ArrayList<String>()
+            val images = db.collection("posts").document(pid).get().await().data?.get("images") as ArrayList<String>
+
+            //todo more elegant solution
+            for (uri in images) {
+                val id: String = uri.replace("https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F","").split(".jpg?")[0]
+                FirebaseStorage.getInstance().reference.child(
+                    "images/posts/$id.jpg").delete()
+            }
+
             //delete images from storage
             db.collection("posts").document(pid).delete().await()
             Response.Success(true)
@@ -255,7 +251,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun loadNextPagePosts(lastVisible: DocumentSnapshot? = null,limit: Long  = 10):
+    suspend fun loadNextPagePosts(lastVisible: DocumentSnapshot? = null,limit: Long  = 8):
             Response<Pair<ArrayList<Post>,DocumentSnapshot>> {
         return try {
             lateinit var queryCursor: DocumentSnapshot
@@ -268,7 +264,7 @@ open class FirestoreRepository (
             } else {
                 db.collection("posts")
                     .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                    .limit(8)
+                    .limit(limit)
             }
 
             val posts = postsQuery.get().addOnSuccessListener { documentSnapshot ->

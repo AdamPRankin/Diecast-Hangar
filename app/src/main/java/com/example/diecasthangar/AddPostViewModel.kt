@@ -23,7 +23,7 @@ class AddPostViewModel(post: Post?,editing: Boolean = false): ViewModel() {
 
 
     init {
-        if (post == null && !editing){
+        if (post == null && editing){
             class CustomException (message: String) : Exception(message)
             throw CustomException ("do not use editing flag with null post")
         }

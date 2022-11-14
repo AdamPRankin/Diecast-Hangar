@@ -314,36 +314,6 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit, private val
                     popup.dismiss()
                 }
                 binding.postOptionsBtnEdit.setOnClickListener {
-                    //construct popup for editing
-/*                        val editInflater: LayoutInflater  =
-                            holder.itemView.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                    val editorBinding = PopupEditPostEditorBinding.inflate(editInflater)
-                        val editorPopup = PopupWindow(
-                            editorBinding.root,
-                            WindowManager.LayoutParams.MATCH_PARENT,
-                            WindowManager.LayoutParams.MATCH_PARENT
-                        )
-                    editorBinding.editPostTextField.setText(post.text)
-                    //todo fix edit text not working
-                    editorBinding.editPostTextField.isFocusable = true
-                    editorBinding.editPostTextField.setTextIsSelectable(true)
-                    popup.dismiss()
-                    editorPopup.showAsDropDown(holder.commentButton)
-
-                    editorBinding.editPostBtnEdit.setOnClickListener {
-                            val newText = editorBinding.editPostTextField.text.toString()
-                            post.text = newText
-                            //TODO edit image array
-                            CoroutineScope(Dispatchers.IO).launch {
-                                firestoreRepository.editFirestorePost(post.id, newText)
-                            }
-                            editorPopup.dismiss()
-                        }
-                    editorBinding.editPostBtnCancel.setOnClickListener {
-                        editorPopup.dismiss()
-                    }
-                    notifyItemChanged(position)
-                    popup.dismiss()*/
                     onItemEdited(post)
                     popup.dismiss()
                 }

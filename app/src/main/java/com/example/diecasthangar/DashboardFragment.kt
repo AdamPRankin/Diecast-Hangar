@@ -104,7 +104,6 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             postAdapter.posts = it
             postAdapter.notifyItemChanged(0)
             postAdapter.notifyItemRangeChanged(end,postAdapter.posts.size)
-
         }
 
         val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)
@@ -119,6 +118,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, ProfileFragment()).addToBackStack("home")
                 .commit()
+            //TODO hide dashboard fragment
         }
 
         postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {

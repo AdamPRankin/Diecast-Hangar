@@ -44,7 +44,7 @@ class UserViewModel: ViewModel() {
         avatarUri.value = uri.toString()
     }
 
-    fun getUserData(){
+    fun getUserData() {
         user = Firebase.auth.currentUser
         CoroutineScope(Dispatchers.IO).launch {
 

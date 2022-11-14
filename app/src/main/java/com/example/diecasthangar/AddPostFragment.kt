@@ -19,7 +19,9 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.diecasthangar.data.Photo
@@ -35,6 +37,7 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
     private val currentPost = post
     private val editing = editMode
 
+
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,11 +45,17 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_add_post, container, false)
-        if (currentPost == null && !editing){
+        if (currentPost == null && editing){
             class CustomException (message: String) : Exception(message)
             throw CustomException ("do not use editing flag with null post")
         }
-        val viewModel: AddPostViewModel by viewModels { AddPostViewModel.Factory(currentPost!!,editing) }
+        val viewModel: AddPostViewModel by viewModels { AddPostViewModel.Factory(currentPost,editing) }
+        val userViewModel: UserViewModel by activityViewModels()
+        //val dashboardViewModel = ViewModelProvider(requireActivity())[DashboardViewModel::class.java]
+        val avatarUri = userViewModel.getAvatarUri().value
+        val username = userViewModel.getUsername()
+
+
         var photos: ArrayList<Photo> = ArrayList()
 
         val localUris: ArrayList<Uri> = ArrayList()
@@ -160,22 +169,24 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
                             // waiting for all request to finish executing in parallel
                         }.awaitAll()
 
-                        when (val result = repository.addPostToFirestore(text, remoteUris)) {
+                        when (val result = repository.addPostToFirestore(text, remoteUris,username,avatarUri)) {
                             is Response.Loading -> {
                             }
                             is Response.Success -> {
                                 parentFragmentManager.popBackStack()
+                                //dashboardViewModel.loadMorePosts(number = 1)
                             }
                             is Response.Failure -> {
                                 print(result.e)
                             }
                         }
                     } else if (localUris.isEmpty()) {
-                        when (val result = repository.addPostToFirestore(text, remoteUris)) {
+                        when (val result = repository.addPostToFirestore(text, remoteUris,username,avatarUri)) {
                             is Response.Loading -> {
                             }
                             is Response.Success -> {
                                 parentFragmentManager.popBackStack()
+                                //dashboardViewModel.loadMorePosts(number = 1)
                             }
                             is Response.Failure -> {
                                 print(result.e)
@@ -183,6 +194,7 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
                         }
                     }
                 }
+
             }
         }
         cancelButton.setOnClickListener {

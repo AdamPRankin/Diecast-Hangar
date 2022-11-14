@@ -53,8 +53,8 @@ class DashboardViewModel: ViewModel() {
         }
     }
 
-    suspend fun loadMorePosts(snap: DocumentSnapshot? = latestSnapshot){
-        when(val response = repository.loadNextPagePosts(snap)) {
+    suspend fun loadMorePosts(snap: DocumentSnapshot? = latestSnapshot, number: Long = 8){
+        when(val response = repository.loadNextPagePosts(snap,number)) {
             is Response.Loading -> {
 
             }
