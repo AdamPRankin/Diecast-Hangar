@@ -10,9 +10,7 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -29,8 +27,12 @@ import com.example.diecasthangar.R
 import com.example.diecasthangar.UserViewModel
 import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.databinding.FragmentProfileBinding
+import com.example.diecasthangar.domain.Response
+import com.example.diecasthangar.domain.adapters.FriendRecyclerAdapter
+import com.example.diecasthangar.domain.adapters.ModelRecyclerAdapter
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.usecase.remote.getUser
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.yalantis.ucrop.UCrop
@@ -41,13 +43,16 @@ import java.io.File
 
 open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), LifecycleOwner {
     private val profileUserId = uid
-    private lateinit var binding: FragmentProfileBinding
     var imageAdded = false
     val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(profileUserId) }
 
+    private var _binding: FragmentProfileBinding? = null
+    // This property is only valid between onCreateView and
+// onDestroyView.
+    private val binding get() = _binding!!
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val binding = FragmentProfileBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
     }
 
@@ -55,20 +60,26 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_profile, container, false)
+        _binding = FragmentProfileBinding.inflate(inflater, container, false)
+        val view = binding.root
         // Inflate the layout for this fragment
 
-        val profileImageView: ImageView = view.findViewById(R.id.profile_avatar)
-        val profileEditAvatar: ImageView = view.findViewById(R.id.profile_edit_avatar)
-        val profileUsername: TextView = view.findViewById(R.id.profile_name)
-        val profileBioText: TextView = view.findViewById(R.id.profile_text_bio)
-        val profileBioEditText: EditText = view.findViewById(R.id.profile_edit_text__bio)
-        val profileEditButton: FloatingActionButton = view.findViewById(R.id.profile_btn_edit)
-        val profileSaveButton: FloatingActionButton = view.findViewById(R.id.profile_btn_save)
-        val profileLayout: MaterialCardView = view.findViewById(R.id.profile_layout)
+        val profileImageView: ImageView = binding.profileAvatar
+        val profileEditAvatar: ImageView = binding.profileEditAvatar
+        val profileUsername: TextView = binding.profileName
+        val profileBioText: TextView = binding.profileTextBio
+        val profileBioEditText: EditText = binding.profileEditTextBio
+        val profileEditButton: FloatingActionButton = binding.profileBtnEdit
+        val profileSaveButton: FloatingActionButton = binding.profileBtnSave
+        val profileLayout: LinearLayout = binding.profileLayout
+        val profileTogglePosts: Button = binding.profileBtnPosts
+        val profileToggleModels: Button = binding.profileBtnModels
+        val profileToggleFriends: Button = binding.profileBtnFriends
+        val toggle = binding.profileToggleButton
+
 
         profileLayout.setOnClickListener{
-
+            //capture click to avoid clicking on background fragment
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
@@ -91,6 +102,32 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val loadingPost = loadingDummyPost()
         postAdapter.posts.add(loadingPost)
 
+        val modelsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_model_recycler)
+        val modelAdapter = ModelRecyclerAdapter()
+        val modelLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
+        modelsRecyclerView.layoutManager = modelLayoutManager
+        modelsRecyclerView.adapter = modelAdapter
+        val friendsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_friend_recycler)
+        val friendRecyclerAdapter = FriendRecyclerAdapter()
+        val friendLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
+        friendsRecyclerView.adapter = friendRecyclerAdapter
+        friendsRecyclerView.layoutManager = friendLayoutManager
+
+        profileTogglePosts.setOnClickListener {
+            postRecyclerView.visibility = View.VISIBLE
+            modelsRecyclerView.visibility = View.GONE
+            friendsRecyclerView.visibility = View.GONE
+        }
+        profileToggleModels.setOnClickListener {
+            postRecyclerView.visibility = View.GONE
+            modelsRecyclerView.visibility = View.VISIBLE
+            friendsRecyclerView.visibility = View.GONE
+        }
+        profileToggleFriends.setOnClickListener {
+            postRecyclerView.visibility = View.GONE
+            modelsRecyclerView.visibility = View.GONE
+            friendsRecyclerView.visibility = View.VISIBLE
+        }
 
         //val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
         viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
@@ -206,8 +243,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                         profileBioText.text = profileBioEditText.text.toString()
                         viewModel.updateBio(profileBioEditText.text.toString())
                     }
-
-                    //TODO upload pic and save to userdata
                     if (imageAdded) {
                         viewModel.updateAvatar()
                     }
@@ -220,7 +255,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
     override fun onPause() {
         super.onPause()
-        //TODO save profile data
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -238,5 +272,10 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             val cropError: Throwable?  = data?.let { UCrop.getError(it) };
         }
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

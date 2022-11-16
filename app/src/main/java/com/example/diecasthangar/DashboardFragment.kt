@@ -61,13 +61,14 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
                 .commit()
+                //TODO hide dash fragment
         },
             // post edited, go to post fragment
             { post ->
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, AddPostFragment(post, true)).addToBackStack("home")
                 .commit()
-                //TODO hide dash fragment
+
         })
 
 

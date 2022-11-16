@@ -65,7 +65,6 @@ open class FirestoreRepository (
             val avatar: String = post.get("avatar").toString()
             val id = post.id
             val comments: ArrayList<Comment> = ArrayList()
-            //TODO implement
             val reactions: MutableMap<String,Int> = post.get("reactions") as MutableMap<String, Int>
 
             val newPost = Post(text, imageUris, user, timestamp.toDate(),username,avatar,id,comments,reactions)
@@ -211,7 +210,6 @@ open class FirestoreRepository (
 
     suspend fun deletePostFromFirestore(pid: String): Response<Boolean> {
         return try {
-            //TODO clean up photos from storage
             val images = db.collection("posts").document(pid).get().await().data?.get("images") as ArrayList<String>
 
             //todo more elegant solution

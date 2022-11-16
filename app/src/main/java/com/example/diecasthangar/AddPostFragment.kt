@@ -55,7 +55,6 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
         val avatarUri = userViewModel.getAvatarUri().value
         val username = userViewModel.getUsername()
 
-
         var photos: ArrayList<Photo> = ArrayList()
 
         val localUris: ArrayList<Uri> = ArrayList()

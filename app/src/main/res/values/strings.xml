@@ -71,4 +71,6 @@
     <string name="posts">posts</string>
     <string name="welcome">Welcome</string>
     <string name="add_photos">add photos</string>
+    <string name="friends">friends</string>
+    <string name="save">save</string>
 </resources>
