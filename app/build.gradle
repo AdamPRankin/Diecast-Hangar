@@ -87,6 +87,7 @@ dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.0'
 
     implementation 'com.github.yalantis:ucrop:2.2.6'
+    implementation 'com.github.kenglxn.QRGen:android:2.6.0'
 
 
     // ViewModel and LiveData
@@ -111,6 +112,8 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.5.0@aar'
     androidTestImplementation "androidx.test:core:1.5.0"
     debugImplementation "androidx.fragment:fragment-testing:1.5.4"
+
+
 }
 
 

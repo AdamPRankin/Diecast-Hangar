@@ -1,19 +1,16 @@
 package com.example.diecasthangar.domain.remote
 
-import android.R.attr.bitmap
 import android.content.ContentValues
-import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import com.example.diecasthangar.core.util.commentMapToClass
-import com.example.diecasthangar.data.Comment
-import com.example.diecasthangar.data.Photo
-import com.example.diecasthangar.data.Post
-import com.example.diecasthangar.data.getReacts
+import com.example.diecasthangar.core.util.modelMapToClass
+import com.example.diecasthangar.data.*
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.usecase.remote.getUser
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks.await
 import com.google.firebase.Timestamp
-import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -21,10 +18,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import io.grpc.Compressor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
-import java.io.ByteArrayOutputStream
-import java.io.IOException
 
 
 open class FirestoreRepository (
@@ -34,14 +32,14 @@ open class FirestoreRepository (
 
     )  {
 
-    suspend fun addImageToStorage(imageUri: Uri): Response<Uri> {
+    suspend fun addImageToStorage(imageUri: Uri, path: String = "posts"): Response<Uri> {
 
         return try {
             val rootRef = FirebaseDatabase.getInstance().reference
-            val newPostKey = rootRef.ref.child("posts").push().key
+            val newPostKey = rootRef.ref.child(path).push().key
             val filename: String = newPostKey + "_"
             val remoteUri = FirebaseStorage.getInstance().reference.child(
-                    "images/posts").child("$filename.jpg").putFile(imageUri)
+                    "images/$path").child("$filename.jpg").putFile(imageUri)
                     .await().storage.downloadUrl.await()
             Response.Success(remoteUri)
         } catch (e: Exception) {
@@ -337,7 +335,6 @@ open class FirestoreRepository (
                         queryCursor = lastVisible
                     }
                 }
-
             }.await()
 
             val postsList = arrayListOf<Post>()
@@ -443,20 +440,6 @@ open class FirestoreRepository (
 
             val commentsList = arrayListOf<Comment>()
             for (comment in comments) {
-/*
-                val text: String = comment.get("text") as String
-                val timestamp: Timestamp = comment.getTimestamp("date") as Timestamp
-                val user: String = comment.get("user").toString()
-                val username: String = comment.get("username").toString()
-                val avatar: String = comment.get("avatar").toString()
-                val id = comment.id
-                val postId: String = comment.get("post") as String
-                val reactions: MutableMap<String, Int> = comment.get("reactions")
-                        as MutableMap<String, Int>
-
-                val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
-*/
-
                 val newComment = commentMapToClass(comment)
                 commentsList.add(newComment)
             }
@@ -465,7 +448,6 @@ open class FirestoreRepository (
             Response.Success(pair)
         } catch (e: Exception) {
             Response.Failure(e)
-
         }
     }
 
@@ -476,33 +458,209 @@ open class FirestoreRepository (
 
             val commentsQuery =
                 db.collection("comments").whereEqualTo("post",pid)
-
                     .limit(number.toLong())
 
             val comments = commentsQuery.get().addOnSuccessListener {}.await()
 
             val commentsList = arrayListOf<Comment>()
             for (comment in comments) {
-/*                val text: String = comment.get("text") as String
-                val timestamp: Timestamp = comment.getTimestamp("date") as Timestamp
-                val user: String = comment.get("user").toString()
-                val username: String = comment.get("username").toString()
-                val avatar: String = comment.get("avatar").toString()
-                val id = comment.id
-                val postId: String = comment.get("post") as String
-                val reactions: MutableMap<String, Int> = comment.get("reactions")
-                        as MutableMap<String, Int>*/
-
-                //val newComment = Comment(text,user,username,avatar,id,timestamp.toDate(),postId,reactions)
                 val newComment = commentMapToClass(comment)
                 commentsList.add(newComment)
             }
             Response.Success(commentsList)
         } catch (e: Exception) {
             Response.Failure(e)
-
         }
     }
+
+    suspend fun getUserFriends(uid: String): Response<java.util.ArrayList<User>> {
+        return try {
+            val friendsRef = db.collection("userfriends").document(uid)
+            val friendIdList = friendsRef.get().await().data?.get("friends") as ArrayList<String>
+            val friendList = ArrayList<User>()
+
+            val friendRequestsRef = db.collection("friend-requests").whereEqualTo("recipient",uid)
+            val requestsList = friendRequestsRef.get().await().documents
+
+            for (request in requestsList){
+                val requesterId = request.get("sender").toString()
+                when(val response = getUserInfo(requesterId)) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        val (avatar,username) = response.data!!
+                        val friend = User(requesterId,username,avatar,false,request.id)
+                        friendList.add(friend)
+                    }
+                    is Response.Failure -> {
+                        print(response.e)
+                    }
+                }
+            }
+            for (id in friendIdList){
+                when(val response = getUserInfo(id)) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        val (avatar,username) = response.data!!
+                        val friend = User(id,username,avatar,true)
+                        friendList.add(friend)
+                    }
+                    is Response.Failure -> {
+                        print(response.e)
+                    }
+                }
+            }
+            val e = ""
+            Response.Success(friendList)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun addFriend(uid: String, friendId: String): Response<Boolean> {
+        return try {
+            val friendRef = db.collection("userfriends")
+            friendRef.document(uid).update("friends", FieldValue.arrayUnion(friendId))
+            friendRef.document(friendId).update("friends", FieldValue.arrayUnion(uid))
+
+            val friendRequestsRef = db.collection("friend-requests").document(uid)
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    fun deleteFriendRequest(requestId: String): Response<Boolean> {
+        return try {
+            val friendRequestRef = db.collection("friend-requests").document(requestId)
+            friendRequestRef.delete()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun addFriendRequest(sender: String, recipient: String): Response<String> {
+        return try {
+            val hashRequest = hashMapOf(
+                "sender" to sender,
+                "recipient" to recipient,
+            )
+            val docRef  = await(db.collection("friend-requests").add(hashRequest))
+            Response.Success(docRef.id)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun addFriendRequestToken(sender: String): Response<String> {
+        return try {
+            val hashRequest = hashMapOf(
+                "sender" to sender,
+                "recipient" to null,
+                "timestamp" to FieldValue.serverTimestamp()
+            )
+            val docRef  = await(db.collection("friend-requests").add(hashRequest))
+            Response.Success(docRef.id)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun addFriendFromToken(token: String, uid :String): Response<Boolean>  {
+        return try {
+            val friendRequest= db.collection("friend-requests").document(token).get().await().data
+            val friendId = friendRequest!!["sender"] as String
+            val friendRef = db.collection("userfriends")
+            friendRef.document(uid).update("friends", FieldValue.arrayUnion(friendId))
+            friendRef.document(friendId).update("friends", FieldValue.arrayUnion(uid))
+
+            db.collection("friend-requests").document(token).delete()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun addModel(model: Model): Response<Boolean> {
+        return try {
+            val remoteUris = arrayListOf<String>()
+            val localUris = arrayListOf<Uri>()
+            for (photo in model.photos) {
+                localUris.add(photo.localUri!!)
+            }
+            val rootRef = FirebaseDatabase.getInstance().reference
+
+            for (uri in localUris) {
+                val newPostKey = rootRef.ref.child("models").push().key
+                val filename: String = newPostKey + "_"
+                val remoteUri = FirebaseStorage.getInstance().reference.child(
+                    "images/models"
+                ).child("$filename.jpg").putFile(uri)
+                    .await().storage.downloadUrl.await()
+                remoteUris.add(remoteUri.toString())
+            }
+            val modelsRef = db.collection("models")
+
+           val h = hashMapOf(
+               "user" to getUser()!!.uid,
+               "manufacturer" to model.manufacturer,
+               "mould" to model.mould,
+               "scale" to model.scale,
+               "frame" to model.frame,
+               "airline" to model.airline,
+               "livery" to model.livery,
+               "photos" to remoteUris,
+               "price" to model.price,
+               "comment" to model.comment
+            )
+
+            modelsRef.add(h)
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun getUserModels(uid: String): Response<ArrayList<Model>> {
+        return try {
+            val modelsRef = db.collection("models")
+            val userModelsSnapShot = modelsRef.whereEqualTo("user",uid).get().await().documents
+            val userModels = ArrayList<Model>()
+            for (model in userModelsSnapShot){
+                userModels.add(modelMapToClass(model))
+            }
+            Response.Success(userModels)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    suspend fun deleteModel(modelId: String):Response<Boolean> {
+        return try {
+            val images = db.collection("posts").document(modelId).get().await().data?.get("images") as ArrayList<String>
+
+            //todo more elegant solution
+            for (uri in images) {
+                val id: String = uri.replace("https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F","").split(".jpg?")[0]
+                FirebaseStorage.getInstance().reference.child(
+                    "images/models/$id.jpg").delete()
+            }
+
+            val modelsRef = db.collection("models")
+            modelsRef.document(modelId).delete()
+
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+
+
+
+
 
 
 

@@ -28,7 +28,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingStart="16dp"
+            android:paddingStart="8dp"
             android:layout_weight="0.2"
             android:orientation="vertical">
             <TextView
@@ -52,6 +52,8 @@
             android:layout_weight="0.5"
             android:text="Le Button" />
     </LinearLayout>
+
+    <!-- Buttons -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/post_recycler_view"

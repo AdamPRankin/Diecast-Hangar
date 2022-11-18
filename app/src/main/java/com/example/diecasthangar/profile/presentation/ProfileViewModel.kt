@@ -4,19 +4,23 @@ import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.example.diecasthangar.data.Model
 import com.example.diecasthangar.data.Post
+import com.example.diecasthangar.data.User
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
 import com.google.firebase.firestore.DocumentSnapshot
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlin.collections.ArrayList
 
 
 class ProfileViewModel(uid: String) : ViewModel() {
     private val postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData()
+    private val friendsLiveData: MutableLiveData<ArrayList<User>> = MutableLiveData()
+    private val modelsLiveData: MutableLiveData<ArrayList<Model>?> = MutableLiveData()
+    private val modelPhotosLiveData: MutableLiveData<ArrayList<Uri>> = MutableLiveData()
     private val postsArrayList: ArrayList<Post> = ArrayList()
     private val repository = FirestoreRepository()
     private var snapshot: DocumentSnapshot? = null
@@ -25,15 +29,31 @@ class ProfileViewModel(uid: String) : ViewModel() {
     var profileUid = uid
     val avatarUri :MutableLiveData<String> = MutableLiveData("")
     val username :MutableLiveData<String> = MutableLiveData("")
+    private val token :MutableLiveData<String> = MutableLiveData("")
+    private var addFriendFromTokenResponse :MutableLiveData<String> = MutableLiveData("")
 
     init {
         loadUserBio()
         loadUserInfo()
         initialLoad()
+        loadUserFriends()
+        getUserModels()
+
+        if (profileUid == getUser()!!.uid) {
+            generateFriendRequestToken()
+        }
     }
 
     fun getPostMutableLiveData(): MutableLiveData<ArrayList<Post>> {
         return postsLiveData
+    }
+
+    fun getFriendsMutableLiveData(): MutableLiveData<ArrayList<User>> {
+        return friendsLiveData
+    }
+
+    fun getModelsMutableLiveData(): MutableLiveData<ArrayList<Model>?> {
+        return modelsLiveData
     }
 
     fun getUserBioMutableLiveData(): MutableLiveData<String> {
@@ -43,13 +63,18 @@ class ProfileViewModel(uid: String) : ViewModel() {
     fun getUsernameMutableLiveData(): MutableLiveData<String> {
         return username
     }
-
     fun getAvatarMutableLiveData(): MutableLiveData<String> {
         return avatarUri
     }
+    fun getFriendRequestToken(): String {
+        return token.value!!
+    }
+    fun getAddFriendFromTokenResponseMutableLiveData(): MutableLiveData<String> {
+        return addFriendFromTokenResponse
+    }
 
     private fun initialLoad(){
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             when(val response = repository.loadNextPagePostsFromUser(userId = profileUid)) {
                 is Response.Loading -> {
                 }
@@ -71,7 +96,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
     }
 
     private fun loadUserBio(){
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             when (val response = repository.getUserBio(profileUid)) {
                 is Response.Loading -> {
                 }
@@ -86,7 +111,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
     }
 
     private fun loadUserInfo(){
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             when (val response = repository.getUserInfo(profileUid)) {
                 is Response.Loading -> {
                 }
@@ -94,7 +119,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     val (avatar, name) = (response.data!!)
                     avatarUri.postValue(avatar)
                     username.postValue(name)
-
                 }
                 is Response.Failure -> {
                     print(response.e)
@@ -102,8 +126,25 @@ class ProfileViewModel(uid: String) : ViewModel() {
             }
         }
     }
+
+    private fun loadUserFriends() {
+        viewModelScope.launch {
+            when (val response = repository.getUserFriends(profileUid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val friendsList = response.data ?: ArrayList()
+                    friendsLiveData.postValue(friendsList)
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+    }
+
     fun loadMorePosts() {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             when(val response = repository.loadNextPagePostsFromUser(
                 lastVisible = snapshot,userId = profileUid)) {
                 is Response.Loading -> {
@@ -129,7 +170,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
     fun updateBio(text: String) {
         if (profileUid == getUser()!!.uid) {
-            CoroutineScope(Dispatchers.IO).launch {
+            viewModelScope.launch {
                 when (val response = repository.updateUserBio(profileUid, text)) {
                     is Response.Loading -> {
                     }
@@ -146,7 +187,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
     fun updateAvatar(uri: Uri = Uri.parse(avatarUri.value), userId: String = profileUid) {
         if (profileUid == getUser()!!.uid) {
-            CoroutineScope(Dispatchers.IO).launch {
+            viewModelScope.launch {
                 when (val response = repository.updateUserAvatar(uri,profileUid)) {
                     is Response.Loading -> {
                     }
@@ -162,12 +203,114 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
     }
 
-    //use this to create a viewModel with uid parameter
-    class Factory(private val uid: String) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ProfileViewModel(uid) as T
+    fun updatePhotos(photos: ArrayList<Uri>){
+        modelPhotosLiveData.postValue(photos)
+    }
+
+    fun addFriend(friend: User){
+        viewModelScope.launch {
+            when (val response = repository.addFriend(profileUid,friend.id)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    repository.deleteFriendRequest(friend.requestToken!!)
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
         }
     }
+
+    fun sendFriendRequest(recipientId: String){
+        viewModelScope.launch {
+            when (val response = repository.addFriendRequest(getUser()!!.uid,recipientId)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+    }
+
+    private fun generateFriendRequestToken() {
+        CoroutineScope(Dispatchers.IO).launch {
+            when (val response = repository.addFriendRequestToken(getUser()!!.uid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    token.postValue(response.data ?: "could not generate token, try again later")
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+
+    }
+    fun addFriendFromToken(token: String){
+        viewModelScope.launch {
+            when (val response = repository.addFriendFromToken(token,getUser()!!.uid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    addFriendFromTokenResponse.postValue("friend added")
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                    addFriendFromTokenResponse.postValue("invalid token")
+                }
+            }
+        }
+    }
+
+    fun uploadModel(model: Model) {
+        viewModelScope.launch {
+            when (val response = repository.addModel(model)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+    }
+
+    private fun getUserModels(){
+        viewModelScope.launch {
+            when (val response = repository.getUserModels(profileUid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val models = response.data
+                    modelsLiveData.postValue(models)
+                    val e = "e"
+                }
+                is Response.Failure -> {
+                    print(response.e)
+
+                }
+            }
+        }
+    }
+
+
+        //use this to create a viewModel with uid parameter
+        class Factory(private val uid: String) : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ProfileViewModel(uid) as T
+            }
+        }
+
+
+
 
 }

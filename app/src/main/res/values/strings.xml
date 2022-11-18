@@ -73,4 +73,17 @@
     <string name="add_photos">add photos</string>
     <string name="friends">friends</string>
     <string name="save">save</string>
+    <string name="request">request</string>
+    <string name="incoming_request">Incoming request</string>
+    <string name="enter_friend_s_code_here">enter friend\'s code here</string>
+    <string name="livery">livery</string>
+    <string name="brand">brand</string>
+    <string name="scale">scale</string>
+    <string name="airline">airline</string>
+    <string name="frame">frame</string>
+    <string name="scale_colon">Scale:</string>
+    <string name="airline_colon">Airline:</string>
+    <string name="comment_colon">Comment:</string>
+    <string name="livery_colon">Livery</string>
+    <string name="brand_colon">Brand:</string>
 </resources>

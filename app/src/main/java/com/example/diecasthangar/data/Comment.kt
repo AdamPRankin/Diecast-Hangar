@@ -1,6 +1,7 @@
 package com.example.diecasthangar.data
 
-import java.util.*
+import java.util.Date
+
 
 class Comment(
     val text: String,

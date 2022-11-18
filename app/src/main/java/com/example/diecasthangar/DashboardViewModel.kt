@@ -2,6 +2,7 @@ package com.example.diecasthangar
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.domain.Response
@@ -32,7 +33,7 @@ class DashboardViewModel: ViewModel() {
     }
 
     private fun initialLoad(){
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
 
             when(val response = repository.loadNextPagePosts(latestSnapshot)) {
                 is Response.Loading -> {
@@ -54,6 +55,7 @@ class DashboardViewModel: ViewModel() {
     }
 
     suspend fun loadMorePosts(snap: DocumentSnapshot? = latestSnapshot, number: Long = 8){
+        viewModelScope.launch {
         when(val response = repository.loadNextPagePosts(snap,number)) {
             is Response.Loading -> {
 
@@ -73,6 +75,7 @@ class DashboardViewModel: ViewModel() {
                 print(response.e)
             }
         }
+    }
     }
 
 

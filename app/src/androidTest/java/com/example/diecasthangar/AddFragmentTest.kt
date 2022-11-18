@@ -28,7 +28,7 @@ class AddFragmentTest {
 
     @Test
     fun testEditPostMode() {
-        val fragmentArgs = bundleOf("post" to Post(),"editMode" to true)
+        val fragmentArgs = bundleOf("editMode" to true)
         val scenario = launchFragmentInContainer<AddPostFragment>(
             themeResId = R.style.Theme_DiecastHangar,
             initialState = Lifecycle.State.STARTED,

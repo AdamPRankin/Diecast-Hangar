@@ -5,44 +5,31 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.bumptech.glide.Glide
-import com.example.diecasthangar.core.util.loadingDummyPost
-import com.example.diecasthangar.data.Post
-import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
-import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.profile.presentation.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
-/**
- * An example full-screen fragment that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
 class DashboardFragment : Fragment(), LifecycleOwner {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
@@ -59,25 +46,19 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             { post ->
             val uid = post.user
             parentFragmentManager.beginTransaction()
-                .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
+                .add(R.id.container, ProfileFragment(uid)).addToBackStack("home").hide(this)
                 .commit()
-                //TODO hide dash fragment
         },
             // post edited, go to post fragment
             { post ->
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, AddPostFragment(post, true)).addToBackStack("home")
                 .commit()
-
         })
-
 
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
-        //val loadingPost = loadingDummyPost()
-        //postAdapter.posts.add(loadingPost)
-        //postAdapter.notifyItemInserted(0)
 
         // Using the activityViewModels() Kotlin property delegate from the
         // fragment-ktx artifact to retrieve the ViewModel in the activity scope
@@ -98,7 +79,8 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             if (loading) {
                 loading = false
                 //remove loading Ui elements
-                postLoadingCircle.visibility = View.GONE
+                //postLoadingCircle.visibility = View.GONE
+                postRecyclerView.visibility = View.VISIBLE
             }
             val end = postAdapter.posts.size
 
@@ -117,13 +99,22 @@ class DashboardFragment : Fragment(), LifecycleOwner {
 
         picView.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .add(R.id.container, ProfileFragment()).addToBackStack("home")
+                .add(R.id.container, ProfileFragment()).addToBackStack("home").hide(this)
                 .commit()
             //TODO hide dashboard fragment
         }
 
         postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val layoutManager = postRecyclerView.layoutManager as LinearLayoutManager
+
+                // load more posts if recyclerview position is nearing the end
+/*                if ((layoutManager.findLastVisibleItemPosition() > postAdapter.itemCount - 5) && dashViewModel.isLoading) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        dashViewModel.loadMorePosts()
+                    }
+                }*/
+                //TODO load posts earlier
                 if (!recyclerView.canScrollVertically(1) && dy > 0 && dashViewModel.isLoading) {
                     CoroutineScope(Dispatchers.IO).launch {
                         dashViewModel.loadMorePosts()
@@ -133,6 +124,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
                 }
             }
         })
+
         return view
     }
 

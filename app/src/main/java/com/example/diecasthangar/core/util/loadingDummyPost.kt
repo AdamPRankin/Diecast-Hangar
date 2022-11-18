@@ -6,8 +6,9 @@ import java.util.*
 fun loadingDummyPost(): Post {
 
     return Post(
-        "Squeek is loading the posts as fast as he can...", arrayListOf(), "Mr. Loading",
+        "Squeek is loading the posts as fast as he can...", arrayListOf(), "123",
         Date(), "Flyin' Squeek The Post Loader",
-        "https://i.gyazo.com/02b2c623a812f221477160f3041f486a.png", "123", arrayListOf(), hashMapOf()
+        "https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fsqueek.png?alt=media&token=1388c527-42b1-4182-8f1a-b796ec4766b7",
+        "123", arrayListOf(), hashMapOf()
     )
 }

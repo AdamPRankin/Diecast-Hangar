@@ -8,7 +8,6 @@ import com.example.diecasthangar.data.Photo
 import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.remote.FirestoreRepository
-import com.example.diecasthangar.domain.usecase.remote.getUser
 import kotlinx.coroutines.*
 
 class AddPostViewModel(post: Post?,editing: Boolean = false): ViewModel() {

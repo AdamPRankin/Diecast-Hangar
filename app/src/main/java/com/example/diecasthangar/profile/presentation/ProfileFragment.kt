@@ -1,8 +1,12 @@
 package com.example.diecasthangar.profile.presentation
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -10,6 +14,7 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.*
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,14 +31,15 @@ import com.example.diecasthangar.AddPostFragment
 import com.example.diecasthangar.R
 import com.example.diecasthangar.UserViewModel
 import com.example.diecasthangar.core.util.loadingDummyPost
+import com.example.diecasthangar.data.Model
+import com.example.diecasthangar.data.Photo
 import com.example.diecasthangar.databinding.FragmentProfileBinding
-import com.example.diecasthangar.domain.Response
+import com.example.diecasthangar.databinding.PopupAddFriendBinding
+import com.example.diecasthangar.databinding.PopupAddModelBinding
 import com.example.diecasthangar.domain.adapters.FriendRecyclerAdapter
 import com.example.diecasthangar.domain.adapters.ModelRecyclerAdapter
 import com.example.diecasthangar.domain.adapters.PostRecyclerAdapter
 import com.example.diecasthangar.domain.usecase.remote.getUser
-import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.delay
@@ -56,6 +62,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         super.onCreate(savedInstanceState)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -75,21 +82,19 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val profileTogglePosts: Button = binding.profileBtnPosts
         val profileToggleModels: Button = binding.profileBtnModels
         val profileToggleFriends: Button = binding.profileBtnFriends
-        val toggle = binding.profileToggleButton
-
+        val profileAddModelButton: FloatingActionButton = binding.profileBtnAddModel
+        val profileAddFriendButton: FloatingActionButton = binding.profileBtnAddFriend
 
         profileLayout.setOnClickListener{
             //capture click to avoid clicking on background fragment
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
-        val postAdapter = PostRecyclerAdapter( { post ->
-            val uid = post.user
-            parentFragmentManager.beginTransaction()
-                .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
-                .commit()
-        }, {
-                post ->
+        val postAdapter = PostRecyclerAdapter( {
+            // do not need to do anything here as all posts are from current user
+            }
+        , { post ->
+                //edit post
             parentFragmentManager.beginTransaction()
                 .add(R.id.container, AddPostFragment(post, true)).addToBackStack("home")
                 .commit()
@@ -108,7 +113,28 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         modelsRecyclerView.layoutManager = modelLayoutManager
         modelsRecyclerView.adapter = modelAdapter
         val friendsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_friend_recycler)
-        val friendRecyclerAdapter = FriendRecyclerAdapter()
+        val friendRecyclerAdapter = FriendRecyclerAdapter(
+            //accept friend button clicked
+            { user ->
+                val uid = user.id
+                viewModel.addFriend(user)
+
+            },
+            //decline friend button clicked
+            { user ->
+                val uid = user.id
+                //TODO decline
+            },
+            //go to friend profile
+            { user ->
+                val uid = user.id
+                parentFragmentManager.beginTransaction()
+                    .add(R.id.container, ProfileFragment(uid)).addToBackStack("home").hide(this)
+                    .commit()
+
+
+            }
+        )
         val friendLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         friendsRecyclerView.adapter = friendRecyclerAdapter
         friendsRecyclerView.layoutManager = friendLayoutManager
@@ -117,17 +143,157 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             postRecyclerView.visibility = View.VISIBLE
             modelsRecyclerView.visibility = View.GONE
             friendsRecyclerView.visibility = View.GONE
+            profileAddModelButton.visibility = View.GONE
+            profileAddFriendButton.visibility = View.GONE
         }
         profileToggleModels.setOnClickListener {
             postRecyclerView.visibility = View.GONE
             modelsRecyclerView.visibility = View.VISIBLE
             friendsRecyclerView.visibility = View.GONE
+            profileAddFriendButton.visibility = View.GONE
+            if (profileUserId == getUser()!!.uid) {
+                profileAddModelButton.visibility = View.VISIBLE
+            }
         }
         profileToggleFriends.setOnClickListener {
             postRecyclerView.visibility = View.GONE
             modelsRecyclerView.visibility = View.GONE
             friendsRecyclerView.visibility = View.VISIBLE
+            profileAddModelButton.visibility = View.GONE
+
+            profileAddFriendButton.visibility = View.VISIBLE
         }
+
+        if (profileUserId != getUser()!!.uid) {
+            profileEditButton.visibility = View.GONE
+        }
+        else if (profileUserId == getUser()!!.uid) {
+            profileEditButton.visibility = View.VISIBLE
+        }
+
+        profileAddFriendButton.setOnClickListener {
+            if (profileUserId == getUser()!!.uid) {
+                //launch token generator popup
+                val context = view.context
+
+                val addFriendPopupInflater: LayoutInflater  =
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val binding = PopupAddFriendBinding.inflate(addFriendPopupInflater)
+                val popup = PopupWindow(
+                    binding.root,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                )
+                // Closes the popup window when touch outside.
+                popup.isOutsideTouchable = true
+                popup.isFocusable = true
+                // Removes default background.
+                popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+                binding.addFriendCodeTextview.text = viewModel.getFriendRequestToken()
+
+                binding.addFriendBtnAdd.setOnClickListener {
+                    val token = binding.addFriendEnterCodeEditText.text.toString()
+                    viewModel.addFriendFromToken(token)
+                    popup.dismiss()
+                }
+                viewModel.getAddFriendFromTokenResponseMutableLiveData()
+                    .observe(viewLifecycleOwner) { result ->
+                        binding.addFriendEnterCodeEditText.error = result
+                // todo snackbar
+
+                }
+
+                popup.showAsDropDown(profileImageView, 0, 0)
+
+            }
+            else if (profileUserId != getUser()!!.uid){
+                //directly send friend request
+                viewModel.sendFriendRequest(profileUserId)
+                //todo tell user request has been sent
+            }
+        }
+
+
+        val photos = ArrayList<Photo>()
+        val modelPhotoLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK
+                && result.data != null
+            ) {
+                if (result.data!!.clipData != null) {
+                    // reset list
+                    val mClipData = result.data!!.clipData
+                    for (i in 0 until mClipData!!.itemCount) {
+                        val item = mClipData.getItemAt(i)
+                        val imageUri = item.uri
+                        val photo = Photo(localUri = imageUri, remoteUri = imageUri.toString())
+                        photos.add(photo)
+                    }
+                } else if (result.data!!.data != null) {
+                    val imageUri = result.data!!.data!!
+                    val photo = Photo(localUri = imageUri, remoteUri = imageUri.toString())
+                    photos.add(photo)
+                }
+            }
+        }
+
+
+
+
+        profileAddModelButton.setOnClickListener {
+            val context = view.context
+
+            val addModelPopupInflater: LayoutInflater  =
+                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val binding = PopupAddModelBinding.inflate(addModelPopupInflater)
+            val popup = PopupWindow(
+                binding.root,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT
+            )
+            // Closes the popup window when touch outside.
+            popup.isOutsideTouchable = true
+            popup.isFocusable = true
+
+            // Removes default background.
+            popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            binding.addModelImageView.setOnClickListener {
+                val intent =
+                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                modelPhotoLauncher.launch(intent)
+
+            }
+
+            binding.addModelBtnAdd.setOnClickListener {
+                val scale = binding.addModelScaleEdittext.text.toString()
+                val airline = binding.addModelAirlineEdittext.text.toString()
+                val frame = binding.addModelFrameEdittext.text.toString()
+                val livery = binding.addModelLiveryEdittext.text.toString()
+                val brand = binding.addModelBrandEdittext.text.toString()
+                val comment = binding.modelRowCommentTextview.text.toString()
+
+                val model = Model(
+                    brand,
+                    brand,
+                    scale,
+                    frame,
+                    airline,
+                    livery,
+                    photos,
+                    comment,0)
+                viewModel.uploadModel(model)
+                modelAdapter.models.add(model)
+                modelAdapter.notifyItemInserted(modelAdapter.models.size -1)
+                popup.dismiss()
+            }
+            popup.showAsDropDown(profileImageView, 0, 0)
+        }
+
+
 
         //val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
         viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
@@ -145,6 +311,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             postAdapter.notifyItemRangeChanged(prevSize,postAdapter.itemCount)
         }
 
+        viewModel.getFriendsMutableLiveData().observe(viewLifecycleOwner) { friendsList ->
+            friendRecyclerAdapter.users = friendsList
+            friendRecyclerAdapter.notifyDataSetChanged()
+
+        }
+
+        viewModel.getModelsMutableLiveData().observe(viewLifecycleOwner) { modelsList ->
+            modelAdapter.models = modelsList ?: arrayListOf()
+            modelAdapter.notifyDataSetChanged()
+        }
+
         viewModel.getUserBioMutableLiveData().observe(viewLifecycleOwner) { bio->
             profileBioText.text = bio
         }
@@ -153,11 +330,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         }
         viewModel.getAvatarMutableLiveData().observe(viewLifecycleOwner) { uri->
             Glide.with(view).load(uri).into(profileImageView)
-
-
             if (imageAdded){
                 Glide.with(view).load(uri).into(profileEditAvatar)
-                //profileEditAvatar.setImageURI(Uri.parse(uri))
             }
         }
 
@@ -205,6 +379,10 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
             }
         }
+
+
+
+
         if (profileUserId == getUser()!!.uid) {
             profileEditButton.visibility = View.VISIBLE
             profileEditButton.setOnClickListener {
@@ -233,7 +411,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
                     //wait to display button to prevent spam toggle
                     lifecycleScope.launch {
-                        delay(3000)
+                        delay(2000)
                         profileEditButton.visibility = View.VISIBLE
                     }
                     profileSaveButton.visibility = View.GONE

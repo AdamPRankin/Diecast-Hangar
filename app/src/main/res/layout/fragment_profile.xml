@@ -26,22 +26,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <ImageView
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/profile_avatar"
                 android:layout_width="109dp"
-                android:layout_height="108dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
+                android:layout_height="109dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:contentDescription="@string/user_avatar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:src="@drawable/avatar_default" />
+                tools:src="@drawable/avatar_default"
+                app:strokeWidth="4dp"
+                app:strokeColor="@color/material_dynamic_tertiary60"
+                app:shapeAppearanceOverlay="@style/roundedImageView"
+                />
             <ImageView
                 android:id="@+id/profile_edit_avatar"
                 android:layout_width="109dp"
-                android:layout_height="108dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
+                android:layout_height="109dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
                 android:contentDescription="@string/user_avatar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -62,8 +67,8 @@
                         android:id="@+id/profile_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
                         android:textSize="24sp"
                         android:hint="Bungus"/>
 
@@ -71,8 +76,8 @@
                         android:id="@+id/profile_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
                         android:text="High Flyer"
                         android:textSize="18sp" />
                 </LinearLayout>
@@ -81,18 +86,19 @@
                     android:id="@+id/profile_text_bio"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="8dp"
                     android:textSize="14sp"
                     tools:ignore="HardcodedText" />
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/profile_edit_text_bio"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="8dp"
                     android:textSize="14sp"
                     android:visibility="gone"/>
             </LinearLayout>
@@ -225,11 +231,27 @@
     </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/profile_btn_add_model"
+    android:id="@+id/profile_btn_add_model"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:contentDescription="@string/edit"
+    android:src="@drawable/airplane_plus"
+    android:layout_gravity="end"
+    app:tint="@color/material_dynamic_tertiary60"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="16dp"
+    android:visibility="gone">
+
+</com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_add_friend"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/edit"
-        android:src="@drawable/airplane_edit"
+        android:src="@drawable/ic_account_plus_black_48dp"
         android:layout_gravity="end"
         app:tint="@color/material_dynamic_tertiary60"
         app:layout_constraintBottom_toBottomOf="parent"

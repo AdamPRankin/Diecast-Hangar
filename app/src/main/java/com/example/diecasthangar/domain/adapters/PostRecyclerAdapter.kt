@@ -4,16 +4,17 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.text.StaticLayout
+import android.text.TextPaint
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
@@ -23,11 +24,8 @@ import com.example.diecasthangar.data.Post
 import com.example.diecasthangar.databinding.PopupAddCommentBinding
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
 import com.example.diecasthangar.databinding.PopupEditPostBinding
-import com.example.diecasthangar.databinding.PopupEditPostEditorBinding
-import com.example.diecasthangar.domain.Response
 import com.example.diecasthangar.domain.remote.FirestoreRepository
 import com.example.diecasthangar.domain.usecase.remote.getUser
-import com.example.diecasthangar.profile.presentation.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
 import kotlin.math.roundToInt
@@ -57,9 +55,14 @@ class PostRecyclerAdapter(private val onItemClicked: (Post) -> Unit, private val
         val testPaint = Paint()
         testPaint.set(holder.bodyTextView.paint)
         val textWidth =  testPaint.measureText(holder.bodyTextView.text.toString())
-
+val text = holder.bodyTextView.text.toString()
+        val textBounds = Rect()
+        //mTextPaint.getTextBounds(mText, 0, mText.length, textBounds)
+        val mTextWidth = textBounds.width()
+        val textHeight = textBounds.height()
         //TODO fix this check
-        if (textWidth > 2500){
+
+        if (textHeight > 250){
             holder.showMoreButton.visibility = View.VISIBLE
             holder.showMoreButton.setOnClickListener{
                 holder.bodyTextView.maxHeight = 9000
