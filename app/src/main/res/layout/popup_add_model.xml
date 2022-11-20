@@ -27,13 +27,15 @@
         android:text="@string/scale_colon"
         android:paddingEnd="16dp"
         tools:ignore="RtlSymmetry" />
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/add_model_scale_edittext"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:layout_weight="1"
-                android:hint="@string/scale"/>
+       <AutoCompleteTextView
+           android:id="@+id/add_model_autocomplete_scale"
+           android:layout_width="0dp"
+           android:layout_height="wrap_content"
+           android:paddingStart="4dp"
+           android:hint="@string/scale"
+           android:layout_weight="1"
+           tools:ignore="RtlSymmetry"
+           />
     </LinearLayout>
 
             <LinearLayout
@@ -108,14 +110,15 @@
                     android:text="@string/brand_colon"
                     android:paddingEnd="16dp"
                     tools:ignore="RtlSymmetry" />
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/add_model_brand_edittext"
+                <AutoCompleteTextView
+                    android:id="@+id/add_model_autocomplete_brand"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:paddingStart="4dp"
                     android:hint="@string/brand"
                     android:layout_weight="1"
-                    tools:ignore="RtlSymmetry" />
+                    tools:ignore="RtlSymmetry"
+                    />
             </LinearLayout>
 
             <LinearLayout

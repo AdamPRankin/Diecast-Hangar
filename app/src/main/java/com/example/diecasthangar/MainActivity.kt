@@ -4,16 +4,12 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import com.example.diecasthangar.domain.Response
-import com.example.diecasthangar.domain.remote.FirestoreRepository
-import com.example.diecasthangar.onboarding.presentation.StartFragment
+import com.example.diecasthangar.core.util.NavigationHost
+import com.example.diecasthangar.ui.DashboardFragment
+import com.example.diecasthangar.ui.onboarding.StartFragment
+import com.example.diecasthangar.ui.UserViewModel
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), NavigationHost {
     override fun onCreate(savedInstanceState: Bundle?) {

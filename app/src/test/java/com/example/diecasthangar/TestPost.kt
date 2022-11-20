@@ -1,7 +1,6 @@
 package com.example.diecasthangar
 
-import com.example.diecasthangar.data.Comment
-import com.example.diecasthangar.data.Post
+import com.example.diecasthangar.data.model.Post
 import org.junit.Test
 import java.util.*
 import kotlin.collections.ArrayList

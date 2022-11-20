@@ -1,6 +1,6 @@
 package com.example.diecasthangar.core.util
 
-import com.example.diecasthangar.data.Comment
+import com.example.diecasthangar.data.model.Comment
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.QueryDocumentSnapshot
 

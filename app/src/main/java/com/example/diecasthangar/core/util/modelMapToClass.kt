@@ -1,8 +1,7 @@
 package com.example.diecasthangar.core.util
 
-import android.net.Uri
-import com.example.diecasthangar.data.Model
-import com.example.diecasthangar.data.Photo
+import com.example.diecasthangar.data.model.Model
+import com.example.diecasthangar.data.model.Photo
 import com.google.firebase.firestore.DocumentSnapshot
 
 fun modelMapToClass(model: DocumentSnapshot): Model {

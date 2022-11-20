@@ -1,7 +1,7 @@
 package com.example.diecasthangar
 
-import com.example.diecasthangar.data.Post
-import com.example.diecasthangar.domain.Response
+import com.example.diecasthangar.data.model.Post
+import com.example.diecasthangar.data.remote.Response
 import org.junit.Test
 import kotlin.test.assertEquals
 

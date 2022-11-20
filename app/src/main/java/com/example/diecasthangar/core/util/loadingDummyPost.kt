@@ -1,6 +1,6 @@
 package com.example.diecasthangar.core.util
 
-import com.example.diecasthangar.data.Post
+import com.example.diecasthangar.data.model.Post
 import java.util.*
 
 fun loadingDummyPost(): Post {

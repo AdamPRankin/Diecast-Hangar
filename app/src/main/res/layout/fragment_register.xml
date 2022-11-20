@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/material_dynamic_primary90"
-    tools:context=".onboarding.presentation.LoginFragment">
+    tools:context=".ui.onboarding.LoginFragment">
 
     <LinearLayout
         android:layout_width="match_parent"

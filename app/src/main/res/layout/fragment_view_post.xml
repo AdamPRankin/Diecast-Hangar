@@ -4,11 +4,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ViewPostFragment">
+    tools:context=".ui.ViewPostFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
         <LinearLayout
@@ -94,7 +94,7 @@
                 android:id="@+id/view_post_body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxHeight="250dp"
+                android:maxHeight="80dp"
                 android:text="@string/lorem_ipsum"
                 app:layout_constraintEnd_toEndOf="@+id/post_picture"
                 app:layout_constraintStart_toStartOf="@+id/post_picture"
@@ -102,28 +102,50 @@
 
         </LinearLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/view_post_comment_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constrainedHeight="true"
+            app:layout_constraintBottom_toTopOf="@+id/view_post_comment_bar"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_margin="8dp"/>
         <!-- Buttons -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/view_post_comment_bar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent">
+            <EditText
+                android:id="@+id/view_post_comment_edit_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp">
+            </EditText>
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/view_post_comment_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:text="@string/comment"
                 />
             <com.google.android.material.button.MaterialButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/react"
                 style="?attr/borderlessButtonStyle"
+                app:icon="@drawable/ic_airplane_takeoff_black_48dp"
+                android:paddingEnd="16dp"
+                android:paddingStart="16dp"
+                android:minWidth="0dp"
                 />
         </LinearLayout>
-
-
-
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
+
 
 </com.google.android.material.card.MaterialCardView>

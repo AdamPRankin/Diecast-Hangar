@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/material_dynamic_primary90"
-    tools:context=".onboarding.presentation.StartFragment">
+    tools:context=".ui.onboarding.StartFragment">
 
 
     <com.google.android.material.button.MaterialButton

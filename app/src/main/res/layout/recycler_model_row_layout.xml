@@ -72,24 +72,20 @@
             android:id="@+id/model_row_title_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:text="1:400 Air Canada B787-900"/>
+            android:textSize="24sp" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/model_row_livery_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:text="Toothpaste blue livery"/>
+                android:textSize="18sp" />
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/model_row_brand_textview"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingEnd="4dp"
-                    android:text="NG Models"/>
+                    android:layout_height="wrap_content" />
                 <ImageView
                     android:id="@+id/model_row_brand_icon"
                     android:layout_width="match_parent"
@@ -99,8 +95,7 @@
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/model_row_comment_textview"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Won this model as a prize at the chuck E cheeses ring toss"/>
+                android:layout_height="wrap_content" />
         </LinearLayout>
     </LinearLayout>
 

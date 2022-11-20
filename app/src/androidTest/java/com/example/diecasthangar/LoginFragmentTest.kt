@@ -7,9 +7,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.rule.ActivityTestRule
-import com.example.diecasthangar.onboarding.presentation.LoginFragment
-import org.junit.Rule
+import com.example.diecasthangar.ui.onboarding.LoginFragment
 import org.junit.Test
 import org.junit.runner.RunWith
 

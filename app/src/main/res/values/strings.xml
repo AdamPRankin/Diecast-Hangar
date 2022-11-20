@@ -9,6 +9,28 @@
     <string name="button_cancel">Cancel</string>
     <string name="login">Login</string>
     <string name="register">Register</string>
+    <string-array name="brands_array">
+        <item>NG Models</item>
+        <item>Phoenix</item>
+        <item>Panda</item>
+        <item>Gemini Jets</item>
+        <item>AV400</item>
+        <item>JC Wings</item>
+        <item>Dragon Wings</item>
+        <item>Aeroclassics</item>
+        <item>Herpa</item>
+        <item>Inflight200</item>
+    </string-array>
+
+    <string-array name="scales_array">
+        <item>1:400</item>
+        <item>1:200</item>
+        <item>1:500</item>
+        <item>1:100</item>
+        <item>1:72</item>
+        <item>1:24</item>
+        <item>1:1</item>
+    </string-array>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus

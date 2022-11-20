@@ -1,6 +1,6 @@
 package com.example.diecasthangar
 
-import com.example.diecasthangar.data.Comment
+import com.example.diecasthangar.data.model.Comment
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
