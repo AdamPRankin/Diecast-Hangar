@@ -11,6 +11,7 @@ class TestModel {
     fun testModel(){
 
         val newModel = Model(
+            userID = "123",
             manufacturer = "NG",
             scale = "1:400",
             frame = "787",

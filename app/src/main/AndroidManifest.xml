@@ -17,6 +17,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true"
             android:theme="@style/Theme.DiecastHangar">
             <intent-filter>

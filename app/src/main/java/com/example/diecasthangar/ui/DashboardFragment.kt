@@ -89,7 +89,10 @@ class DashboardFragment : Fragment(), LifecycleOwner {
 
         userViewModel.getAvatarUri().observe(viewLifecycleOwner) { uri ->
             val avatarUri = uri.toString()
-            Glide.with(view).load(avatarUri).into(picView)
+            Glide.with(view)
+                .load(avatarUri)
+                .placeholder(R.drawable.avatar_default)
+                .into(picView)
         }
 
         dashViewModel.getPostMutableLiveData().observe(viewLifecycleOwner) {

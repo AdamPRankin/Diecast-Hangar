@@ -21,7 +21,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center">
-                <com.google.android.material.button.MaterialButton
+<!--                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_view_post_img_left"
                     android:layout_width="36dp"
                     android:layout_height="match_parent"
@@ -29,14 +29,15 @@
                     app:icon="@drawable/chevron_left"
                     app:iconGravity="textStart"
                     app:iconTint="@color/material_dynamic_primary20"
-                    style="?attr/borderlessButtonStyle" />
+                    style="?attr/borderlessButtonStyle" />-->
                 <ImageView
                     android:id="@+id/view_post_picture"
-                    android:layout_width="276dp"
-                    android:layout_height="184dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
                     tools:srcCompat="@tools:sample/backgrounds/scenic"
-                    android:layout_gravity="center" />
-                <com.google.android.material.button.MaterialButton
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+<!--                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_view_post_img_right"
                     android:layout_width="36dp"
                     android:layout_height="match_parent"
@@ -44,7 +45,16 @@
                     app:icon="@drawable/chevron_right"
                     app:iconGravity="textStart"
                     app:iconTint="@color/material_dynamic_primary20"
-                    style="?attr/borderlessButtonStyle" />
+                    style="?attr/borderlessButtonStyle" />-->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/view_post_photo_recycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:layout_margin="8dp"
+                    android:orientation="horizontal"
+                    android:scrollbars="horizontal"
+                    >
+                </androidx.recyclerview.widget.RecyclerView>
             </LinearLayout>
         </LinearLayout>
 
@@ -126,7 +136,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp">
+                android:layout_marginEnd="8dp"
+                android:hint="@string/comment">
             </EditText>
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/view_post_comment_button"

@@ -8,6 +8,5 @@ class TestCommentMapToClass {
     @Test
     fun testMap() {
 
-
     }
 }

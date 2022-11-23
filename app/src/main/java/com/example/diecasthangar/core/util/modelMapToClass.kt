@@ -23,16 +23,17 @@ fun modelMapToClass(model: DocumentSnapshot): Model {
     }
 
     return Model(
-        manufacturer,
-        mould,
-        scale,
-        frame,
-        airline,
-        livery,
-        photos,
-        comment,
-        price,
-        id
+        userID = user,
+        manufacturer = manufacturer,
+        mould = mould,
+        scale = scale,
+        frame = frame,
+        airline = airline,
+        livery = livery,
+        photos = photos,
+        comment = comment,
+        price = price,
+        id = id
     )
 }
 

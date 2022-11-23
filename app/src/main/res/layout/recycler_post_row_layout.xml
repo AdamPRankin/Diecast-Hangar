@@ -177,6 +177,7 @@
                     android:layout_height="match_parent"
                     app:tint="@color/material_dynamic_tertiary40">
                 </ImageView>
+
                 <FrameLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -194,7 +195,8 @@
 
             <FrameLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginStart="-24dp">
                 <ImageView
                     android:id="@+id/post_reacts_2"
                     android:layout_width="wrap_content"
@@ -218,7 +220,8 @@
             </FrameLayout>
             <FrameLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginStart="-24dp">
                 <ImageView
                     android:id="@+id/post_reacts_3"
                     android:layout_width="wrap_content"

@@ -8,6 +8,7 @@ import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.data.remote.FirestoreRepository
+import com.example.diecasthangar.domain.remote.getUser
 import kotlinx.coroutines.*
 
 class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
@@ -28,13 +29,7 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
         }
         else if (editing) {
             postBody.value = post!!.text
-            val remoteUris = post.images
-
-            val postPhotos = ArrayList<Photo>()
-            for (uri in remoteUris) run {
-                val photo = Photo(remoteUri = uri)
-                postPhotos.add(photo)
-            }
+            val postPhotos = post.images
             photoMutableLiveData.value = postPhotos
         }
     }
@@ -46,15 +41,9 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
         return photoMutableLiveData
     }
     fun addPhotos(photos: ArrayList<Photo>) {
-
-        if (photoMutableLiveData.value != null){
-            val newPhotoList = photoMutableLiveData.value
-            newPhotoList!!.addAll(photos)
-            photoMutableLiveData.value = newPhotoList!!
-        }
-        else {
-            photoMutableLiveData.value = photos
-        }
+        val newPhotoList = photoMutableLiveData.value?.let { ArrayList(it) } ?: arrayListOf()
+        newPhotoList!!.addAll(photos)
+        photoMutableLiveData.value = newPhotoList
     }
 
     fun addOrEditPost(editing: Boolean){
@@ -84,12 +73,10 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
                                 }
                             }
                         }
-
                     }
                     // waiting for all request to finish executing in parallel
                 }.awaitAll()
                 val remoteUris = ArrayList<Uri>()
-
 
                 for (photo in photos) {
                     remoteUris.add(Uri.parse(photo.remoteUri))
@@ -116,6 +103,23 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
                 is Response.Loading -> {
                 }
                 is Response.Success -> {
+                }
+                is Response.Failure -> {
+                    print(result.e)
+                }
+            }
+
+
+        }
+    }
+
+    fun addPost(post: Post){
+        CoroutineScope(Dispatchers.IO).launch {
+            when (val result = repository.addPost(post)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+
                 }
                 is Response.Failure -> {
                     print(result.e)

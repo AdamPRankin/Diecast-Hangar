@@ -41,11 +41,15 @@ class UserViewModel: ViewModel() {
         avatarUri.value = uri.toString()
     }
 
+    fun setUsername(username: String){
+        this.username = username
+    }
+
     fun getUserData() {
         user = Firebase.auth.currentUser
         CoroutineScope(Dispatchers.IO).launch {
 
-            when(val response = repository.getUserInfo(user!!.uid)) {
+            when(val response = user?.let { repository.getUserInfo(it.uid) }) {
                 is Response.Loading -> {
                 }
                 is Response.Success -> {
@@ -57,6 +61,7 @@ class UserViewModel: ViewModel() {
                 is Response.Failure -> {
                     print(response.e)
                 }
+                else -> {}
             }
         }
     }

@@ -28,22 +28,23 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
+import com.example.diecasthangar.core.util.loadDummy
 import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.data.model.Model
 import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.databinding.FragmentProfileBinding
 import com.example.diecasthangar.databinding.PopupAddFriendBinding
 import com.example.diecasthangar.databinding.PopupAddModelBinding
-import com.example.diecasthangar.ui.PostRecyclerAdapter
 import com.example.diecasthangar.domain.remote.getUser
-import com.example.diecasthangar.ui.AddPostFragment
-import com.example.diecasthangar.ui.UserViewModel
-import com.example.diecasthangar.ui.ViewPostFragment
+import com.example.diecasthangar.ui.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import me.shouheng.compress.Compress
+import me.shouheng.compress.concrete
+import me.shouheng.compress.strategy.config.ScaleMode
 import java.io.File
 
 
@@ -54,7 +55,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
     private var _binding: FragmentProfileBinding? = null
     // This property is only valid between onCreateView and
-// onDestroyView.
+   // onDestroyView.
     private val binding get() = _binding!!
 
 
@@ -84,6 +85,151 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val profileToggleFriends: Button = binding.profileBtnFriends
         val profileAddModelButton: FloatingActionButton = binding.profileBtnAddModel
         val profileAddFriendButton: FloatingActionButton = binding.profileBtnAddFriend
+
+        val photos = ArrayList<Photo>()
+        val modelPhotoLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK
+                && result.data != null
+            ) {
+                if (result.data!!.clipData != null) {
+                    // reset list
+                    val mClipData = result.data!!.clipData
+                    lifecycleScope.launch {
+                        for (i in 0 until mClipData!!.itemCount) {
+                            val item = mClipData.getItemAt(i)
+                            val imageUri = item.uri
+                            val compressedFile = Compress.with(requireContext(), imageUri)
+                                .setQuality(80)
+                                .concrete {
+                                    withMaxWidth(300f)
+                                    withMaxHeight(300f)
+                                    withScaleMode(ScaleMode.SCALE_HEIGHT)
+                                    withIgnoreIfSmaller(true)
+                                }.get()
+                            val compressedUri = Uri.fromFile(compressedFile)
+                            val photo = Photo(localUri = compressedUri, remoteUri = "")
+                            photos.add(photo)
+                            viewModel.addCurrentModelPhotos(arrayListOf(photo))
+                        }
+                    }
+                } else if (result.data!!.data != null) {
+                    val imageUri = result.data!!.data!!
+                    val compressedFile = Compress.with(requireContext(), imageUri)
+                        .setQuality(80)
+                        .concrete {
+                            withMaxWidth(300f)
+                            withMaxHeight(300f)
+                            withScaleMode(ScaleMode.SCALE_HEIGHT)
+                            withIgnoreIfSmaller(true)
+                        }.get()
+                    val compressedUri = Uri.fromFile(compressedFile)
+                    val photo = Photo(localUri = compressedUri, remoteUri = "")
+                    photos.add(photo)
+                    viewModel.addCurrentModelPhotos(arrayListOf(photo))
+                }
+            }
+        }
+
+        fun editModel(model: Model,editing: Boolean = true) {
+            val context = view.context
+            viewModel.clearCurrentModelPhotos()
+            if (editing) {
+                viewModel.addCurrentModelPhotos(model.photos)
+            }
+
+            val addModelPopupInflater: LayoutInflater  =
+                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val binding = PopupAddModelBinding.inflate(addModelPopupInflater)
+            val popup = PopupWindow(
+                binding.root,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.WRAP_CONTENT
+            )
+            // Closes the popup window when touch outside.
+            popup.isOutsideTouchable = true
+            popup.isFocusable = true
+
+            // Removes default background.
+            popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            // brand autocomplete
+            val autoCompleteBrand = binding.addModelAutocompleteBrand
+            val brands: Array<out String> = resources.getStringArray(R.array.brands_array)
+            autoCompleteBrand.setAdapter(ArrayAdapter(requireContext(),
+                android.R.layout.simple_list_item_1, brands).also { adapter ->
+                autoCompleteBrand.setAdapter(adapter)})
+
+            // scale autocomplete
+            val autoCompleteScale = binding.addModelAutocompleteScale
+            val scales: Array<out String> = resources.getStringArray(R.array.scales_array)
+            autoCompleteScale .setAdapter(ArrayAdapter(requireContext(),
+                android.R.layout.simple_list_item_1, scales).also { adapter ->
+                autoCompleteScale.setAdapter(adapter)})
+
+            binding.addModelImageView.setOnClickListener {
+                val intent =
+                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                modelPhotoLauncher.launch(intent)
+            }
+
+            val photoRecyclerView = binding.addModelRecyclerview
+            val photoAdapter = SideScrollImageRecyclerAdapter({ deletedPhoto ->
+                viewModel.addCurrentModelDeletedPhoto(deletedPhoto)
+            }, canDeleteItems = true)
+            photoRecyclerView.adapter = photoAdapter
+            photoRecyclerView.layoutManager = LinearLayoutManager(view.context,LinearLayoutManager.HORIZONTAL, false)
+
+            if (editing) {
+                autoCompleteScale.setText(model.scale)
+                binding.addModelAirlineEdittext.setText(model.airline)
+                binding.addModelFrameEdittext.setText(model.frame)
+                binding.addModelLiveryEdittext.setText(model.livery)
+                autoCompleteBrand.setText(model.manufacturer)
+                binding.modelRowCommentTextview.setText(model.comment)
+                photoAdapter.photos = model.photos
+            }
+
+            viewModel.getSelectedModelMutableLiveData().observe(viewLifecycleOwner) { photosList ->
+                photoAdapter.photos = photosList ?: arrayListOf()
+                photoAdapter.notifyDataSetChanged()
+            }
+
+            binding.addModelBtnAdd.text = resources.getString(R.string.edit)
+            binding.addModelBtnAdd.setOnClickListener {
+                val scale = autoCompleteScale.text.toString()
+                val airline = binding.addModelAirlineEdittext.text.toString()
+                val frame = binding.addModelFrameEdittext.text.toString()
+                val livery = binding.addModelLiveryEdittext.text.toString()
+                val brand = autoCompleteBrand.text.toString()
+                val comment = binding.modelRowCommentTextview.text.toString()
+
+                val newPhotos = viewModel.getCurrentNonDeletedPhotos()
+
+                if (editing) {
+                    val editedModel = Model(
+                        getUser()!!.uid, brand, brand, scale,
+                        frame, airline, livery, newPhotos, comment, 0, model.id
+                    )
+                    viewModel.updateModel(editedModel)
+                }
+                else{
+                    val model = Model(
+                        getUser()!!.uid, brand, brand, scale, frame, airline,
+                        livery, photos, comment, 0, null)
+                    viewModel.uploadModel(model)
+                    //todo add to dapta
+                    //modelAdapter.models.add(model)
+                    //modelAdapter.notifyItemInserted(modelAdapter.models.size -1)
+                }
+                //modelAdapter.models.add(model)
+                //modelAdapter.notifyItemInserted(modelAdapter.models.size -1)
+                popup.dismiss()
+            }
+            popup.showAsDropDown(profileImageView, 0, 0)
+        }
 
         profileLayout.setOnClickListener{
             //capture click to avoid clicking on background fragment
@@ -120,7 +266,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         postAdapter.posts.add(loadingPost)
 
         val modelsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_model_recycler)
-        val modelAdapter = ModelRecyclerAdapter()
+        val modelAdapter = ModelRecyclerAdapter(
+            //model edited
+            { model ->
+                editModel(model)
+                //todo update locally
+            },
+            //model deleted
+            { model ->
+                viewModel.deleteModel(model.id!!)
+            },
+        )
         val modelLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         modelsRecyclerView.layoutManager = modelLayoutManager
         modelsRecyclerView.adapter = modelAdapter
@@ -134,7 +290,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             },
             //decline friend button clicked
             { user ->
-                val uid = user.id
+                val token = user.requestToken
                 //TODO decline
 
             },
@@ -173,7 +329,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             modelsRecyclerView.visibility = View.GONE
             friendsRecyclerView.visibility = View.VISIBLE
             profileAddModelButton.visibility = View.GONE
-
             profileAddFriendButton.visibility = View.VISIBLE
         }
 
@@ -228,40 +383,16 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             }
         }
 
-        val photos = ArrayList<Photo>()
-        val modelPhotoLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK
-                && result.data != null
-            ) {
-                if (result.data!!.clipData != null) {
-                    // reset list
-                    val mClipData = result.data!!.clipData
-                    for (i in 0 until mClipData!!.itemCount) {
-                        val item = mClipData.getItemAt(i)
-                        val imageUri = item.uri
-                        val photo = Photo(localUri = imageUri, remoteUri = imageUri.toString())
-                        photos.add(photo)
-                    }
-                } else if (result.data!!.data != null) {
-                    val imageUri = result.data!!.data!!
-                    val photo = Photo(localUri = imageUri, remoteUri = imageUri.toString())
-                    photos.add(photo)
-                }
-            }
-        }
-
-
         profileAddModelButton.setOnClickListener {
             val context = view.context
+            viewModel.clearCurrentModelPhotos()
 
             val addModelPopupInflater: LayoutInflater  =
                 context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val binding = PopupAddModelBinding.inflate(addModelPopupInflater)
             val popup = PopupWindow(
                 binding.root,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.WRAP_CONTENT
             )
             // Closes the popup window when touch outside.
@@ -292,6 +423,20 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 modelPhotoLauncher.launch(intent)
             }
 
+
+            val photoRecyclerView = binding.addModelRecyclerview
+            val photoAdapter = SideScrollImageRecyclerAdapter({ deletedPhoto ->
+                viewModel.addCurrentModelDeletedPhoto(deletedPhoto)
+            },canDeleteItems = true)
+            photoRecyclerView.adapter = photoAdapter
+            photoRecyclerView.layoutManager = LinearLayoutManager(view.context,LinearLayoutManager.HORIZONTAL, false)
+
+            viewModel.getSelectedModelMutableLiveData().observe(viewLifecycleOwner) { photosList ->
+
+                photoAdapter.photos = photosList ?: arrayListOf()
+                photoAdapter.notifyDataSetChanged()
+            }
+
             binding.addModelBtnAdd.setOnClickListener {
                 val scale = autoCompleteScale.text.toString()
                 val airline = binding.addModelAirlineEdittext.text.toString()
@@ -300,14 +445,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 val brand = autoCompleteBrand.text.toString()
                 val comment = binding.modelRowCommentTextview.text.toString()
 
+                val newPhotos = viewModel.getCurrentNonDeletedPhotos()
+
                 val model = Model(
+                    getUser()!!.uid,
                     brand,
                     brand,
                     scale,
                     frame,
                     airline,
                     livery,
-                    photos,
+                    newPhotos,
                     comment,
                     0,
                     null)
@@ -318,8 +466,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             }
             popup.showAsDropDown(profileImageView, 0, 0)
         }
-
-
 
         //val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
         viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
@@ -396,7 +542,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     options.setDimmedLayerColor(Color.TRANSPARENT)
                     options.setToolbarWidgetColor(ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_tertiary60))
 
-
                     UCrop.of(imageUri,Uri.fromFile(croppedImgFile))
                         .withAspectRatio(1F, 1F)
                         .withMaxResultSize(200, 200)
@@ -405,9 +550,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
             }
         }
-
-
-
 
         if (profileUserId == getUser()!!.uid) {
             profileEditButton.visibility = View.VISIBLE
@@ -473,10 +615,12 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 userViewModel.setAvatarUri(resultUri)
             }
         } else if (resultCode == UCrop.RESULT_ERROR) {
-            val cropError: Throwable?  = data?.let { UCrop.getError(it) };
+            val cropError: Throwable?  = data?.let { UCrop.getError(it) }
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

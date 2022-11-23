@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class DashboardViewModel: ViewModel() {
-    val loadingPost = loadingDummyPost()
+    private val loadingPost = loadingDummyPost()
     var isLoading = true
     private var postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData(arrayListOf(loadingPost))
     private val repository = FirestoreRepository()

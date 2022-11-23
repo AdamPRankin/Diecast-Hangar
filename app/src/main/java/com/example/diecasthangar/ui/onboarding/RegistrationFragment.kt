@@ -11,12 +11,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.example.diecasthangar.core.util.NavigationHost
 import com.example.diecasthangar.R
 import com.example.diecasthangar.R.string
 import com.example.diecasthangar.databinding.FragmentRegisterBinding
 import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.ui.DashboardFragment
+import com.example.diecasthangar.ui.UserViewModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
@@ -32,9 +34,12 @@ class RegistrationFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+    val repository = FirestoreRepository()
+    val userViewModel: UserViewModel by activityViewModels()
+
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
         val view = binding.root
@@ -51,17 +56,8 @@ class RegistrationFragment : Fragment() {
         val usernameInput = view.findViewById<TextInputLayout>(R.id.reg_username_text_input)
         val usernameField = view.findViewById<EditText>(R.id.reg_username_edit_text)
 
-        // Set an error if the password is less than 8 characters.
-        registerButton.setOnClickListener {
-            if (!isPasswordValid(passwordField.text!!)) {
-                passwordInput.error = getString(string.invalid_password)
-            } else {
-                // Clear the error.
-                passwordInput.error = null
-                // Navigate to the next Fragment.
-                (activity as NavigationHost).navigateTo(DashboardFragment(), false)
-            }
-        }
+
+
 
         // Clear the error once more than 8 characters are typed.
         passwordField.setOnKeyListener { _, _, _ ->
@@ -81,7 +77,8 @@ class RegistrationFragment : Fragment() {
                 emailInput.error = "invalid email"
             }
             else {
-                registerUser(email,password,mAuth)
+                registerUser(email,password,username,mAuth)
+                userViewModel.setUsername(username)
 
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.container, DashboardFragment())
@@ -98,35 +95,29 @@ class RegistrationFragment : Fragment() {
         return view
     }
 
-    private fun registerUser(email: String, password: String,mAuth: FirebaseAuth) {
+    private fun registerUser(email: String, password: String,username: String,mAuth: FirebaseAuth) {
         activity?.let {
-            val storage: FirebaseStorage = FirebaseStorage.getInstance()
-            val db: FirebaseFirestore = Firebase.firestore
             mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(it) { task ->
                     if (task.isSuccessful) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "createUserWithEmail:success")
-                        val user = Firebase.auth.currentUser
+                        val user = Firebase.auth.currentUser!!
+                        val uid = user.uid
+                        repository.addUserInfoToDatabase(uid,"",username)
                         val profileUpdates = userProfileChangeRequest {
-                            val usernameField = view?.findViewById<EditText>(R.id.reg_username_edit_text)
-                            val displayName = usernameField!!.text.toString()
-                            val repository = FirestoreRepository(storage, db)
-                            repository.addUserInfoToDatabase(user!!.uid,"",displayName)
+
                         }
-                        user!!.updateProfile(profileUpdates).addOnCompleteListener { task ->
+                        user.updateProfile(profileUpdates).addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 Log.d(TAG, "User profile updated.")
                             }
                         }
-                        parentFragmentManager.beginTransaction()
-                            .replace(R.id.container, DashboardFragment())
-                            .commit()
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "createUserWithEmail:failure", task.exception)
                         val snackbar = Snackbar.make(requireView(), "failed to register user", Snackbar.LENGTH_LONG)
-                                snackbar.show()
+                        snackbar.show()
                     }
                 }
         }

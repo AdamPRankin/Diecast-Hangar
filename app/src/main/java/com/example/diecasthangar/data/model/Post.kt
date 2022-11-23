@@ -5,7 +5,7 @@ import java.util.Date
 
 class Post(
     var text: String = "",
-    var images: ArrayList<String> = arrayListOf(),
+    var images: ArrayList<Photo> = arrayListOf(),
     var user: String = getUser()!!.uid,
     var date: Date = Date(),
     var username: String = "",

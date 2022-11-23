@@ -69,8 +69,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
-                        android:textSize="24sp"
-                        android:hint="Bungus"/>
+                        android:textSize="24sp"/>
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/profile_title"

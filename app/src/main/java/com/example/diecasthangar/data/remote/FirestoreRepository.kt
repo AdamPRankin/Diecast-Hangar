@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Log
 import com.example.diecasthangar.core.util.commentMapToClass
 import com.example.diecasthangar.core.util.modelMapToClass
-import com.example.diecasthangar.data.*
+import com.example.diecasthangar.data.getReacts
 import com.example.diecasthangar.data.model.*
 import com.example.diecasthangar.domain.remote.getUser
 import com.google.android.gms.tasks.Tasks.await
@@ -21,8 +21,6 @@ import kotlinx.coroutines.tasks.await
 
 
 open class FirestoreRepository (
-
-    private val storage: FirebaseStorage = FirebaseStorage.getInstance(),
     private val db: FirebaseFirestore = Firebase.firestore,
 
     )  {
@@ -42,35 +40,6 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun getPostsFromFireStore(): Response<ArrayList<Post>> {
-
-        val posts =     db.collection("posts")
-            .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING).limit(10)
-            .get().await().documents
-
-        val postsList = arrayListOf<Post>()
-        for (post in posts){
-            val imageUris: ArrayList<String> = post.get("images") as ArrayList<String>
-            val text: String = post.get("text") as String
-            val timestamp: Timestamp = post.getTimestamp("date") as Timestamp
-            val user: String = post.get("user").toString()
-            val username : String = post.get("username").toString()
-            val avatar: String = post.get("avatar").toString()
-            val id = post.id
-            val comments: ArrayList<Comment> = ArrayList()
-            val reactions: MutableMap<String,Int> = post.get("reactions") as MutableMap<String, Int>
-
-            val newPost = Post(text, imageUris, user, timestamp.toDate(),username,avatar,id,comments,reactions)
-
-            postsList.add(newPost)
-        }
-
-        return try {
-            Response.Success(postsList)
-        } catch (e: Exception) {
-            Response.Failure(e)
-        }
-    }
 
     suspend fun getUserUsername(userId: String) : Response<String> {
         return try {
@@ -92,7 +61,6 @@ open class FirestoreRepository (
 
     suspend fun updateUserAvatar(imageUri: Uri, userId: String): Response<Uri> {
         return try {
-
             val remoteUri = FirebaseStorage.getInstance().reference.child(
                 "images/avatars").child("$userId.jpg").putFile(imageUri)
                 .await().storage.downloadUrl.await()
@@ -170,35 +138,40 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addPostToFirestore(text:String, remoteUris: ArrayList<Uri>, username: String, avatarUri: String?): Response<Boolean> {
-
+    suspend fun addPost(post: Post): Response<Boolean> {
         return try {
+            val remoteUris = arrayListOf<String>()
+            val localUris = arrayListOf<Uri>()
+            for (photo in post.images) {
+                photo.localUri?.let { localUris.add(it) }
+            }
             val rootRef = FirebaseDatabase.getInstance().reference
-            val avatar = avatarUri ?: ""
+            for (uri in localUris) {
+                val newPostKey = rootRef.ref.child("posts").push().key
+                val filename: String = newPostKey + "_"
+                val remoteUri = FirebaseStorage.getInstance().reference.child(
+                    "images/posts"
+                ).child("$filename.jpg").putFile(uri)
+                    .await().storage.downloadUrl.await()
+                remoteUris.add(remoteUri.toString())
+            }
 
-            val newPostKey = rootRef.ref.child("posts").push().key
-            val hashPost = hashMapOf(
-                "text" to text,
-                "id" to newPostKey,
+            val postsRef = db.collection("posts")
+
+            val hPost = hashMapOf(
+                "text" to post.text,
                 "images" to remoteUris,
-                "user" to getUser()!!.uid,
+                "user" to post.user,
                 "date" to FieldValue.serverTimestamp(),
-                "username" to username,
-                "avatar" to avatar,
+                "username" to post.username,
+                "avatar" to post.avatar,
                 "reactions" to getReacts()
-                //TODO add hashmap to Post class/ vice versa helper functions
             )
-            db.collection("posts").add(hashPost)
-                .addOnSuccessListener {
-                    Log.d(ContentValues.TAG, "post  added")
-                }.addOnFailureListener { e ->
-                    Log.e(ContentValues.TAG, "error adding document")
-                }
+            postsRef.add(hPost)
             Response.Success(true)
         } catch (e: Exception) {
             Response.Failure(e)
         }
-
     }
 
     suspend fun deletePostFromFirestore(pid: String): Response<Boolean> {
@@ -277,6 +250,8 @@ open class FirestoreRepository (
                 val avatar: String = post.get("avatar").toString()
                 val id = post.id
                 var comments: ArrayList<Comment>? = ArrayList()
+                val reactions: MutableMap<String, Int> =
+                    post.get("reactions") as MutableMap<String, Int>
                 when(val response = getTopRatedComments(post.id,8)) {
                     is Response.Loading -> {
                     }
@@ -288,11 +263,11 @@ open class FirestoreRepository (
                         print(response.e)
                     }
                 }
-                val reactions: MutableMap<String, Int> =
-                    post.get("reactions") as MutableMap<String, Int>
+
+                val photos: List<Photo> = imageUris.map { Photo(remoteUri = it) }
 
                 val newPost = Post(
-                    text, imageUris, user, timestamp.toDate(), username, avatar, id,
+                    text, photos as ArrayList<Photo>, user, timestamp.toDate(), username, avatar, id,
                     comments, reactions
                 )
                 postsList.add(newPost)
@@ -341,23 +316,14 @@ open class FirestoreRepository (
                 val username: String = post.get("username").toString()
                 val avatar: String = post.get("avatar").toString()
                 val id = post.id
-                var comments: ArrayList<Comment>? = ArrayList()
-                when(val response = getTopRatedComments(post.id,8)) {
-                    is Response.Loading -> {
-                    }
-                    is Response.Success -> {
-                        comments = response.data
-
-                    }
-                    is Response.Failure -> {
-                        print(response.e)
-                    }
-                }
+                val comments: ArrayList<Comment>? = ArrayList()
                 val reactions: MutableMap<String, Int> =
                     post.get("reactions") as MutableMap<String, Int>
 
+                val photos: List<Photo> = imageUris.map { Photo(remoteUri = it) }
+
                 val newPost = Post(
-                    text, imageUris, user, timestamp.toDate(), username, avatar, id,
+                    text, photos as ArrayList<Photo>, user, timestamp.toDate(), username, avatar, id,
                     comments, reactions
                 )
                 postsList.add(newPost)
@@ -426,7 +392,9 @@ open class FirestoreRepository (
                 if (documentSnapshot.documents.isNotEmpty()) {
                     queryCursor = documentSnapshot.documents[documentSnapshot.size() - 1]
                 } else if (documentSnapshot.documents.isEmpty()) {
-                    queryCursor = lastVisible!!
+                    if (lastVisible != null) {
+                        queryCursor = lastVisible
+                    }
                 }
             }.await()
 
@@ -510,7 +478,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addFriend(uid: String, friendId: String): Response<Boolean> {
+    fun addFriend(uid: String, friendId: String): Response<Boolean> {
         return try {
             val friendRef = db.collection("userfriends")
             friendRef.document(uid).update("friends", FieldValue.arrayUnion(friendId))
@@ -533,7 +501,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addFriendRequest(sender: String, recipient: String): Response<String> {
+    fun addFriendRequest(sender: String, recipient: String): Response<String> {
         return try {
             val hashRequest = hashMapOf(
                 "sender" to sender,
@@ -546,7 +514,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addFriendRequestToken(sender: String): Response<String> {
+    fun addFriendRequestToken(sender: String): Response<String> {
         return try {
             val hashRequest = hashMapOf(
                 "sender" to sender,
@@ -579,11 +547,12 @@ open class FirestoreRepository (
         return try {
             val remoteUris = arrayListOf<String>()
             val localUris = arrayListOf<Uri>()
+            //val files = arrayListOf<File>()
             for (photo in model.photos) {
                 localUris.add(photo.localUri!!)
+                //files.add(photo.file!!)
             }
             val rootRef = FirebaseDatabase.getInstance().reference
-
             for (uri in localUris) {
                 val newPostKey = rootRef.ref.child("models").push().key
                 val filename: String = newPostKey + "_"
@@ -593,6 +562,7 @@ open class FirestoreRepository (
                     .await().storage.downloadUrl.await()
                 remoteUris.add(remoteUri.toString())
             }
+
             val modelsRef = db.collection("models")
 
            val h = hashMapOf(
@@ -605,7 +575,7 @@ open class FirestoreRepository (
                "livery" to model.livery,
                "photos" to remoteUris,
                "price" to model.price,
-               "comment" to model.comment
+               "comment" to model.comment,
             )
 
             modelsRef.add(h)
@@ -631,21 +601,49 @@ open class FirestoreRepository (
 
     suspend fun deleteModel(modelId: String): Response<Boolean> {
         return try {
-            val images = db.collection("posts").document(modelId).get().await().data?.get("images") as ArrayList<String>
+
+            val images = (db.collection("posts").document(modelId).get().await().data?.get("images") ?: arrayListOf<String>()) as ArrayList<String>
 
             //todo more elegant solution
             for (uri in images) {
-                val id: String = uri.replace("https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F","").split(".jpg?")[0]
+                val id: String = uri.toString().replace(
+                    "https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F",
+                    ""
+                ).split(".jpg?")[0]
                 FirebaseStorage.getInstance().reference.child(
-                    "images/models/$id.jpg").delete()
+                    "images/models/$id.jpg"
+                ).delete()
             }
 
             val modelsRef = db.collection("models")
             modelsRef.document(modelId).delete()
+            Response.Success(true)
+        } catch (e: Exception) {
+            Response.Failure(e)
+        }
+    }
+
+    fun editFirestoreModel(model: Model) : Response<Boolean> {
+        return try {
+            val remoteUris = model.photos.map { it.remoteUri }
+
+            db.collection("models").document(model.id!!).update(
+                "user", getUser()!!.uid,
+                "manufacturer" , model.manufacturer,
+                "mould" , model.mould,
+                "scale" , model.scale,
+                "frame" , model.frame,
+                "airline" , model.airline,
+                "livery" , model.livery,
+                "photos" , remoteUris,
+                "price" , model.price,
+                "comment" , model.comment,
+            )
 
             Response.Success(true)
         } catch (e: Exception) {
             Response.Failure(e)
+
         }
     }
 

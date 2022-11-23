@@ -1,16 +1,30 @@
 package com.example.diecasthangar.ui.profile
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.util.TypedValue
+import android.view.*
+import android.widget.PopupWindow
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.data.model.Model
+import com.example.diecasthangar.data.model.Post
+import com.example.diecasthangar.databinding.PopupEditPostBinding
+import com.example.diecasthangar.databinding.PopupViewModelPhotosBinding
 import com.example.diecasthangar.databinding.RecyclerModelRowLayoutBinding
+import com.example.diecasthangar.domain.remote.getUser
+import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
+import kotlin.math.roundToInt
 
-class ModelRecyclerAdapter: RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder>() {
+class ModelRecyclerAdapter(
+    private val onItemEdited: (Model) -> Unit,
+    private val onItemDeleted: (Model) -> Unit,
+): RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder>() {
     var models = ArrayList<Model>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -18,19 +32,17 @@ class ModelRecyclerAdapter: RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder
         return ViewHolder(rowBinding)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val model = models[position]
-        var currentImagePosition = 0
-        if (model.photos.size > 0) {
 
-            Glide.with(holder.itemView.context).load(model.photos[currentImagePosition].remoteUri)
+        if (model.photos.size > 0) {
+            Glide.with(holder.itemView.context).load(model.photos[0].remoteUri)
                 .placeholder(R.drawable.airplane)
                 .into(holder.modelPhotoImageView)
         }
         else {
             holder.modelPhotoImageView.visibility = View.GONE
-            holder.rightImageButton.visibility = View.GONE
-            holder.leftImageButton.visibility = View.GONE
         }
 
         holder.modelComment.text = model.comment
@@ -51,27 +63,8 @@ class ModelRecyclerAdapter: RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder
             }
         }
 
-
-
-        if (model.photos.size < 2) {
-            holder.leftImageButton.visibility = View.GONE
-            holder.rightImageButton.visibility = View.GONE
-        }
-        else {
-            holder.leftImageButton.setOnClickListener {
-                if (currentImagePosition == 0){
-                    currentImagePosition = model.photos.size-1
-                }
-                else{
-                    currentImagePosition -=1
-                }
-                val imageUri: Uri = Uri.parse(model.photos[currentImagePosition].remoteUri)
-                Glide.with(holder.itemView.context)
-                    .load(imageUri)
-                    .into(holder.modelPhotoImageView)
-
-            }
-            holder.rightImageButton.setOnClickListener {
+/*        if (model.photos.size > 1) {
+            holder.modelPhotoImageView.setOnClickListener {
                 if (currentImagePosition == model.photos.size-1){
                     currentImagePosition = 0
                 }
@@ -83,8 +76,76 @@ class ModelRecyclerAdapter: RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder
                     .load(imageUri)
                     .into(holder.modelPhotoImageView)
             }
+        }*/
+
+        if (model.userID == getUser()?.uid) {
+            holder.modelEditPopup.visibility = View.VISIBLE
+            holder.modelEditPopup.setOnClickListener {
+                val context = holder.itemView.context
+                val inflater: LayoutInflater  =
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val binding = PopupEditPostBinding.inflate(inflater)
+                val popup = PopupWindow(
+                    binding.root,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                )
+                // Closes the popup window when touch outside.
+                popup.isOutsideTouchable = true
+                popup.isFocusable = true
+                // Removes default background.
+                popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+                popup.showAsDropDown(holder.modelEditPopup, 0, 0)
+
+                //TODO make sure displays onscreen
+                //check if the popup is below the screen, if so, adjust upwards
+
+                binding.postOptionsBtnDelete.setOnClickListener {
+                    onItemDeleted(model)
+                    models.removeAt(position)
+                    notifyItemRemoved(position)
+                    notifyItemRangeChanged(position,models.size)
+                    popup.dismiss()
+                }
+                binding.postOptionsBtnEdit.setOnClickListener {
+                    onItemEdited(model)
+                    popup.dismiss()
+                }
+            }
         }
 
+        if (model.photos.size > 1) {
+            holder.modelPhotoImageView.setOnClickListener {
+                val context = holder.itemView.context
+                val inflater: LayoutInflater  =
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val binding = PopupViewModelPhotosBinding.inflate(inflater)
+                val popup = PopupWindow(
+                    binding.root,
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT
+
+                )
+                popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+                val photoRecyclerView = binding.modelPopupRecyclerview
+                val photoAdapter = SideScrollImageRecyclerAdapter({ _ ->
+                    //display only mode
+                },false)
+                photoRecyclerView.adapter = photoAdapter
+                photoRecyclerView.layoutManager = LinearLayoutManager(holder.itemView.context,
+                    LinearLayoutManager.HORIZONTAL, false)
+                photoAdapter.photos = model.photos
+                popup.showAtLocation(holder.itemView, Gravity.CENTER, 0, 0)
+
+
+
+                binding.modelPopupExit.setOnClickListener {
+                    popup.dismiss()
+                }
+            }
+        }
     }
 
     inner class ViewHolder(binding: RecyclerModelRowLayoutBinding): RecyclerView.ViewHolder(binding.root),
@@ -95,11 +156,9 @@ class ModelRecyclerAdapter: RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder
         val modelLivery = binding.modelRowLiveryTextview
         val modelTitle = binding.modelRowTitleTextview
 
-
-        val leftImageButton = binding.modelRowBtnImgLeft
-        val rightImageButton = binding.modelRowBtnImgRight
         val modelPhotoImageView = binding.modelRowImageView
         val modelBrandIcon = binding.modelRowBrandIcon
+        val modelEditPopup = binding.modelRowBtnEditPopup
 
 
         init {

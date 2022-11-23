@@ -108,4 +108,10 @@
     <string name="comment_colon">Comment:</string>
     <string name="livery_colon">Livery</string>
     <string name="brand_colon">Brand:</string>
+    <string name="accept">accept</string>
+    <string name="decline">decline</string>
+    <string name="brand_logo">brand logo</string>
+    <string name="send_this_code_to_a_friend">Send this code to a friend</string>
+    <string name="frame_colon">Frame:</string>
+    <string name="close">close</string>
 </resources>

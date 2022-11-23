@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.core.util.parseDate
+import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.databinding.FragmentViewPostBinding
 
@@ -27,15 +28,11 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
     private val dashViewModel: DashboardViewModel by viewModels()
     private val currentPost = post
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentViewPostBinding.inflate(inflater, container, false)
         val view = binding.root
 
@@ -44,37 +41,47 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
         val bodyTextView: TextView = binding.viewPostBody
         val userTextView: TextView = binding.viewPostUsername
         val picImageview: ImageView = binding.viewPostPicture
-        val postImageHolder: LinearLayout = binding.viewPostPhotoContainer
-        val leftImageButton: Button = binding.btnViewPostImgLeft
-        val rightImageButton: Button = binding.btnViewPostImgRight
         val commentRecyclerView: RecyclerView = binding.viewPostCommentRecycler
 
         val addCommentButton: Button = binding.viewPostCommentButton
         val commentEditText = binding.viewPostCommentEditText
+        val photoRecyclerView = binding.viewPostPhotoRecycler
 
         Glide.with(requireContext())
             .load(currentPost.avatar)
             .placeholder(R.drawable.ic_airplane_black_48dp)
             .into(avatarImageView)
-
-        Glide.with(requireContext())
-            .load(currentPost.images[0])
-            .placeholder(R.drawable.ic_airplane_black_48dp)
-            .into(picImageview)
-
-        //TODO add sice scroller adpater to show dem images
-        rightImageButton.visibility = View.GONE
-        leftImageButton.visibility = View.GONE
-
         userTextView.text = currentPost.username
         dateTextView.text = parseDate(currentPost.date)
         bodyTextView.text = currentPost.text
 
+        if (currentPost.images.size == 0){
+            photoRecyclerView.visibility = View.GONE
+            picImageview.visibility = View.GONE
+        }
+        if (currentPost.images.size == 1) {
+            photoRecyclerView.visibility = View.GONE
+            picImageview.visibility = View.VISIBLE
+            Glide.with(requireContext())
+                .load(currentPost.images[0].remoteUri)
+                .placeholder(R.drawable.ic_airplane_black_48dp)
+                .into(picImageview)
+        }
+        else {
+            picImageview.visibility = View.GONE
+            photoRecyclerView.visibility = View.VISIBLE
+            val photoAdapter = SideScrollImageRecyclerAdapter({ _ ->
+                //not deleting items
+            }, false)
+            photoRecyclerView.adapter = photoAdapter
+            photoRecyclerView.layoutManager = LinearLayoutManager(view.context,LinearLayoutManager.HORIZONTAL, false)
+
+            photoAdapter.photos = currentPost.images
+        }
+
         val commentAdapter = CommentRecyclerAdapter()
-
-
-        val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
-        commentRecyclerView.layoutManager = postLayoutManager
+        val commentLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
+        commentRecyclerView.layoutManager = commentLayoutManager
         commentRecyclerView.adapter = commentAdapter
 
         dashViewModel.loadComments(currentPost.id)

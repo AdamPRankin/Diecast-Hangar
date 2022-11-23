@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="270dp">
-
+    android:layout_width="match_parent"
+    android:layout_height="270dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal">
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/photo_delete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:backgroundTint="@android:color/transparent"
+            app:rippleColor="@android:color/transparent"
+            android:contentDescription="@string/close"
+            android:src="@drawable/trash_can"
+            android:layout_gravity="end"
+            android:outlineProvider="none"
+            app:tint="@color/material_dynamic_tertiary60"
+            android:gravity="end">
+        </com.google.android.material.floatingactionbutton.FloatingActionButton>
         <ImageView
             android:id="@+id/add_post_row_image"
             android:layout_width="match_parent"
@@ -12,5 +26,5 @@
             android:scaleType="fitCenter"
             tools:ignore="ContentDescription"
             android:adjustViewBounds="true" />
+</com.google.android.material.card.MaterialCardView>
 
-</LinearLayout>

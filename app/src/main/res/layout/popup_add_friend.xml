@@ -19,12 +19,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 
-        android:text="Send this code to a friend " />
+        android:text="@string/send_this_code_to_a_friend" />
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/add_friend_code_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="IuCf7IRMOmbgSzZwsrI9rHYsNFk1"
         android:textSize="24sp"/>
     </LinearLayout>
 

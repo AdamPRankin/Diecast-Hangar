@@ -25,8 +25,12 @@ import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.databinding.FragmentAddPostBinding
 import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.data.remote.FirestoreRepository
+import com.example.diecasthangar.domain.remote.getUser
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
+import me.shouheng.compress.Compress
+import me.shouheng.compress.concrete
+import me.shouheng.compress.strategy.config.ScaleMode
 
 
 class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment() {
@@ -66,8 +70,6 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
 
         val localUris: ArrayList<Uri> = ArrayList()
 
-        val repository = FirestoreRepository()
-
         val addPhotoButton: FloatingActionButton = view.findViewById(R.id.add_post_btn_add_images)
         val confirmButton: Button = view.findViewById(R.id.add_post_btn_add)
         if (editing){
@@ -80,18 +82,18 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
         val addPostProgressBar: ProgressBar = view.findViewById(R.id.add_post_progress_bar)
         val addImageLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(
             view.context,LinearLayoutManager.HORIZONTAL, false)
-        val addImageAdapter = SideScrollImageRecyclerAdapter()
+        val addImageAdapter = SideScrollImageRecyclerAdapter(
+            // photo deleted
+            { photo ->
+            photos.remove(photo)
+        },canDeleteItems = true)
         addImageRecyclerView.layoutManager = addImageLayoutManager
         addImageRecyclerView.adapter = addImageAdapter
 
         if (editing){
-            for (uri in currentPost!!.images) {
-                val photo = Photo(remoteUri = uri)
-                photos.add(photo)
-            }
+            photos.addAll(currentPost!!.images)
             addImageAdapter.photos = photos
             addImageAdapter.notifyDataSetChanged()
-
         }
 
         viewModel.getPostBodyMutableLiveData().observe(viewLifecycleOwner) { text->
@@ -99,7 +101,6 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
         }
         viewModel.getPhotoMutableLiveData().observe(viewLifecycleOwner) {
             //photos = it
-
             addImageAdapter.photos = it
             addImageAdapter.notifyDataSetChanged()
         }
@@ -117,15 +118,33 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
                     for (i in 0 until mClipData!!.itemCount) {
                         val item = mClipData.getItemAt(i)
                         val imageUri = item.uri
-                        val photo = Photo(localUri = imageUri)
+                        val compressedFile = Compress.with(requireContext(), imageUri)
+                            .setQuality(80)
+                            .concrete {
+                                withMaxWidth(300f)
+                                withMaxHeight(300f)
+                                withScaleMode(ScaleMode.SCALE_HEIGHT)
+                                withIgnoreIfSmaller(true)
+                            }.get()
+                        val compressedUri = Uri.fromFile(compressedFile)
+                        val photo = Photo(remoteUri = "", localUri = compressedUri)
                         photos.add(photo)
-                        localUris.add(imageUri)
+                        localUris.add(compressedUri)
                     }
                 } else if (result.data!!.data != null) {
                     val imageUri = result.data!!.data
-                    val photo = Photo(localUri = imageUri)
+                    val compressedFile = Compress.with(requireContext(), imageUri!!)
+                        .setQuality(80)
+                        .concrete {
+                            withMaxWidth(300f)
+                            withMaxHeight(300f)
+                            withScaleMode(ScaleMode.SCALE_HEIGHT)
+                            withIgnoreIfSmaller(true)
+                        }.get()
+                    val compressedUri = Uri.fromFile(compressedFile)
+                    val photo = Photo(localUri = compressedUri)
                     photos.add(photo)
-                    localUris.add(imageUri!!)
+                    localUris.add(compressedUri)
                 }
                 viewModel.addPhotos(photos)
                 addImageAdapter.photos = viewModel.getPhotoMutableLiveData().value!!
@@ -150,56 +169,11 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
             else {
                 addPostProgressBar.visibility = View.VISIBLE
                 val text = postBodyEditText.text.toString()
-                val remoteUris = arrayListOf<Uri>()
+                val photos = addImageAdapter.photos
 
-                //TODO move to viewmodel
-                CoroutineScope(Dispatchers.IO).launch {
-                    if (localUris.isNotEmpty()) {
-
-                        localUris.map { uri ->
-                            async(Dispatchers.IO) {
-                                when (val result = repository.addImageToStorage(uri)) {
-                                    is Response.Loading -> {
-                                    }
-                                    is Response.Success -> {
-                                        val remoteUri = result.data!!
-                                        remoteUris.add(remoteUri)
-                                    }
-                                    is Response.Failure -> {
-                                        print(result.e)
-                                    }
-                                }
-
-                            }
-                            // waiting for all request to finish executing in parallel
-                        }.awaitAll()
-
-                        when (val result = repository.addPostToFirestore(text, remoteUris,username,avatarUri)) {
-                            is Response.Loading -> {
-                            }
-                            is Response.Success -> {
-                                parentFragmentManager.popBackStack()
-                                //dashboardViewModel.loadMorePosts(number = 1)
-                            }
-                            is Response.Failure -> {
-                                print(result.e)
-                            }
-                        }
-                    } else if (localUris.isEmpty()) {
-                        when (val result = repository.addPostToFirestore(text, remoteUris,username,avatarUri)) {
-                            is Response.Loading -> {
-                            }
-                            is Response.Success -> {
-                                parentFragmentManager.popBackStack()
-                                //dashboardViewModel.loadMorePosts(number = 1)
-                            }
-                            is Response.Failure -> {
-                                print(result.e)
-                            }
-                        }
-                    }
-                }
-
+                viewModel.addPost(Post(text = text, images = photos, avatar = avatarUri!!,
+                    username = username, user = getUser()!!.uid))
+                parentFragmentManager.popBackStack()
             }
         }
         cancelButton.setOnClickListener {

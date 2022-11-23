@@ -6,14 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.diecasthangar.data.model.Model
+import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.data.model.User
-import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.data.remote.FirestoreRepository
+import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.domain.remote.getUser
 import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.*
-import kotlin.collections.ArrayList
 
 
 class ProfileViewModel(uid: String) : ViewModel() {
@@ -31,6 +31,10 @@ class ProfileViewModel(uid: String) : ViewModel() {
     val username :MutableLiveData<String> = MutableLiveData("")
     private val token :MutableLiveData<String> = MutableLiveData("")
     private var addFriendFromTokenResponse :MutableLiveData<String> = MutableLiveData("")
+
+    private val currentModelPhotosMutableLiveData: MutableLiveData<ArrayList<Photo>> = MutableLiveData()
+    private val currentModelDeletedPhotosMutableLiveData: MutableLiveData<ArrayList<Photo>> = MutableLiveData()
+
 
     init {
         loadUserBio()
@@ -71,6 +75,37 @@ class ProfileViewModel(uid: String) : ViewModel() {
     }
     fun getAddFriendFromTokenResponseMutableLiveData(): MutableLiveData<String> {
         return addFriendFromTokenResponse
+    }
+
+    fun getSelectedModelMutableLiveData(): MutableLiveData<ArrayList<Photo>> {
+        return currentModelPhotosMutableLiveData
+    }
+
+    fun getCurrentModelDeletedPhotosMutableLiveData(): MutableLiveData<ArrayList<Photo>> {
+        return currentModelDeletedPhotosMutableLiveData
+    }
+
+    fun addCurrentModelDeletedPhoto(photo: Photo){
+        val newDeletedModels = currentModelDeletedPhotosMutableLiveData.value?.let { ArrayList(it) } ?: arrayListOf()
+        newDeletedModels.add(photo)
+        currentModelDeletedPhotosMutableLiveData.value
+    }
+
+    fun addCurrentModelPhotos(photos: ArrayList<Photo>){
+        val newPhotos = currentModelPhotosMutableLiveData.value?.let { ArrayList(it) } ?: arrayListOf()
+        newPhotos.addAll(photos)
+        currentModelPhotosMutableLiveData.value = newPhotos
+
+    }
+    fun clearCurrentModelPhotos(){
+        currentModelPhotosMutableLiveData.value = arrayListOf()
+        currentModelDeletedPhotosMutableLiveData.value = arrayListOf()
+    }
+
+    fun getCurrentNonDeletedPhotos(): ArrayList<Photo> {
+        val photos =  currentModelPhotosMutableLiveData.value?.let { ArrayList(it) } ?: arrayListOf()
+        currentModelDeletedPhotosMutableLiveData.value?.let { photos.removeAll(it.toSet()) }
+        return photos
     }
 
     private fun initialLoad(){
@@ -305,6 +340,40 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
                 }
             }
+        }
+    }
+
+    fun deleteModel(mid: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            repository.deleteModel(mid)
+        }
+    }
+
+    fun updateModel(model: Model) {
+        val photos = model.photos
+        CoroutineScope(Dispatchers.IO).launch {
+            photos.map { photo ->
+                async(Dispatchers.IO) {
+                    //add photo to database iff it is not already there
+                    if (photo.remoteUri == "") {
+                        when (val result = repository.addImageToStorage(photo.localUri!!)) {
+                            is Response.Loading -> {
+                            }
+                            is Response.Success -> {
+                                val remoteUri = result.data!!
+                                photo.remoteUri = remoteUri.toString()
+                            }
+                            is Response.Failure -> {
+                                print(result.e)
+                            }
+                        }
+                    }
+                }
+                // waiting for all request to finish executing in parallel
+            }.awaitAll()
+            val remoteUris = ArrayList<Uri>()
+            model.photos = photos
+            repository.editFirestoreModel(model)
         }
     }
 

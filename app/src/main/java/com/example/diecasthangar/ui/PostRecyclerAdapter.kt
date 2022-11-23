@@ -16,6 +16,7 @@ import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
+import com.example.diecasthangar.core.util.TransparentGradientImageView
 import com.example.diecasthangar.core.util.parseDate
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
@@ -82,7 +83,7 @@ class PostRecyclerAdapter(
         }
 
         if (post.images.isNotEmpty()){
-            val firstImageUri: Uri = Uri.parse(post.images[0])
+            val firstImageUri: Uri = Uri.parse(post.images[0].remoteUri)
             Glide.with(holder.itemView.context).load(firstImageUri).into(holder.picImageview)
         }
         if (post.images.isEmpty()){
@@ -105,7 +106,7 @@ class PostRecyclerAdapter(
                 else{
                     currentImagePosition -=1
                 }
-                val imageUri: Uri = Uri.parse(post.images[currentImagePosition])
+                val imageUri: Uri = Uri.parse(post.images[currentImagePosition].remoteUri)
                 Glide.with(holder.itemView.context).load(imageUri).into(holder.picImageview)
 
             }
@@ -116,7 +117,7 @@ class PostRecyclerAdapter(
                 else{
                     currentImagePosition +=1
                 }
-                val imageUri: Uri = Uri.parse(post.images[currentImagePosition])
+                val imageUri: Uri = Uri.parse(post.images[currentImagePosition].remoteUri)
                 Glide.with(holder.itemView.context).load(imageUri).into(holder.picImageview)
             }
         }
@@ -189,52 +190,6 @@ class PostRecyclerAdapter(
 
         holder.commentButton.setOnClickListener {
             onCommentBtnClicked(post)
-/*            val context = holder.itemView.context
-            val inflater: LayoutInflater  =
-                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            val binding = PopupAddCommentBinding.inflate(inflater)
-            val popup = PopupWindow(
-                binding.root,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT
-            )
-            // Closes the popup window when touch outside.
-            popup.isOutsideTouchable = true
-            popup.isFocusable = true
-            // Removes default background.
-            popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-            binding.postAddCommentButton.setOnClickListener {
-                val commentText = binding.postAddCommentEditText.text.toString()
-                val user = getUser()
-                val username = user!!.uid
-                CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addFirestoreComment(post.id,commentText, username)
-                }
-                popup.dismiss()
-            }
-
-                popup.showAsDropDown(holder.commentButton, 0, 0)
-
-                //check if the popup is below the screen, if so, adjust upwards
-                val displayMetrics = context.resources.displayMetrics
-                val height = displayMetrics.heightPixels
-
-                val values = IntArray(2)
-                holder.commentButton.getLocationOnScreen(values)
-                val positionOfIcon = values[1]
-
-                // adjust for window padding
-                val px =
-                    TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f,
-                        context.resources.displayMetrics).roundToInt()
-
-                //adjust popup upwards by 2 button heights so that it displays above the comment button
-                if (positionOfIcon >= (height - (holder.commentButton.height * 2) - px)) {
-                    val yOffset =  (-3 * holder.commentButton.height) + px
-                    popup.update(holder.commentButton, 0, yOffset, popup.width, popup.height)
-                }*/
-
         }
         val reacts: Map<String,Int> = post.reactions
 
@@ -341,7 +296,6 @@ class PostRecyclerAdapter(
 
         private var view: View = binding.root
 
-        //todo use binding
         val dateTextView: TextView = binding.postDate
         val avatarImageView: ImageView = binding.postAvatar
         val bodyTextView: TextView = binding.postBody
@@ -354,14 +308,12 @@ class PostRecyclerAdapter(
         val commentButton: Button = binding.postBtnComment
         val reactButton: Button = binding.postBtnReact
         val editPostPopupButton: FloatingActionButton = binding.postBtnEditPopup
-
-        val reactIcon1: ImageView = view.findViewById(R.id.post_reacts_1)
-        val reactIcon2: ImageView = view.findViewById(R.id.post_reacts_2)
-        val reactIcon3: ImageView = view.findViewById(R.id.post_reacts_3)
-        val reactNumber1: TextView = view.findViewById(R.id.post_reaction1_number)
-        val reactNumber2: TextView = view.findViewById(R.id.post_reaction2_number)
-        val reactNumber3: TextView = view.findViewById(R.id.post_reaction3_number)
-
+        val reactIcon1: ImageView = binding.postReacts1
+        val reactIcon2: ImageView = binding.postReacts2
+        val reactIcon3: ImageView = binding.postReacts3
+        val reactNumber1: TextView = binding.postReaction1Number
+        val reactNumber2: TextView = binding.postReaction2Number
+        val reactNumber3: TextView = binding.postReaction3Number
 
         init {
             view.setOnClickListener(this)

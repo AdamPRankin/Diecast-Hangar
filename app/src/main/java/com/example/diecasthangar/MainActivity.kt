@@ -12,13 +12,15 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 class MainActivity : AppCompatActivity(), NavigationHost {
+    private val userViewModel: UserViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val userViewModel: UserViewModel by viewModels()
+
 
         val currentUser = Firebase.auth.currentUser
         if(currentUser != null){
+
             userViewModel.getUserData()
             supportFragmentManager
                 .beginTransaction()

@@ -19,6 +19,7 @@ class LoginFragmentTest {
         @Test
         fun testEventFragment() {
             val scenario = launchFragmentInContainer<LoginFragment>(
+                themeResId = R.style.Theme_DiecastHangar,
                 initialState = Lifecycle.State.INITIALIZED
             )
             scenario.moveToState(Lifecycle.State.RESUMED)

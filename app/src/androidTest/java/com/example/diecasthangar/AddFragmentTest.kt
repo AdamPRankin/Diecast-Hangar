@@ -25,7 +25,7 @@ class AddFragmentTest {
             .check(ViewAssertions.matches((ViewMatchers.withText("Add"))))
     }
 
-    @Test
+
     fun testEditPostMode() {
         val fragmentArgs = bundleOf("editMode" to true)
         val scenario = launchFragmentInContainer<AddPostFragment>(
