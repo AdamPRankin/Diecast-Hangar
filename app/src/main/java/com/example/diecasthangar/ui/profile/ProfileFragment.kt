@@ -1,7 +1,6 @@
 package com.example.diecasthangar.ui.profile
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
@@ -23,15 +22,16 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
-import com.example.diecasthangar.core.util.loadDummy
 import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.data.model.Model
 import com.example.diecasthangar.data.model.Photo
+import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.databinding.FragmentProfileBinding
 import com.example.diecasthangar.databinding.PopupAddFriendBinding
 import com.example.diecasthangar.databinding.PopupAddModelBinding
@@ -220,12 +220,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                         getUser()!!.uid, brand, brand, scale, frame, airline,
                         livery, photos, comment, 0, null)
                     viewModel.uploadModel(model)
-                    //todo add to dapta
-                    //modelAdapter.models.add(model)
-                    //modelAdapter.notifyItemInserted(modelAdapter.models.size -1)
                 }
-                //modelAdapter.models.add(model)
-                //modelAdapter.notifyItemInserted(modelAdapter.models.size -1)
                 popup.dismiss()
             }
             popup.showAsDropDown(profileImageView, 0, 0)
@@ -256,6 +251,10 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 parentFragmentManager.beginTransaction()
                     .add(R.id.container, ViewPostFragment(post)).addToBackStack("home")
                     .commit()
+            },
+            { pair ->
+                val (reaction, pid) = pair
+                viewModel.addReact(reaction, pid)
             })
         val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
@@ -268,9 +267,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val modelsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_model_recycler)
         val modelAdapter = ModelRecyclerAdapter(
             //model edited
-            { model ->
+            { model, _ ->
                 editModel(model)
-                //todo update locally
             },
             //model deleted
             { model ->
@@ -460,38 +458,88 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     0,
                     null)
                 viewModel.uploadModel(model)
-                modelAdapter.models.add(model)
-                modelAdapter.notifyItemInserted(modelAdapter.models.size -1)
                 popup.dismiss()
             }
             popup.showAsDropDown(profileImageView, 0, 0)
         }
 
-        //val viewModel =  ViewModelProvider(this)[ProfileViewModel::class.java]
-        viewModel.getPostMutableLiveData().observe(viewLifecycleOwner) { postList ->
-            if (loading) {
-                loading = false
-                //remove loading Ui elements
-                postAdapter.posts.removeAt(0)
-                postAdapter.notifyItemRemoved(0)
+
+        viewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val posts = result.data
+                    postAdapter.posts = posts ?: arrayListOf()
+                    postAdapter.notifyDataSetChanged()
+                    //TODO diffutil
+                }
+
+                is Response.Failure -> {
+                    //todo toast
+                }
             }
-            // update UI
-            postAdapter.notifyItemRemoved(0)
-            val prevSize = postAdapter.posts.size
-            postAdapter.posts = postList
-            //X previous posts, so we want to update from index X onwards
-            postAdapter.notifyItemRangeChanged(prevSize,postAdapter.itemCount)
+        }
+
+        viewModel.fetchModels.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val models = result.data
+                    modelAdapter.models = models  ?: arrayListOf()
+                    modelAdapter.notifyDataSetChanged()
+                    //TODO diffutil
+                }
+
+                is Response.Failure -> {
+                    //todo toast
+                }
+            }
+        }
+
+        //only grab friend requests if user is on their own profile
+        if (profileUserId == getUser()!!.uid) {
+            viewModel.fetchFriendsAndRequests.observe(viewLifecycleOwner) { result ->
+                when (result) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        val users = result.data
+                        friendRecyclerAdapter.users = users ?: arrayListOf()
+                        modelAdapter.notifyDataSetChanged()
+                        //TODO diffutil
+                    }
+
+                    is Response.Failure -> {
+                        //todo toast
+                    }
+                }
+            }
+        }
+        else {
+            //different user, just grab friends
+            viewModel.fetchFriends.observe(viewLifecycleOwner) { result ->
+                when (result) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        val users = result.data
+                        friendRecyclerAdapter.users = users ?: arrayListOf()
+                        modelAdapter.notifyDataSetChanged()
+                        //TODO diffutil
+                    }
+
+                    is Response.Failure -> {
+                        //todo toast
+                    }
+                }
+            }
         }
 
         viewModel.getFriendsMutableLiveData().observe(viewLifecycleOwner) { friendsList ->
             friendRecyclerAdapter.users = friendsList
             friendRecyclerAdapter.notifyDataSetChanged()
-
-        }
-
-        viewModel.getModelsMutableLiveData().observe(viewLifecycleOwner) { modelsList ->
-            modelAdapter.models = modelsList ?: arrayListOf()
-            modelAdapter.notifyDataSetChanged()
         }
 
         viewModel.getUserBioMutableLiveData().observe(viewLifecycleOwner) { bio->
@@ -507,13 +555,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             }
         }
 
-        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (!recyclerView.canScrollVertically(1) && dy > 0 && viewModel.postsLoading) {
-                    viewModel.loadMorePosts()
-                }
-            }
-        })
         val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->

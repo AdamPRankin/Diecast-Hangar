@@ -113,24 +113,6 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
         }
     }
 
-    fun addPost(post: Post){
-        CoroutineScope(Dispatchers.IO).launch {
-            when (val result = repository.addPost(post)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-
-                }
-                is Response.Failure -> {
-                    print(result.e)
-                }
-            }
-
-
-        }
-    }
-
-
     //use this to create a viewModel with uid parameter
     class Factory(private val post: Post? = null, private val editing: Boolean) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")

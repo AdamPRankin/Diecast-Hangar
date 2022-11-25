@@ -114,4 +114,17 @@
     <string name="send_this_code_to_a_friend">Send this code to a friend</string>
     <string name="frame_colon">Frame:</string>
     <string name="close">close</string>
+    <string name="trash_can_reaction">trash can reaction</string>
+    <string name="fire_reaction">fire reaction</string>
+    <string name="walking_reaction">walking reaction</string>
+    <string name="takeoff_reaction">takeoff reaction</string>
+    <string name="landing_reaction">landing reaction</string>
+    <string name="plane_reaction">plane reaction</string>
+    <string name="reaction">reaction</string>
+    <string name="trash">trash</string>
+    <string name="fire">fire</string>
+    <string name="walking">walking</string>
+    <string name="takeoff">takeoff</string>
+    <string name="landing">landing</string>
+    <string name="plane">plane</string>
 </resources>

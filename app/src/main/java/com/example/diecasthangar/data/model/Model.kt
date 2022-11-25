@@ -1,6 +1,6 @@
 package com.example.diecasthangar.data.model
 
-open class Model(
+data class Model(
     val userID: String,
     val manufacturer: String,
     val mould: String = manufacturer,

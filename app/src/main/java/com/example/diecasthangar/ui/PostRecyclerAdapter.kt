@@ -1,5 +1,9 @@
 package com.example.diecasthangar.ui
 
+import android.R.attr.animationDuration
+import android.R.id.toggle
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
@@ -7,25 +11,26 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.os.CountDownTimer
 import android.util.TypedValue
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.*
 import android.widget.*
+import androidx.core.view.iterator
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
-import com.example.diecasthangar.core.util.TransparentGradientImageView
+import com.example.diecasthangar.core.util.getReactIcon
+import com.example.diecasthangar.core.util.getTopReacts
 import com.example.diecasthangar.core.util.parseDate
 import com.example.diecasthangar.data.model.Post
+import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
 import com.example.diecasthangar.databinding.PopupEditPostBinding
 import com.example.diecasthangar.databinding.RecyclerPostRowLayoutBinding
-import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.domain.remote.getUser
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 
 
@@ -34,6 +39,7 @@ class PostRecyclerAdapter(
     private val onItemEdited: (Post) -> Unit,
     private val onItemDeleted: (Post) -> Unit,
     private val onCommentBtnClicked: (Post) -> Unit,
+    private val onReactSelected: (Pair<String, String>) -> Unit
     ): RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
     var posts =  ArrayList<Post>()
     private val firestoreRepository = FirestoreRepository()
@@ -142,31 +148,67 @@ class PostRecyclerAdapter(
             binding.reactionPlane.isFocusable = false
             binding.reactionTakeoff.isFocusable = false
             binding.reactionLanding.isFocusable = false
-            binding.reactionPlane.setOnClickListener {
-                CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addReaction("plane",post.id)
+
+           for (item in binding.reactsLinearLayout) {
+               item.setOnClickListener {
+                   onReactSelected(Pair(item.contentDescription.toString(), post.id))
+                   popup.dismiss()
+               }
+           }
+
+
+
+/*            popup.setOnDismissListener {
+                object : CountDownTimer(animationDuration.toLong(), 100) {
+                    override fun onTick(millisUntilFinished: Long) {}
+                    override fun onFinish() {
+                        popup.dismiss()
+                    }
+                }.start()
+            }*/
+
+/*            for (item in binding.reactsLinearLayout) {
+                item.setOnClickListener {  clickedButton ->
+                    onReactSelected(Pair(item.contentDescription.toString(),post.id))
+                    for (item in binding.reactsLinearLayout) {
+                        if (item.id != clickedButton.id){
+                            // get the center for the clipping circle
+                            item.visibility = View.GONE
+                            val k = IntArray(2)
+                            val h = clickedButton.getLocationInWindow(k)
+                            popup.update(h,popup.width,popup.height)
+                            popup.update()
+                            //popup.update(48,48)
+                            //popup.dismiss()
+*//*                            val cx = item.width / 2
+                            val cy = item.height / 2
+
+                            // get the final radius for the clipping circle
+                            val finalRadius = hypot(cx.toDouble(), cy.toDouble()).toFloat()
+
+                            // create the animator for this view (the start radius is zero)
+                            val anim = ViewAnimationUtils.createCircularReveal(item, cx, cy, 0f, finalRadius)
+
+                            anim.addListener(object : AnimatorListenerAdapter() {
+
+                                override fun onAnimationEnd(animation: Animator) {
+                                    super.onAnimationEnd(animation)
+                                    item.visibility = View.INVISIBLE
+                                    popup.dismiss()
+                                }
+                            })
+                            anim.start()*//*
+                        }
+                    }
+                    popup.update()
+
+
                 }
-                post.reactions["plane"] = post.reactions["plane"]!!.plus(1)
-                notifyItemChanged(position)
-                popup.dismiss()
-            }
-            binding.reactionLanding.setOnClickListener {
-                CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addReaction("landing",post.id)
-                }
-                post.reactions["landing"] = post.reactions["landing"]!!.plus(1)
-                notifyItemChanged(position)
-                popup.dismiss()
-            }
-            binding.reactionTakeoff.setOnClickListener {
-                CoroutineScope(Dispatchers.IO).launch{
-                    firestoreRepository.addReaction("takeoff",post.id)
-                }
-                post.reactions["takeoff"] = post.reactions["takeoff"]!!.plus(1)
-                notifyItemChanged(position)
-                popup.dismiss()
-            }
-            popup.showAsDropDown(holder.reactButton, 0, 0)
+            }*/
+
+
+            popup.showAsDropDown(holder.reactButton)
+            popup.animationStyle = com.google.android.material.R.style.Animation_AppCompat_DropDownUp
 
 
             //check if the popup is below the screen, if so, adjust upwards
@@ -188,59 +230,50 @@ class PostRecyclerAdapter(
             }
         }
 
+
+
         holder.commentButton.setOnClickListener {
             onCommentBtnClicked(post)
         }
         val reacts: Map<String,Int> = post.reactions
 
-        val planeReacts = if (reacts["plane"] != null) {
-            reacts["plane"]!!.toInt()
-        } else {
-            0
-        }
-        val landingReacts = if (reacts["landing"] != null) {
-            reacts["landing"]!!.toInt()
-        } else {
-            0
-        }
-        val takeoffReacts = if (reacts["takeoff"] != null) {
-            reacts["takeoff"]!!.toInt()
-        } else {
-            0
-        }
+        val topThreeReacts = getTopReacts(reacts,3)
 
-        //TODO logic to display top X reactions in initial snippet
-        // TODO add new reaction to map if null
+        val (firstReactType, firstReactNumber) = topThreeReacts[0]
+        val (secondReactType, secondReactNumber) = topThreeReacts[1]
+        val (thirdReactType, thirdReactNumber ) = topThreeReacts[2]
 
-        if (planeReacts > 0 ) {
-            holder.reactIcon1.setImageResource(R.drawable.ic_airplane_black_48dp)
-            if (planeReacts > 1){
-                holder.reactNumber1.text = planeReacts.toString()
+        //set react icons, sets to blank if fewer than 3 exist
+        holder.reactIcon1.setImageResource(getReactIcon(firstReactType))
+        holder.reactIcon2.setImageResource(getReactIcon(secondReactType))
+        holder.reactIcon3.setImageResource(getReactIcon(thirdReactType))
+
+        if (firstReactNumber > 0 ) {
+
+            if (firstReactNumber > 1){
+                holder.reactNumber1.text = secondReactNumber.toString()
             }
         }
         else {
             holder.reactNumber1.text = ""
-            holder.reactIcon1.setImageResource(0)
         }
-        if (landingReacts > 0) {
-            holder.reactIcon2.setImageResource(R.drawable.ic_airplane_landing_black_48dp)
-            if (landingReacts > 1){
-                holder.reactNumber2.text = landingReacts.toString()
+        if (secondReactNumber > 0) {
+
+            if (secondReactNumber > 1){
+                holder.reactNumber1.text = ""
             }
         }
         else {
             holder.reactNumber2.text = ""
-            holder.reactIcon2.setImageResource(0)
         }
-        if (takeoffReacts > 0) {
-            holder.reactIcon3.setImageResource(R.drawable.ic_airplane_takeoff_black_48dp)
-            if (takeoffReacts > 1){
-                holder.reactNumber3.text = takeoffReacts.toString()
+        if (thirdReactNumber > 0) {
+
+            if (thirdReactNumber > 1){
+                holder.reactNumber3.text = thirdReactNumber.toString()
             }
         }
         else {
             holder.reactNumber3.text = ""
-            holder.reactIcon3.setImageResource(0)
         }
 
         //show edit/delete button on current user posts

@@ -26,6 +26,7 @@ import com.example.diecasthangar.databinding.FragmentAddPostBinding
 import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.domain.remote.getUser
+import com.example.diecasthangar.ui.profile.ProfileViewModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
 import me.shouheng.compress.Compress
@@ -39,7 +40,7 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
 
     private var _binding: FragmentAddPostBinding? = null
     // This property is only valid between onCreateView and
-// onDestroyView.
+    // onDestroyView.
     private val binding get() = _binding!!
 
 
@@ -62,7 +63,8 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
             )
         }
         val userViewModel: UserViewModel by activityViewModels()
-        //val dashboardViewModel = ViewModelProvider(requireActivity())[DashboardViewModel::class.java]
+        val dashboardViewModel: DashboardViewModel by activityViewModels()
+
         val avatarUri = userViewModel.getAvatarUri().value
         val username = userViewModel.getUsername()
 
@@ -164,6 +166,10 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
             if (editing){
                 viewModel.updatePostBodyText(postBodyEditText.text.toString())
                 viewModel.updatePostPhotos()
+                val newPost = Post(text = postBodyEditText.text.toString(), images = photos, avatar = avatarUri!!,
+                    username = username, user = getUser()!!.uid)
+                //todo notify profile as well
+                dashboardViewModel.itemEdited(Pair(currentPost!!,newPost))
                 parentFragmentManager.popBackStack()
             }
             else {
@@ -171,8 +177,9 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
                 val text = postBodyEditText.text.toString()
                 val photos = addImageAdapter.photos
 
-                viewModel.addPost(Post(text = text, images = photos, avatar = avatarUri!!,
-                    username = username, user = getUser()!!.uid))
+                val newPost = Post(text = text, images = photos, avatar = avatarUri!!,
+                    username = username, user = getUser()!!.uid)
+                dashboardViewModel.addPost(newPost)
                 parentFragmentManager.popBackStack()
             }
         }

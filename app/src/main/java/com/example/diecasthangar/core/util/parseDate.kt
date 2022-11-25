@@ -5,7 +5,15 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-fun parseDate(date: Date, fullDateFlag: Boolean = false,now: LocalDateTime = LocalDateTime.now()): String? {
+/**
+ * Given an input date, returns a string depending on how mucg time has passed since that date
+ *
+ *
+ * @param fullDateFlag if true, returns the entire date string
+ * @param date: the date to be formatted
+ * @param now: the date to be compared with: should generally bt the current date
+ */
+fun parseDate(date: Date, fullDateFlag: Boolean = false,now: LocalDateTime = LocalDateTime.now()): String {
 
     val localDateTime: LocalDateTime =
         date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()

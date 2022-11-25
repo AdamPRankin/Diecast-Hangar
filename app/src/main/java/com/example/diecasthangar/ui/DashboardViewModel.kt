@@ -23,6 +23,9 @@ class DashboardViewModel: ViewModel() {
     private var latestCommentSnapshot: DocumentSnapshot? = null
     private var commentsLiveData: MutableLiveData<ArrayList<Comment>> = MutableLiveData(arrayListOf())
 
+    private val localAddedPost: MutableLiveData<Post> = MutableLiveData()
+    private val localEditedPost: MutableLiveData<Pair<Post,Post>> = MutableLiveData()
+
 
 /*    val postsFlow: Flow<List<Post>> = flow {
         while(true) {
@@ -60,6 +63,14 @@ class DashboardViewModel: ViewModel() {
      fun getCurrentCommentMutableLiveData(): MutableLiveData<ArrayList<Comment>> {
          return commentsLiveData
      }
+
+    fun getLocalAddedPost(): MutableLiveData<Post>{
+        return localAddedPost
+    }
+
+    fun getLocalEditedPost(): MutableLiveData<Pair<Post,Post>> {
+        return localEditedPost
+    }
 
     private fun initialLoad(){
         viewModelScope.launch {
@@ -132,11 +143,37 @@ class DashboardViewModel: ViewModel() {
         }
     }
 
+    fun addPost(post: Post) {
+        CoroutineScope(Dispatchers.IO).launch {
+            when (val result = repository.addPost(post)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val addedPost = post.copy(id = result.data!!)
+                    localAddedPost.postValue(addedPost)
+                }
+                is Response.Failure -> {
+                    print(result.e)
+                }
+            }
+        }
+    }
+
     fun addComment(pid: String,commentText: String){
         val user = getUser()
         val uid = user!!.uid
         CoroutineScope(Dispatchers.IO).launch{
             repository.addFirestoreComment(pid,commentText, uid)
         }
+    }
+
+    fun addReact(react: String, pid: String){
+        viewModelScope.launch {
+            repository.addReaction(react,pid)
+        }
+    }
+
+    fun itemEdited(oldAndNewModel: Pair<Post,Post>){
+        localEditedPost.postValue(oldAndNewModel)
     }
 }

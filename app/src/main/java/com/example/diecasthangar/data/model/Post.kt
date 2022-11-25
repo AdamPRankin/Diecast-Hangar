@@ -3,7 +3,7 @@ package com.example.diecasthangar.data.model
 import com.example.diecasthangar.domain.remote.getUser
 import java.util.Date
 
-class Post(
+data class Post(
     var text: String = "",
     var images: ArrayList<Photo> = arrayListOf(),
     var user: String = getUser()!!.uid,
@@ -18,6 +18,12 @@ class Post(
         if (reactions.containsKey(name)) {
             reactions[name] = (reactions[name]!!.plus(number))
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return (other is Post)
+                && this.id == other.id
+
     }
 
 }

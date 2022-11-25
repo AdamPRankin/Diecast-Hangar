@@ -5,7 +5,6 @@ import android.net.Uri
 import android.util.Log
 import com.example.diecasthangar.core.util.commentMapToClass
 import com.example.diecasthangar.core.util.modelMapToClass
-import com.example.diecasthangar.data.getReacts
 import com.example.diecasthangar.data.model.*
 import com.example.diecasthangar.domain.remote.getUser
 import com.google.android.gms.tasks.Tasks.await
@@ -17,7 +16,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.rpc.context.AttributeContext
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 open class FirestoreRepository (
@@ -138,7 +143,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addPost(post: Post): Response<Boolean> {
+    suspend fun addPost(post: Post): Response<String> {
         return try {
             val remoteUris = arrayListOf<String>()
             val localUris = arrayListOf<Uri>()
@@ -165,10 +170,10 @@ open class FirestoreRepository (
                 "date" to FieldValue.serverTimestamp(),
                 "username" to post.username,
                 "avatar" to post.avatar,
-                "reactions" to getReacts()
+                "reactions" to hashMapOf<String,Int>()
             )
-            postsRef.add(hPost)
-            Response.Success(true)
+            val postID = postsRef.add(hPost).await().id
+            Response.Success(postID)
         } catch (e: Exception) {
             Response.Failure(e)
         }
@@ -337,6 +342,49 @@ open class FirestoreRepository (
 
         }
     }
+
+    suspend fun userPostsFlow(userId: String): Flow<Response<kotlin.collections.ArrayList<Post>>> = callbackFlow  {
+        // 2.- We create a reference to our data inside Firestore
+        val eventDocument =  FirebaseFirestore
+            .getInstance()
+            .collection("posts")
+            .whereEqualTo("user", userId)
+            .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
+
+        // 3.- We generate a subscription that is going to let us listen for changes with
+        // .addSnapshotListener and then offer those values to the channel that will be collected in our viewmodel
+        val subscription = eventDocument.addSnapshotListener { snapshot, _ ->
+            if(snapshot!!.documents.isNotEmpty()){
+                val posts = ArrayList<Post>()
+                for (doc in snapshot) {
+                    val imageUris: ArrayList<String> = doc.get("images") as ArrayList<String>
+                    val text: String = doc.get("text") as String
+                    val timestamp: Timestamp = (doc.getTimestamp("date") ?: Timestamp(Date()))
+                    val user: String = doc.get("user").toString()
+                    val username: String = doc.get("username").toString()
+                    val avatar: String = doc.get("avatar").toString()
+                    val id = doc.id
+                    val comments: ArrayList<Comment>? = ArrayList()
+                    val reactions: MutableMap<String, Int> =
+                        doc.get("reactions") as MutableMap<String, Int>
+
+                    val photos: List<Photo> = imageUris.map { Photo(remoteUri = it) }
+
+                    val newPost = Post(
+                        text, photos as ArrayList<Photo>, user, timestamp.toDate(), username, avatar, id,
+                        comments, reactions
+                    )
+                    posts.add(newPost)
+                }
+                trySend(Response.Success(posts)).isSuccess
+            }
+        }
+        //Finally if collect is not in use or collecting any data we cancel this channel to prevent any leak and remove the subscription listener to the database
+        awaitClose { subscription.remove() }
+    }
+
+
+
     //TODO add current UID to repostiry
     suspend fun addFirestoreComment(pid: String, text: String, uid: String) : Response<Boolean> {
         return try {
@@ -357,7 +405,7 @@ open class FirestoreRepository (
                         "text" to text,
                         "user" to uid,
                         "username" to username,
-                        "reactions" to getReacts(),
+                        "reactions" to hashMapOf<String,Int>(),
                         "total-reacts" to 0
                     )
                     db.collection("comments").add(hashComment).addOnSuccessListener {
@@ -433,7 +481,7 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun getUserFriends(uid: String): Response<java.util.ArrayList<User>> {
+/*    suspend fun getUserFriends(uid: String): Response<ArrayList<User>> {
         return try {
             val friendsRef = db.collection("userfriends").document(uid)
             val friendIdList = friendsRef.get().await().data?.get("friends") as ArrayList<String>
@@ -476,6 +524,54 @@ open class FirestoreRepository (
         } catch (e: Exception) {
             Response.Failure(e)
         }
+    }*/
+
+    suspend fun userFriendsFlow(userId: String): Flow<Response<ArrayList<User>>> = callbackFlow  {
+        // create a reference
+        val eventDocumentFriend =  FirebaseFirestore
+            .getInstance()
+            .collection("userfriends")
+            .whereEqualTo("user", userId)
+
+        // listen for changes with addSnapshotListener and then offer values to the channel
+        val subscription = eventDocumentFriend.addSnapshotListener { snapshot, _ ->
+            if(snapshot!!.documents.isNotEmpty()){
+                val users = ArrayList<User>()
+                for (doc in snapshot) {
+                    val avatar = doc.get("avatar").toString()
+                    val username = doc.get("username").toString()
+                    val friend = User(doc.id,username,avatar,true)
+                    users.add(friend)
+                }
+                trySend(Response.Success(users)).isSuccess
+            }
+        }
+        //if collect is not in use remove the subscription listener to the database
+        awaitClose { subscription.remove() }
+    }
+
+    suspend fun userFriendRequestsFlow(userId: String): Flow<Response<ArrayList<User>>> = callbackFlow  {
+        // create a reference
+        val eventDocumentFriend =  FirebaseFirestore
+            .getInstance()
+            .collection("friend-requests")
+            .whereEqualTo("recipient", userId)
+
+        // listen for changes with addSnapshotListener and then offer values to the channel
+        val subscription = eventDocumentFriend.addSnapshotListener { snapshot, _ ->
+            if(snapshot!!.documents.isNotEmpty()){
+                val users = ArrayList<User>()
+                for (doc in snapshot) {
+                    val avatar = doc.get("avatar").toString()
+                    val username = doc.get("username").toString()
+                    val friend = User(doc.id,username,avatar,false)
+                    users.add(friend)
+                }
+                trySend(Response.Success(users)).isSuccess
+            }
+        }
+        //if collect is not in use remove the subscription listener to the database
+        awaitClose { subscription.remove() }
     }
 
     fun addFriend(uid: String, friendId: String): Response<Boolean> {
@@ -543,22 +639,17 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun addModel(model: Model): Response<Boolean> {
+    suspend fun addModel(model: Model): Response<Model> {
         return try {
             val remoteUris = arrayListOf<String>()
-            val localUris = arrayListOf<Uri>()
-            //val files = arrayListOf<File>()
-            for (photo in model.photos) {
-                localUris.add(photo.localUri!!)
-                //files.add(photo.file!!)
-            }
+
             val rootRef = FirebaseDatabase.getInstance().reference
-            for (uri in localUris) {
+            for (photo in model.photos) {
                 val newPostKey = rootRef.ref.child("models").push().key
                 val filename: String = newPostKey + "_"
                 val remoteUri = FirebaseStorage.getInstance().reference.child(
                     "images/models"
-                ).child("$filename.jpg").putFile(uri)
+                ).child("$filename.jpg").putFile(photo.localUri!!)
                     .await().storage.downloadUrl.await()
                 remoteUris.add(remoteUri.toString())
             }
@@ -578,25 +669,34 @@ open class FirestoreRepository (
                "comment" to model.comment,
             )
 
-            modelsRef.add(h)
-            Response.Success(true)
+            val mid = modelsRef.add(h).await().id
+            val photos:ArrayList<Photo> = remoteUris.map { Photo(remoteUri = it) } as ArrayList<Photo>
+            val modelWithId = model.copy(id = mid, photos = photos)
+            Response.Success(modelWithId)
         } catch (e: Exception) {
             Response.Failure(e)
         }
     }
 
-    suspend fun getUserModels(uid: String): Response<ArrayList<Model>> {
-        return try {
-            val modelsRef = db.collection("models")
-            val userModelsSnapShot = modelsRef.whereEqualTo("user",uid).get().await().documents
-            val userModels = ArrayList<Model>()
-            for (model in userModelsSnapShot){
-                userModels.add(modelMapToClass(model))
+    suspend fun userModelsFlow(userId: String): Flow<Response<ArrayList<Model>>> = callbackFlow  {
+        // create a reference
+        val eventDocument =  FirebaseFirestore
+            .getInstance()
+            .collection("models")
+            .whereEqualTo("user", userId)
+
+        // listen for changes with addSnapshotListener and then offer values to the channel
+        val subscription = eventDocument.addSnapshotListener { snapshot, _ ->
+            if(snapshot!!.documents.isNotEmpty()){
+                val models = ArrayList<Model>()
+                for (doc in snapshot) {
+                    models.add(modelMapToClass(doc))
+                }
+                trySend(Response.Success(models)).isSuccess
             }
-            Response.Success(userModels)
-        } catch (e: Exception) {
-            Response.Failure(e)
         }
+        //if collect is not in use remove the subscription listener to the database
+        awaitClose { subscription.remove() }
     }
 
     suspend fun deleteModel(modelId: String): Response<Boolean> {
@@ -646,15 +746,6 @@ open class FirestoreRepository (
 
         }
     }
-
-
-
-
-
-
-
-
-
 }
 
 

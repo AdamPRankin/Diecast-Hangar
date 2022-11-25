@@ -22,7 +22,7 @@ import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
 import kotlin.math.roundToInt
 
 class ModelRecyclerAdapter(
-    private val onItemEdited: (Model) -> Unit,
+    private val onItemEdited: (Model, Int) -> Unit,
     private val onItemDeleted: (Model) -> Unit,
 ): RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder>() {
     var models = ArrayList<Model>()
@@ -109,7 +109,7 @@ class ModelRecyclerAdapter(
                     popup.dismiss()
                 }
                 binding.postOptionsBtnEdit.setOnClickListener {
-                    onItemEdited(model)
+                    onItemEdited(model, position)
                     popup.dismiss()
                 }
             }

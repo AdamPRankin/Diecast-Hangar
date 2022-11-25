@@ -70,6 +70,11 @@ class DashboardFragment : Fragment(), LifecycleOwner {
                 parentFragmentManager.beginTransaction()
                     .add(R.id.container, ViewPostFragment(post)).addToBackStack("home")
                     .commit()
+            },
+            //reaction clicked
+            { pair ->
+                val (reaction, pid) = pair
+                dashViewModel.addReact(reaction, pid)
             }
 
         )
@@ -107,6 +112,20 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             postAdapter.posts = it
             postAdapter.notifyItemChanged(0)
             postAdapter.notifyItemRangeChanged(end,postAdapter.posts.size)
+        }
+
+        dashViewModel.getLocalEditedPost().observe(viewLifecycleOwner) { pair ->
+            // find current post and update with edited version
+            val index = postAdapter.posts.indexOf(pair.first)
+            if (index != -1) {
+                postAdapter.posts[index] = pair.second
+                postAdapter.notifyItemChanged(index)
+            }
+        }
+
+        dashViewModel.getLocalAddedPost().observe(viewLifecycleOwner) { post ->
+            postAdapter.posts.add(0,post)
+            postAdapter.notifyItemInserted(0)
         }
 
         val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)

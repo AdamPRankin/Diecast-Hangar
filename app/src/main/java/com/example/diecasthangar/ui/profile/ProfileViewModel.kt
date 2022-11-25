@@ -1,10 +1,8 @@
 package com.example.diecasthangar.ui.profile
 
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
+import android.util.Log
+import androidx.lifecycle.*
 import com.example.diecasthangar.data.model.Model
 import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.data.model.Post
@@ -13,11 +11,13 @@ import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.domain.remote.getUser
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.SetOptions.merge
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.merge
 
 
 class ProfileViewModel(uid: String) : ViewModel() {
-    val postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData()
+    //val postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData()
     private val friendsLiveData: MutableLiveData<ArrayList<User>> = MutableLiveData()
     private val modelsLiveData: MutableLiveData<ArrayList<Model>?> = MutableLiveData()
     private val modelPhotosLiveData: MutableLiveData<ArrayList<Uri>> = MutableLiveData()
@@ -35,30 +35,67 @@ class ProfileViewModel(uid: String) : ViewModel() {
     private val currentModelPhotosMutableLiveData: MutableLiveData<ArrayList<Photo>> = MutableLiveData()
     private val currentModelDeletedPhotosMutableLiveData: MutableLiveData<ArrayList<Photo>> = MutableLiveData()
 
+    val fetchPosts = liveData(Dispatchers.IO) {
+        emit(Response.Loading)
+        try{
+            repository.userPostsFlow(profileUid).collect {
+                emit(it)
+            }
+        }catch (e: Exception){
+            emit(Response.Failure(e))
+            e.message?.let { Log.e("ERROR:", it) }
+        }
+    }
+
+    val fetchModels = liveData(Dispatchers.IO) {
+        emit(Response.Loading)
+        try{
+            repository.userModelsFlow(profileUid).collect {
+                emit(it)
+            }
+        }catch (e: Exception){
+            emit(Response.Failure(e))
+            e.message?.let { Log.e("ERROR:", it) }
+        }
+    }
+
+    val fetchFriendsAndRequests = liveData(Dispatchers.IO) {
+        emit(Response.Loading)
+        try{
+            val friendFlow = repository.userFriendsFlow(profileUid)
+            val requestFlow = repository.userFriendsFlow(profileUid)
+            merge(friendFlow, requestFlow).collect{ emit(it) }
+        } catch (e: Exception){
+            emit(Response.Failure(e))
+            e.message?.let { Log.e("ERROR:", it) }
+        }
+    }
+
+    val fetchFriends = liveData(Dispatchers.IO) {
+        emit(Response.Loading)
+        try{
+            repository.userFriendsFlow(profileUid).collect {
+                emit(it)
+            }
+        }catch (e: Exception){
+            emit(Response.Failure(e))
+            e.message?.let { Log.e("ERROR:", it) }
+        }
+    }
 
     init {
         loadUserBio()
         loadUserInfo()
-        initialLoad()
-        loadUserFriends()
-        getUserModels()
 
         if (profileUid == getUser()!!.uid) {
             generateFriendRequestToken()
         }
     }
 
-    fun getPostMutableLiveData(): MutableLiveData<ArrayList<Post>> {
-        return postsLiveData
-    }
-
     fun getFriendsMutableLiveData(): MutableLiveData<ArrayList<User>> {
         return friendsLiveData
     }
 
-    fun getModelsMutableLiveData(): MutableLiveData<ArrayList<Model>?> {
-        return modelsLiveData
-    }
 
     fun getUserBioMutableLiveData(): MutableLiveData<String> {
         return bio
@@ -108,28 +145,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
         return photos
     }
 
-    private fun initialLoad(){
-        viewModelScope.launch {
-            when(val response = repository.loadNextPagePostsFromUser(userId = profileUid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val (postsList,newSnap) = response.data!!
-                    snapshot = newSnap
-
-                    //disable on scroll loading if we have loaded the last post
-                    if (postsList.size < 10){
-                        postsLoading = false
-                    }
-                    postsLiveData.postValue(postsList)
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
-        }
-    }
-
     private fun loadUserBio(){
         viewModelScope.launch {
             when (val response = repository.getUserBio(profileUid)) {
@@ -162,46 +177,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
         }
     }
 
-    private fun loadUserFriends() {
-        viewModelScope.launch {
-            when (val response = repository.getUserFriends(profileUid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val friendsList = response.data ?: ArrayList()
-                    friendsLiveData.postValue(friendsList)
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
-        }
-    }
-
-    fun loadMorePosts() {
-        viewModelScope.launch {
-            when(val response = repository.loadNextPagePostsFromUser(
-                lastVisible = snapshot,userId = profileUid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val (postsList,newSnap) = response.data!!
-                    snapshot = newSnap
-                    val newList = ArrayList<Post>()
-                    newList.addAll(postsLiveData.value!!)
-                    newList.addAll(postsList)
-                    postsLiveData.postValue(newList)
-                    //if these are equal then there are no more posts to load
-                    if (newSnap == snapshot){
-                        postsLoading = false
-                    }
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
-            }
-        }
-    }
 
     fun updateBio(text: String) {
         if (profileUid == getUser()!!.uid) {
@@ -316,28 +291,12 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 is Response.Loading -> {
                 }
                 is Response.Success -> {
-
+                    //get model ID and add to model
+                    val newModel = response.data
+                    //localAddedModel.postValue(newModel!!)
                 }
                 is Response.Failure -> {
                     print(response.e)
-                }
-            }
-        }
-    }
-
-    private fun getUserModels(){
-        viewModelScope.launch {
-            when (val response = repository.getUserModels(profileUid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val models = response.data
-                    modelsLiveData.postValue(models)
-                    val e = "e"
-                }
-                is Response.Failure -> {
-                    print(response.e)
-
                 }
             }
         }
@@ -346,6 +305,11 @@ class ProfileViewModel(uid: String) : ViewModel() {
     fun deleteModel(mid: String) {
         CoroutineScope(Dispatchers.IO).launch {
             repository.deleteModel(mid)
+        }
+    }
+    fun addReact(react: String, pid: String){
+        viewModelScope.launch {
+            repository.addReaction(react,pid)
         }
     }
 
@@ -371,10 +335,10 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 }
                 // waiting for all request to finish executing in parallel
             }.awaitAll()
-            val remoteUris = ArrayList<Uri>()
             model.photos = photos
             repository.editFirestoreModel(model)
         }
+
     }
 
         //use this to create a viewModel with uid parameter
