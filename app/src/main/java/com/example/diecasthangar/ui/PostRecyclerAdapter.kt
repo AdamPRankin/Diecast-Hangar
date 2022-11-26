@@ -16,6 +16,7 @@ import android.util.TypedValue
 import android.view.*
 import android.widget.*
 import androidx.core.view.iterator
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
@@ -23,9 +24,11 @@ import com.example.diecasthangar.core.util.getReactIcon
 import com.example.diecasthangar.core.util.getTopReacts
 import com.example.diecasthangar.core.util.parseDate
 import com.example.diecasthangar.data.model.Post
+import com.example.diecasthangar.data.model.Reaction
 import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
 import com.example.diecasthangar.databinding.PopupEditPostBinding
+import com.example.diecasthangar.databinding.PopupShowReactionsBinding
 import com.example.diecasthangar.databinding.RecyclerPostRowLayoutBinding
 import com.example.diecasthangar.domain.remote.getUser
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -49,7 +52,7 @@ class PostRecyclerAdapter(
         return ViewHolder(binding)
     }
 
-    @SuppressLint("InflateParams")
+    @SuppressLint("InflateParams", "NotifyDataSetChanged")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val post = posts[position]
         //addCommentsToPosts(firestoreRepository,10)
@@ -156,8 +159,6 @@ class PostRecyclerAdapter(
                }
            }
 
-
-
 /*            popup.setOnDismissListener {
                 object : CountDownTimer(animationDuration.toLong(), 100) {
                     override fun onTick(millisUntilFinished: Long) {}
@@ -231,7 +232,6 @@ class PostRecyclerAdapter(
         }
 
 
-
         holder.commentButton.setOnClickListener {
             onCommentBtnClicked(post)
         }
@@ -248,7 +248,7 @@ class PostRecyclerAdapter(
         holder.reactIcon2.setImageResource(getReactIcon(secondReactType))
         holder.reactIcon3.setImageResource(getReactIcon(thirdReactType))
 
-        if (firstReactNumber > 0 ) {
+/*        if (firstReactNumber > 0 ) {
 
             if (firstReactNumber > 1){
                 holder.reactNumber1.text = secondReactNumber.toString()
@@ -274,6 +274,55 @@ class PostRecyclerAdapter(
         }
         else {
             holder.reactNumber3.text = ""
+        }*/
+
+        for (item in holder.reactsLayout){
+            item.setOnClickListener {
+                val context = holder.itemView.context
+                val inflater: LayoutInflater  =
+                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val binding = PopupShowReactionsBinding.inflate(inflater)
+                val popup = PopupWindow(
+                    binding.root,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                )
+                // Closes the popup window when touch outside.
+                popup.isOutsideTouchable = true
+                popup.isFocusable = true
+                // Removes default background.
+                popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+                //get list of reactions and map to model class
+                val reactions = post.reactions.map { Reaction(it.key, getReactIcon(it.key),it.value) }
+
+                val reactsRecycler = binding.reactsRecyclerview
+                val reactsAdapter = ReactionsRecyclerAdapter()
+                val reactsLayoutManager = LinearLayoutManager(context)
+                reactsRecycler.adapter = reactsAdapter
+                reactsRecycler.layoutManager = reactsLayoutManager
+                reactsAdapter.reacts = reactions as ArrayList<Reaction>
+                reactsAdapter.notifyDataSetChanged()
+
+                //check if the popup is below the screen, if so, adjust upwards
+                val displayMetrics = context.resources.displayMetrics
+                val height = displayMetrics.heightPixels
+
+                val values = IntArray(2)
+                holder.reactButton.getLocationOnScreen(values)
+                val positionOfIcon = values[1]
+
+                // adjust for window padding
+                val px =
+                    TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f,
+                        context.resources.displayMetrics).roundToInt()
+
+                if (positionOfIcon >= (height - holder.reactButton.height)) {
+                    val yOffset = -1 * ( holder.reactButton.height + px)
+                    popup.update(holder.reactButton, 0, yOffset, popup.width, popup.height)
+                }
+                popup.showAtLocation(holder.itemView, Gravity.CENTER, 0, 0)
+            }
         }
 
         //show edit/delete button on current user posts
@@ -306,6 +355,7 @@ class PostRecyclerAdapter(
                     onItemEdited(post)
                     popup.dismiss()
                 }
+
             }
         }
         else {
@@ -344,9 +394,10 @@ class PostRecyclerAdapter(
         val reactIcon1: ImageView = binding.postReacts1
         val reactIcon2: ImageView = binding.postReacts2
         val reactIcon3: ImageView = binding.postReacts3
-        val reactNumber1: TextView = binding.postReaction1Number
+/*        val reactNumber1: TextView = binding.postReaction1Number
         val reactNumber2: TextView = binding.postReaction2Number
-        val reactNumber3: TextView = binding.postReaction3Number
+        val reactNumber3: TextView = binding.postReaction3Number*/
+        val reactsLayout = binding.postReactionsLayout
 
         init {
             view.setOnClickListener(this)

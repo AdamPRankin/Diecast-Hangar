@@ -63,21 +63,6 @@ class ModelRecyclerAdapter(
             }
         }
 
-/*        if (model.photos.size > 1) {
-            holder.modelPhotoImageView.setOnClickListener {
-                if (currentImagePosition == model.photos.size-1){
-                    currentImagePosition = 0
-                }
-                else{
-                    currentImagePosition +=1
-                }
-                val imageUri: Uri = Uri.parse(model.photos[currentImagePosition].remoteUri)
-                Glide.with(holder.itemView.context)
-                    .load(imageUri)
-                    .into(holder.modelPhotoImageView)
-            }
-        }*/
-
         if (model.userID == getUser()?.uid) {
             holder.modelEditPopup.visibility = View.VISIBLE
             holder.modelEditPopup.setOnClickListener {

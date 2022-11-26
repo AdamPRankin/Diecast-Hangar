@@ -1,7 +1,9 @@
 package com.example.diecasthangar.ui
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.data.model.Comment
@@ -12,6 +14,8 @@ import com.example.diecasthangar.domain.remote.getUser
 import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class DashboardViewModel: ViewModel() {
@@ -53,9 +57,25 @@ class DashboardViewModel: ViewModel() {
 
     }*/
 
-    init {
-        initialLoad()
+    val lastVisibleItem = MutableStateFlow<Int>(0)
+    //val posts: Flow<ArrayList<Post>> = repository.getPostsFlow(lastVisibleItem) as Flow<ArrayList<Post>>
+
+    val fetchPosts = liveData(Dispatchers.IO) {
+        emit(Response.Loading)
+        try{
+            repository.getPostsFlow(lastVisibleItem).collect {
+                emit(Response.Success(it))
+            }
+        }catch (e: Exception){
+            emit(Response.Failure(e))
+            e.message?.let { Log.e("ERROR:", it) }
+        }
     }
+
+    init {
+        //initialLoad()
+    }
+
     fun getPostMutableLiveData(): MutableLiveData<ArrayList<Post>> {
         return postsLiveData
     }

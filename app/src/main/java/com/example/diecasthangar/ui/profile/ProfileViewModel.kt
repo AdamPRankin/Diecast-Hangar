@@ -59,11 +59,11 @@ class ProfileViewModel(uid: String) : ViewModel() {
         }
     }
 
-    val fetchFriendsAndRequests = liveData(Dispatchers.IO) {
+/*    val fetchFriendsAndRequests = liveData(Dispatchers.IO) {
         emit(Response.Loading)
         try{
             val friendFlow = repository.userFriendsFlow(profileUid)
-            val requestFlow = repository.userFriendsFlow(profileUid)
+            val requestFlow = repository.userFriendRequestsFlow(profileUid)
             merge(friendFlow, requestFlow).collect{ emit(it) }
         } catch (e: Exception){
             emit(Response.Failure(e))
@@ -81,19 +81,16 @@ class ProfileViewModel(uid: String) : ViewModel() {
             emit(Response.Failure(e))
             e.message?.let { Log.e("ERROR:", it) }
         }
-    }
+    }*/
 
     init {
         loadUserBio()
         loadUserInfo()
+        loadUserFriends()
 
         if (profileUid == getUser()!!.uid) {
             generateFriendRequestToken()
         }
-    }
-
-    fun getFriendsMutableLiveData(): MutableLiveData<ArrayList<User>> {
-        return friendsLiveData
     }
 
 
@@ -144,6 +141,9 @@ class ProfileViewModel(uid: String) : ViewModel() {
         currentModelDeletedPhotosMutableLiveData.value?.let { photos.removeAll(it.toSet()) }
         return photos
     }
+    fun getFriendsMutableLiveData(): MutableLiveData<ArrayList<User>> {
+        return friendsLiveData
+    }
 
     private fun loadUserBio(){
         viewModelScope.launch {
@@ -169,6 +169,22 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     val (avatar, name) = (response.data!!)
                     avatarUri.postValue(avatar)
                     username.postValue(name)
+                }
+                is Response.Failure -> {
+                    print(response.e)
+                }
+            }
+        }
+    }
+
+    private fun loadUserFriends() {
+        viewModelScope.launch {
+            when (val response = repository.getUserFriends(profileUid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                    val friendsList = response.data ?: ArrayList()
+                    friendsLiveData.postValue(friendsList)
                 }
                 is Response.Failure -> {
                     print(response.e)

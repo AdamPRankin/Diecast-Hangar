@@ -421,7 +421,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 modelPhotoLauncher.launch(intent)
             }
 
-
             val photoRecyclerView = binding.addModelRecyclerview
             val photoAdapter = SideScrollImageRecyclerAdapter({ deletedPhoto ->
                 viewModel.addCurrentModelDeletedPhoto(deletedPhoto)
@@ -499,7 +498,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         }
 
         //only grab friend requests if user is on their own profile
-        if (profileUserId == getUser()!!.uid) {
+/*        if (profileUserId == getUser()!!.uid) {
             viewModel.fetchFriendsAndRequests.observe(viewLifecycleOwner) { result ->
                 when (result) {
                     is Response.Loading -> {
@@ -535,7 +534,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     }
                 }
             }
-        }
+        }*/
 
         viewModel.getFriendsMutableLiveData().observe(viewLifecycleOwner) { friendsList ->
             friendRecyclerAdapter.users = friendsList

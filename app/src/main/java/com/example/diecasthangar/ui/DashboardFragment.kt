@@ -1,5 +1,6 @@
 package com.example.diecasthangar.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
+import com.example.diecasthangar.data.model.Post
+import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.databinding.FragmentDashboardBinding
 import com.example.diecasthangar.ui.profile.ProfileFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -36,6 +39,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         }*/
         super.onCreate(savedInstanceState)
     }
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
@@ -100,7 +104,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
                 .into(picView)
         }
 
-        dashViewModel.getPostMutableLiveData().observe(viewLifecycleOwner) {
+/*        dashViewModel.getPostMutableLiveData().observe(viewLifecycleOwner) {
             if (loading) {
                 loading = false
                 //remove loading Ui elements
@@ -112,6 +116,22 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             postAdapter.posts = it
             postAdapter.notifyItemChanged(0)
             postAdapter.notifyItemRangeChanged(end,postAdapter.posts.size)
+        }*/
+
+        dashViewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is Response.Loading -> {
+                }
+                is Response.Success<*> -> {
+                    postAdapter.posts = result.data as ArrayList<Post>
+                    postAdapter.notifyDataSetChanged()
+                    //TODO diffutil
+                }
+
+                is Response.Failure -> {
+                    //todo toast
+                }
+            }
         }
 
         dashViewModel.getLocalEditedPost().observe(viewLifecycleOwner) { pair ->
@@ -142,7 +162,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
                 .commit()
         }
 
-        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+/*        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 // load more posts if recyclerview position is at the end
                 //TODO load posts earlier
@@ -150,6 +170,17 @@ class DashboardFragment : Fragment(), LifecycleOwner {
                     dashViewModel.loadMorePosts()
                 } else if (!recyclerView.canScrollVertically(-1) && dy < 0) {
                     //scrolled to TOP
+                }
+            }
+        })*/
+
+        val lm = postRecyclerView.layoutManager as LinearLayoutManager
+        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val lastVisible = lm.findLastVisibleItemPosition() + 1
+                if (dashViewModel.lastVisibleItem.value < lastVisible) {
+                    dashViewModel.lastVisibleItem.value = lastVisible
                 }
             }
         })
