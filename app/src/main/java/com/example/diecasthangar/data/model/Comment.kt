@@ -3,7 +3,7 @@ package com.example.diecasthangar.data.model
 import java.util.Date
 
 
-class Comment(
+data class Comment(
     val text: String,
     val user: String,
     val username: String,

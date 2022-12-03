@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/material_dynamic_primary90"
+    android:background="?attr/background"
     tools:context=".ui.profile.ProfileFragment">
 
     <LinearLayout
@@ -14,12 +14,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:id="@+id/profile_layout"
-        >
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         android:orientation="vertical">
+
 
         <LinearLayout
             android:id="@+id/profile_lay"
@@ -38,7 +34,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:src="@drawable/avatar_default"
                 app:strokeWidth="4dp"
-                app:strokeColor="@color/material_dynamic_tertiary60"
+                app:strokeColor="?attr/colorOutline"
                 app:shapeAppearanceOverlay="@style/roundedImageView"
                 />
             <ImageView
@@ -50,7 +46,7 @@
                 android:contentDescription="@string/user_avatar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/material_dynamic_tertiary60"
+                app:tint="?colorButton"
                 tools:src="@drawable/image_edit"
                 android:visibility="gone"/>
 
@@ -69,7 +65,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
-                        android:textSize="24sp"/>
+                        android:textSize="24sp" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/profile_title"
@@ -77,7 +73,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginTop="8dp"
-                        android:text="High Flyer"
                         android:textSize="18sp" />
                 </LinearLayout>
 
@@ -89,7 +84,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
                     android:textSize="14sp"
-                    tools:ignore="HardcodedText" />
+                    android:textColor="?android:textColor" />
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/profile_edit_text_bio"
@@ -99,6 +94,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
                     android:textSize="14sp"
+                    android:textColor="?android:textColor"
                     android:visibility="gone"/>
             </LinearLayout>
 
@@ -116,6 +112,7 @@
                 android:paddingEnd="8dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
+                app:checkedButton="@id/profile_btn_posts"
                 >
 
                 <com.google.android.material.button.MaterialButton
@@ -124,8 +121,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="@string/models"
+                    android:textColor="?android:textColor"
                     android:layout_weight="1"
-
                     />
                 <com.google.android.material.button.MaterialButton
                     style="?attr/materialButtonOutlinedStyle"
@@ -134,7 +131,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/posts"
                     android:layout_weight="1"
-                    android:checked="true"
+                    android:textColor="?android:textColor"
                     />
                 <com.google.android.material.button.MaterialButton
                     style="?attr/materialButtonOutlinedStyle"
@@ -143,6 +140,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/friends"
                     android:layout_weight="1"
+                    android:textColor="?android:textColor"
                     />
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -179,7 +177,6 @@
 
 
     </LinearLayout>
-    </LinearLayout>
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/profile_btn_edit_profile"
         android:layout_width="wrap_content"
@@ -205,7 +202,7 @@
         android:src="@drawable/ic_account_edit_black_48dp"
         android:layout_gravity="end"
         android:outlineProvider="none"
-        app:tint="@color/material_dynamic_tertiary60"
+        app:tint="?colorButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -222,7 +219,7 @@
         android:src="@drawable/content_save"
         android:layout_gravity="end"
         android:outlineProvider="none"
-        app:tint="@color/material_dynamic_tertiary60"
+        app:tint="?colorButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:visibility="gone">
@@ -230,29 +227,13 @@
     </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-    android:id="@+id/profile_btn_add_model"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:contentDescription="@string/edit"
-    android:src="@drawable/airplane_plus"
-    android:layout_gravity="end"
-    app:tint="@color/material_dynamic_tertiary60"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    android:layout_marginEnd="16dp"
-    android:layout_marginBottom="16dp"
-    android:visibility="gone">
-
-</com.google.android.material.floatingactionbutton.FloatingActionButton>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/profile_btn_add_friend"
+        android:id="@+id/profile_btn_add_model"
+        android:backgroundTint="?colorFabMain"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/edit"
-        android:src="@drawable/ic_account_plus_black_48dp"
+        android:src="@drawable/airplane_plus"
         android:layout_gravity="end"
-        app:tint="@color/material_dynamic_tertiary60"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginEnd="16dp"
@@ -261,5 +242,20 @@
 
     </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_add_friend"
+        android:backgroundTint="?colorFabMain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/ic_account_plus_black_48dp"
+        android:layout_gravity="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

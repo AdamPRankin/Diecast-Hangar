@@ -1,6 +1,5 @@
 package com.example.diecasthangar.ui.profile
 
-import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
@@ -10,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,21 +22,21 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.diecasthangar.R
-import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.data.model.Model
 import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.data.remote.Response
+import com.example.diecasthangar.data.remote.getUser
 import com.example.diecasthangar.databinding.FragmentProfileBinding
 import com.example.diecasthangar.databinding.PopupAddFriendBinding
 import com.example.diecasthangar.databinding.PopupAddModelBinding
-import com.example.diecasthangar.domain.remote.getUser
 import com.example.diecasthangar.ui.*
+import com.example.diecasthangar.ui.viewpost.ViewPostFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.yalantis.ucrop.UCrop
@@ -50,20 +50,18 @@ import java.io.File
 
 open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), LifecycleOwner {
     private val profileUserId = uid
-    var imageAdded = false
-    val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(profileUserId) }
+    private var imageAdded = false
+    private val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(profileUserId) }
 
     private var _binding: FragmentProfileBinding? = null
     // This property is only valid between onCreateView and
    // onDestroyView.
     private val binding get() = _binding!!
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -79,7 +77,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val profileBioEditText: EditText = binding.profileEditTextBio
         val profileEditButton: FloatingActionButton = binding.profileBtnEdit
         val profileSaveButton: FloatingActionButton = binding.profileBtnSave
-        val profileLayout: LinearLayout = binding.profileLayout
         val profileTogglePosts: Button = binding.profileBtnPosts
         val profileToggleModels: Button = binding.profileBtnModels
         val profileToggleFriends: Button = binding.profileBtnFriends
@@ -205,29 +202,28 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 val livery = binding.addModelLiveryEdittext.text.toString()
                 val brand = autoCompleteBrand.text.toString()
                 val comment = binding.modelRowCommentTextview.text.toString()
+                val reg = binding.modelRowRegTextview.text.toString()
 
                 val newPhotos = viewModel.getCurrentNonDeletedPhotos()
+                // remove user deleted models from firebase
+                viewModel.removeCurrentDeletedModelPhotos()
 
                 if (editing) {
                     val editedModel = Model(
                         getUser()!!.uid, brand, brand, scale,
-                        frame, airline, livery, newPhotos, comment, 0, model.id
+                        frame, airline, livery, newPhotos, comment, 0, model.id, model.reg
                     )
                     viewModel.updateModel(editedModel)
                 }
                 else{
                     val model = Model(
                         getUser()!!.uid, brand, brand, scale, frame, airline,
-                        livery, photos, comment, 0, null)
+                        livery, photos, comment, 0, null, reg)
                     viewModel.uploadModel(model)
                 }
                 popup.dismiss()
             }
             popup.showAsDropDown(profileImageView, 0, 0)
-        }
-
-        profileLayout.setOnClickListener{
-            //capture click to avoid clicking on background fragment
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
@@ -239,8 +235,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             //edit post button click
             { post ->
             parentFragmentManager.beginTransaction()
-                .add(R.id.container, AddPostFragment(post, true)).addToBackStack("home")
-                .commit()
+                .add(R.id.container, AddPostFragment(post, true))
+                .addToBackStack("home").hide(this).commit()
             },
             // delete post button click
             { post ->
@@ -250,8 +246,9 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             { post ->
                 parentFragmentManager.beginTransaction()
                     .add(R.id.container, ViewPostFragment(post)).addToBackStack("home")
-                    .commit()
+                    .hide(this).commit()
             },
+            //reaction selected
             { pair ->
                 val (reaction, pid) = pair
                 viewModel.addReact(reaction, pid)
@@ -259,10 +256,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
-
-        var loading = true
-        val loadingPost = loadingDummyPost()
-        postAdapter.posts.add(loadingPost)
 
         val modelsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_model_recycler)
         val modelAdapter = ModelRecyclerAdapter(
@@ -282,9 +275,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val friendRecyclerAdapter = FriendRecyclerAdapter(
             //accept friend button clicked
             { user ->
-                val uid = user.id
                 viewModel.addFriend(user)
-
             },
             //decline friend button clicked
             { user ->
@@ -296,10 +287,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             { user ->
                 val uid = user.id
                 parentFragmentManager.beginTransaction()
-                    .add(R.id.container, ProfileFragment(uid)).addToBackStack("home").hide(this)
-                    .commit()
-
-
+                    .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
+                    .remove(this).commit()
             }
         )
         val friendLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
@@ -322,6 +311,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 profileAddModelButton.visibility = View.VISIBLE
             }
         }
+        //todo hide friend button if friends already
         profileToggleFriends.setOnClickListener {
             postRecyclerView.visibility = View.GONE
             modelsRecyclerView.visibility = View.GONE
@@ -441,27 +431,18 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 val livery = binding.addModelLiveryEdittext.text.toString()
                 val brand = autoCompleteBrand.text.toString()
                 val comment = binding.modelRowCommentTextview.text.toString()
+                val reg = binding.modelRowRegTextview.text.toString()
 
                 val newPhotos = viewModel.getCurrentNonDeletedPhotos()
 
                 val model = Model(
-                    getUser()!!.uid,
-                    brand,
-                    brand,
-                    scale,
-                    frame,
-                    airline,
-                    livery,
-                    newPhotos,
-                    comment,
-                    0,
-                    null)
+                    getUser()!!.uid, brand, brand, scale, frame, airline,
+                    livery, newPhotos, comment, 0, null, reg)
                 viewModel.uploadModel(model)
                 popup.dismiss()
             }
             popup.showAsDropDown(profileImageView, 0, 0)
         }
-
 
         viewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
             when (result) {
@@ -469,13 +450,14 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
                 is Response.Success -> {
                     val posts = result.data
-                    postAdapter.posts = posts ?: arrayListOf()
-                    postAdapter.notifyDataSetChanged()
-                    //TODO diffutil
+                    if (posts != null) {
+                        postAdapter.setData(posts)
+                    }
                 }
 
                 is Response.Failure -> {
-                    //todo toast
+                    Toast.makeText(context, "Failed to load posts, please try again later",
+                        Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -485,14 +467,12 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 is Response.Loading -> {
                 }
                 is Response.Success -> {
-                    val models = result.data
-                    modelAdapter.models = models  ?: arrayListOf()
-                    modelAdapter.notifyDataSetChanged()
-                    //TODO diffutil
+                    result.data?.let { modelAdapter.setData(it) }
                 }
 
                 is Response.Failure -> {
-                    //todo toast
+                    Toast.makeText(context, "Failed to load models, please try again later",
+                        Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -507,11 +487,11 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                         val users = result.data
                         friendRecyclerAdapter.users = users ?: arrayListOf()
                         modelAdapter.notifyDataSetChanged()
-                        //TODO diffutil
+
                     }
 
                     is Response.Failure -> {
-                        //todo toast
+
                     }
                 }
             }
@@ -526,11 +506,11 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                         val users = result.data
                         friendRecyclerAdapter.users = users ?: arrayListOf()
                         modelAdapter.notifyDataSetChanged()
-                        //TODO diffutil
+
                     }
 
                     is Response.Failure -> {
-                        //todo toast
+
                     }
                 }
             }
@@ -548,12 +528,13 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             profileUsername.text = name
         }
         viewModel.getAvatarMutableLiveData().observe(viewLifecycleOwner) { uri->
-            Glide.with(view).load(uri).into(profileImageView)
+            Glide.with(view).load(uri)
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .into(profileImageView)
             if (imageAdded){
                 Glide.with(view).load(uri).into(profileEditAvatar)
             }
         }
-
         val launcher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
@@ -570,17 +551,23 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
                     val options = UCrop.Options()
 
-                    //TODO add dark theme support
-                    val lightColor = ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_primary60)
-                    val darkColor = ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_primary40)
-                    options.setCropGridColor(lightColor)
-                    options.setCropFrameColor(lightColor)
-                    options.setToolbarColor(darkColor)
-                    options.setActiveControlsWidgetColor(darkColor)
-                    options.setLogoColor(darkColor)
-                    options.setRootViewBackgroundColor(ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_tertiary90))
+                    val valueAccent = TypedValue()
+                    requireContext().theme.resolveAttribute(android.R.attr.colorAccent, valueAccent, true)
+                    val colorAccent = valueAccent.data
+
+                    val valueBackground = TypedValue()
+                    requireContext().theme.resolveAttribute(android.R.attr.colorBackgroundFloating, valueBackground, true)
+                    val colorBackground = valueBackground.data
+
+                    options.setCropGridColor(colorAccent)
+                    options.setCropFrameColor(colorAccent)
+                    options.setToolbarColor(colorAccent)
+                    options.setActiveControlsWidgetColor(colorAccent)
+                    options.setLogoColor(colorAccent)
+                    options.setRootViewBackgroundColor(colorBackground)
                     options.setDimmedLayerColor(Color.TRANSPARENT)
-                    options.setToolbarWidgetColor(ContextCompat.getColor(requireContext(),com.google.android.material.R.color.material_dynamic_tertiary60))
+                    options.setToolbarWidgetColor(colorBackground)
+                    options.setStatusBarColor(colorBackground)
 
                     UCrop.of(imageUri,Uri.fromFile(croppedImgFile))
                         .withAspectRatio(1F, 1F)
@@ -624,7 +611,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     }
                     profileSaveButton.visibility = View.GONE
 
-                    // prevent unneeded api call
+                    // check if bio has been edited
                     if (profileBioText.text.toString() != profileBioEditText.text.toString()) {
                         profileBioText.text = profileBioEditText.text.toString()
                         viewModel.updateBio(profileBioEditText.text.toString())
@@ -634,7 +621,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     }
                 }
             }
-
         }
         return view
     }
@@ -657,10 +643,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         } else if (resultCode == UCrop.RESULT_ERROR) {
             val cropError: Throwable?  = data?.let { UCrop.getError(it) }
         }
-        super.onActivityResult(requestCode, resultCode, data)
+        //super.onActivityResult(requestCode, resultCode, data)
     }
-
-
 
     override fun onDestroyView() {
         super.onDestroyView()

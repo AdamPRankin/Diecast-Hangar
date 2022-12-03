@@ -23,12 +23,10 @@ import com.example.diecasthangar.R
 import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.databinding.FragmentAddPostBinding
-import com.example.diecasthangar.data.remote.Response
-import com.example.diecasthangar.data.remote.FirestoreRepository
-import com.example.diecasthangar.domain.remote.getUser
-import com.example.diecasthangar.ui.profile.ProfileViewModel
+import com.example.diecasthangar.data.remote.getUser
+import com.example.diecasthangar.ui.dashboard.DashboardViewModel
+import com.example.diecasthangar.ui.viewpost.AddPostViewModel
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlinx.coroutines.*
 import me.shouheng.compress.Compress
 import me.shouheng.compress.concrete
 import me.shouheng.compress.strategy.config.ScaleMode
@@ -43,12 +41,11 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
     // onDestroyView.
     private val binding get() = _binding!!
 
-
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentAddPostBinding.inflate(inflater, container, false)
         val view = binding.root
 
@@ -64,12 +61,9 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
         }
         val userViewModel: UserViewModel by activityViewModels()
         val dashboardViewModel: DashboardViewModel by activityViewModels()
-
         val avatarUri = userViewModel.getAvatarUri().value
         val username = userViewModel.getUsername()
-
         var photos: ArrayList<Photo> = ArrayList()
-
         val localUris: ArrayList<Uri> = ArrayList()
 
         val addPhotoButton: FloatingActionButton = view.findViewById(R.id.add_post_btn_add_images)
@@ -151,8 +145,6 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
                 viewModel.addPhotos(photos)
                 addImageAdapter.photos = viewModel.getPhotoMutableLiveData().value!!
                 addImageAdapter.notifyDataSetChanged()
-
-
             }
         }
         addPhotoButton.setOnClickListener {
@@ -168,7 +160,6 @@ class AddPostFragment(post: Post? = null, editMode: Boolean = false) : Fragment(
                 viewModel.updatePostPhotos()
                 val newPost = Post(text = postBodyEditText.text.toString(), images = photos, avatar = avatarUri!!,
                     username = username, user = getUser()!!.uid)
-                //todo notify profile as well
                 dashboardViewModel.itemEdited(Pair(currentPost!!,newPost))
                 parentFragmentManager.popBackStack()
             }

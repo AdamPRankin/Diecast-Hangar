@@ -16,7 +16,7 @@
             android:src="@drawable/trash_can"
             android:layout_gravity="end"
             android:outlineProvider="none"
-            app:tint="@color/material_dynamic_tertiary60"
+            app:tint="?colorFaintButton"
             android:gravity="end">
         </com.google.android.material.floatingactionbutton.FloatingActionButton>
         <ImageView

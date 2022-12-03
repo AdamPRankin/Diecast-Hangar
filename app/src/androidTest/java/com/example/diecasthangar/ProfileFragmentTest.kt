@@ -13,8 +13,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class ProfileFragmentTest {
-    private val TAG = "ProfileFragmentTest2"
-
 
     @Test
     fun testProfileFragment() {

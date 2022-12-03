@@ -1,4 +1,4 @@
-package com.example.diecasthangar.domain.remote
+package com.example.diecasthangar.data.remote
 
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth

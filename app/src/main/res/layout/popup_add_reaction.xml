@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:id="@+id/reaction_layout">
@@ -23,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:src="@drawable/airplane"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/plane" />
         <ImageView
             android:id="@+id/reaction_landing"
@@ -31,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:src="@drawable/airplane_landing"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/landing" />
         <ImageView
             android:id="@+id/reaction_takeoff"
@@ -39,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:src="@drawable/airplane_takeoff"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/takeoff" />
         <ImageView
             android:id="@+id/reaction_walking"
@@ -47,7 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:src="@drawable/walk"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/walking" />
         <ImageView
             android:id="@+id/reaction_fire"
@@ -55,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:src="@drawable/fire"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/fire" />
         <ImageView
             android:id="@+id/reaction_trash"
@@ -63,9 +61,8 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:src="@drawable/trash_can"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/trash" />
-
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

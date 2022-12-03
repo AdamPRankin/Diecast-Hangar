@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 /**
- * Given an input date, returns a string depending on how mucg time has passed since that date
+ * Given an input date, returns a string depending on how muchtime has passed since that date
  *
  *
  * @param fullDateFlag if true, returns the entire date string

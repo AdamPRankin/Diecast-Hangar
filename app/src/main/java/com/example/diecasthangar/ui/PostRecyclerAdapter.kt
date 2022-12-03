@@ -1,9 +1,5 @@
 package com.example.diecasthangar.ui
 
-import android.R.attr.animationDuration
-import android.R.id.toggle
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
@@ -11,41 +7,42 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
-import android.os.CountDownTimer
 import android.util.TypedValue
 import android.view.*
 import android.widget.*
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.iterator
+import androidx.core.view.size
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.diecasthangar.R
 import com.example.diecasthangar.core.util.getReactIcon
 import com.example.diecasthangar.core.util.getTopReacts
+import com.example.diecasthangar.core.util.loadingDummyPost
 import com.example.diecasthangar.core.util.parseDate
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.data.model.Reaction
-import com.example.diecasthangar.data.remote.FirestoreRepository
+import com.example.diecasthangar.data.remote.getUser
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
-import com.example.diecasthangar.databinding.PopupEditPostBinding
+import com.example.diecasthangar.databinding.PopupEditDeleteBinding
 import com.example.diecasthangar.databinding.PopupShowReactionsBinding
 import com.example.diecasthangar.databinding.RecyclerPostRowLayoutBinding
-import com.example.diecasthangar.domain.remote.getUser
+import com.example.diecasthangar.ui.viewpost.ReactionsRecyclerAdapter
+import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlinx.coroutines.*
-import kotlin.math.hypot
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 
-class PostRecyclerAdapter(
+@ExperimentalBadgeUtils class PostRecyclerAdapter(
     private val onAvatarClicked: (Post) -> Unit,
     private val onItemEdited: (Post) -> Unit,
     private val onItemDeleted: (Post) -> Unit,
     private val onCommentBtnClicked: (Post) -> Unit,
     private val onReactSelected: (Pair<String, String>) -> Unit
     ): RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
-    var posts =  ArrayList<Post>()
-    private val firestoreRepository = FirestoreRepository()
+    var posts =  arrayListOf(loadingDummyPost())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = RecyclerPostRowLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -55,7 +52,6 @@ class PostRecyclerAdapter(
     @SuppressLint("InflateParams", "NotifyDataSetChanged")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val post = posts[position]
-        //addCommentsToPosts(firestoreRepository,10)
         var currentImagePosition = 0
 
         val displayDateString = parseDate(post.date)
@@ -63,21 +59,23 @@ class PostRecyclerAdapter(
         holder.bodyTextView.text = post.text
         holder.userTextView.text = post.username
 
-        val testPaint = Paint()
-        testPaint.set(holder.bodyTextView.paint)
-        val textWidth =  testPaint.measureText(holder.bodyTextView.text.toString())
-        val text = holder.bodyTextView.text.toString()
-        val textBounds = Rect()
-        //mTextPaint.getTextBounds(mText, 0, mText.length, textBounds)
-        val mTextWidth = textBounds.width()
-        val textHeight = textBounds.height()
-        //TODO fix this check
-
-        if (textWidth > 250){
+        val bounds = Rect()
+        val bodyText = holder.bodyTextView
+        bodyText.paint.getTextBounds(bodyText.text.toString(), 0, bodyText.text.length, bounds)
+        val textHeight = bounds.width()
+        if (textHeight >= bodyText.maxHeight){
             holder.showMoreButton.visibility = View.VISIBLE
             holder.showMoreButton.setOnClickListener{
-                holder.bodyTextView.maxHeight = 9000
+                holder.bodyTextView.maxHeight = Int.MAX_VALUE
                 holder.showMoreButton.visibility = View.GONE
+                holder.showLessButton.visibility = View.VISIBLE
+                holder.showLessButton.setOnClickListener {
+                    val pxValueOf150dp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150f, holder.itemView.resources.displayMetrics)
+                    holder.bodyTextView.maxHeight = pxValueOf150dp.toInt()
+                    holder.showLessButton.visibility = View.GONE
+                    holder.showMoreButton.visibility = View.VISIBLE
+                }
+
             }
         }
         else{
@@ -173,15 +171,15 @@ class PostRecyclerAdapter(
                     onReactSelected(Pair(item.contentDescription.toString(),post.id))
                     for (item in binding.reactsLinearLayout) {
                         if (item.id != clickedButton.id){
-                            // get the center for the clipping circle
                             item.visibility = View.GONE
+                            // get the center for the clipping circle
                             val k = IntArray(2)
                             val h = clickedButton.getLocationInWindow(k)
                             popup.update(h,popup.width,popup.height)
                             popup.update()
                             //popup.update(48,48)
                             //popup.dismiss()
-*//*                            val cx = item.width / 2
+                           val cx = item.width / 2
                             val cy = item.height / 2
 
                             // get the final radius for the clipping circle
@@ -209,9 +207,7 @@ class PostRecyclerAdapter(
 
 
             popup.showAsDropDown(holder.reactButton)
-            popup.animationStyle = com.google.android.material.R.style.Animation_AppCompat_DropDownUp
-
-
+            //todo activity context
             //check if the popup is below the screen, if so, adjust upwards
             val displayMetrics = context.resources.displayMetrics
             val height = displayMetrics.heightPixels
@@ -220,17 +216,27 @@ class PostRecyclerAdapter(
             holder.reactButton.getLocationOnScreen(values)
             val positionOfIcon = values[1]
 
-            // adjust for window padding
-            val px =
-                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f,
-                    context.resources.displayMetrics).roundToInt()
+            val screenWidth = displayMetrics.widthPixels
+            val iconPx =
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 24f,
+                    context.resources.displayMetrics)
+            val paddingPx =
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, 8f,
+                    context.resources.displayMetrics)
+            val numIcons = binding.reactsLinearLayout.size
+            val totalRowWidth = (iconPx * numIcons + paddingPx * (numIcons+1))
+            val numRows = ceil(totalRowWidth/screenWidth)
+            val popupHeight = iconPx * numRows + paddingPx * (numIcons+1)
+            val buttonHeight = holder.reactButton.height
 
-            if (positionOfIcon >= (height - holder.reactButton.height)) {
-                val yOffset = -1 * ( holder.reactButton.height + px)
-                popup.update(holder.reactButton, 0, yOffset, popup.width, popup.height)
+            // adjust for window padding
+            if (positionOfIcon >= (height - buttonHeight)) {
+                val yOffset = -1 * (buttonHeight + popupHeight.toInt())
+                popup.update(holder.reactButton, 0, yOffset, screenWidth, popup.height)
             }
         }
-
 
         holder.commentButton.setOnClickListener {
             onCommentBtnClicked(post)
@@ -247,34 +253,6 @@ class PostRecyclerAdapter(
         holder.reactIcon1.setImageResource(getReactIcon(firstReactType))
         holder.reactIcon2.setImageResource(getReactIcon(secondReactType))
         holder.reactIcon3.setImageResource(getReactIcon(thirdReactType))
-
-/*        if (firstReactNumber > 0 ) {
-
-            if (firstReactNumber > 1){
-                holder.reactNumber1.text = secondReactNumber.toString()
-            }
-        }
-        else {
-            holder.reactNumber1.text = ""
-        }
-        if (secondReactNumber > 0) {
-
-            if (secondReactNumber > 1){
-                holder.reactNumber1.text = ""
-            }
-        }
-        else {
-            holder.reactNumber2.text = ""
-        }
-        if (thirdReactNumber > 0) {
-
-            if (thirdReactNumber > 1){
-                holder.reactNumber3.text = thirdReactNumber.toString()
-            }
-        }
-        else {
-            holder.reactNumber3.text = ""
-        }*/
 
         for (item in holder.reactsLayout){
             item.setOnClickListener {
@@ -332,7 +310,7 @@ class PostRecyclerAdapter(
                 val context = holder.itemView.context
                 val inflater: LayoutInflater  =
                     context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                val binding = PopupEditPostBinding.inflate(inflater)
+                val binding = PopupEditDeleteBinding.inflate(inflater)
                 val popup = PopupWindow(
                     binding.root,
                     WindowManager.LayoutParams.WRAP_CONTENT,
@@ -366,7 +344,6 @@ class PostRecyclerAdapter(
         if (post.id == "123"){
             holder.commentButton.visibility = View.GONE
             holder.reactButton.visibility = View.GONE
-            holder.showMoreButton.visibility = View.GONE
         }
         else{
             holder.commentButton.visibility = View.VISIBLE
@@ -388,13 +365,14 @@ class PostRecyclerAdapter(
         val leftImageButton: Button = binding.btnPostImgLeft
         val rightImageButton: Button = binding.btnPostImgRight
         val showMoreButton: Button = binding.postBtnShowMore
+        val showLessButton: Button = binding.postBtnShowLess
         val commentButton: Button = binding.postBtnComment
         val reactButton: Button = binding.postBtnReact
         val editPostPopupButton: FloatingActionButton = binding.postBtnEditPopup
         val reactIcon1: ImageView = binding.postReacts1
         val reactIcon2: ImageView = binding.postReacts2
         val reactIcon3: ImageView = binding.postReacts3
-/*        val reactNumber1: TextView = binding.postReaction1Number
+/*      val reactNumber1: TextView = binding.postReaction1Number
         val reactNumber2: TextView = binding.postReaction2Number
         val reactNumber3: TextView = binding.postReaction3Number*/
         val reactsLayout = binding.postReactionsLayout
@@ -408,5 +386,46 @@ class PostRecyclerAdapter(
 
     override fun getItemCount(): Int {
         return posts.size
+    }
+
+    fun setData(newPost: List<Post>) {
+        val diffCallback = PostDiffCallback(posts, newPost)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        posts.clear()
+        posts.addAll(newPost)
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    class PostDiffCallback(oldList: List<Post>, newList: List<Post>) :
+        DiffUtil.Callback() {
+        private val oldPostList: List<Post>
+        private val newPostList: List<Post>
+
+        init {
+            oldPostList = oldList
+            newPostList = newList
+        }
+
+        override fun getOldListSize(): Int {
+            return oldPostList.size
+        }
+
+        override fun getNewListSize(): Int {
+            return newPostList.size
+        }
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldPostList[oldItemPosition].id === newPostList[newItemPosition].id
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val oldPost: Post = oldPostList[oldItemPosition]
+            val newPost: Post = newPostList[newItemPosition]
+            return oldPost.text == newPost.text && oldPost.images == newPost.images
+        }
+
+        override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+            return super.getChangePayload(oldItemPosition, newItemPosition)
+        }
     }
 }

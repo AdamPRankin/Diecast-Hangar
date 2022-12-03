@@ -68,7 +68,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
     implementation 'com.google.firebase:firebase-storage-ktx:20.1.0'
     implementation 'com.google.firebase:firebase-database:20.1.0'
-    implementation 'com.google.firebase:firebase-firestore-ktx:24.4.0'
+    implementation 'com.google.firebase:firebase-firestore-ktx:24.4.1'
     implementation 'androidx.test.ext:junit-ktx:1.1.4'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'

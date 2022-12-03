@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.data.model.Photo
-import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.databinding.RecyclerHorizontalImageRowLayoutBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -19,7 +18,7 @@ class SideScrollImageRecyclerAdapter(
     canDeleteItems: Boolean = false
 ): RecyclerView.Adapter<SideScrollImageRecyclerAdapter.ViewHolder>() {
     var photos = ArrayList<Photo>()
-    val canDelete = canDeleteItems
+    private val canDelete = canDeleteItems
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = RecyclerHorizontalImageRowLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -72,7 +71,5 @@ class SideScrollImageRecyclerAdapter(
     override fun getItemCount(): Int {
         return photos.size
     }
-
-
 
 }

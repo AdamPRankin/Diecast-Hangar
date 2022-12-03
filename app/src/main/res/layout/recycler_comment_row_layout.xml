@@ -2,8 +2,26 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="8dp">
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/comment_btn_edit_popup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:backgroundTint="@android:color/transparent"
+        app:rippleColor="@android:color/transparent"
+        android:contentDescription="@string/options"
+        android:src="@drawable/dots_horizontal"
+        android:layout_gravity="end"
+        android:outlineProvider="none"
+        app:tint="?colorFaintButton"
+        android:paddingTop="0dp"
+        android:layout_marginTop="-8dp"
+        android:gravity="top"
+        android:visibility="gone">
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +32,6 @@
             android:id="@+id/post_comment_avatar"
             android:layout_width="48dp"
             android:layout_height="match_parent"
-            tools:srcCompat="@drawable/img"
             android:contentDescription="@null"
             android:scaleType="fitStart"
             />
@@ -45,8 +62,7 @@
                 android:layout_marginBottom="8dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxHeight="250dp"
-                android:text="@string/lorem_ipsum" />
+                android:maxHeight="250dp" />
         </LinearLayout>
 
 

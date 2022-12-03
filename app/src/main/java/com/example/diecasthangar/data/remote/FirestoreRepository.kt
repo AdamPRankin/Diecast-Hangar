@@ -3,12 +3,10 @@ package com.example.diecasthangar.data.remote
 import android.content.ContentValues
 import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.asLiveData
 import com.example.diecasthangar.core.util.commentMapToClass
 import com.example.diecasthangar.core.util.docToPostClass
 import com.example.diecasthangar.core.util.modelMapToClass
 import com.example.diecasthangar.data.model.*
-import com.example.diecasthangar.domain.remote.getUser
 import com.google.android.gms.tasks.Tasks.await
 import com.google.firebase.Timestamp
 import com.google.firebase.database.FirebaseDatabase
@@ -19,22 +17,15 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import com.google.rpc.context.AttributeContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.coroutines.*
 
 
 open class FirestoreRepository (
-    private val db: FirebaseFirestore = Firebase.firestore,
-
+    private val db: FirebaseFirestore = Firebase.firestore
     )  {
 
     private fun Query.paginate(lastVisibleItem: Flow<Int>): Flow<List<DocumentSnapshot>> = flow {
@@ -48,6 +39,7 @@ open class FirestoreRepository (
         lastVisibleItem.transform { lastVisible ->
             if (lastVisible == documents.size && documents.size > 0) {
                 documents.addAll(
+
                     suspendCoroutine { c ->
                         this@paginate.startAfter(documents.last())
                             .limit(25)
@@ -62,6 +54,82 @@ open class FirestoreRepository (
         }.collect { docs ->
             emit(docs)
         }
+    }
+
+    fun getPosts(lastVisibleItem: Flow<Int>): Flow<List<Post>> =
+        flow {
+            val postsDocSnap = mutableListOf<DocumentSnapshot>()
+            postsDocSnap.addAll(
+                suspendCoroutine<List<DocumentSnapshot>> { c ->
+                    Firebase.firestore.collection("posts")
+                        .orderBy("date", Query.Direction.DESCENDING)
+                        .limit(25)
+                        .get().addOnSuccessListener {
+                            c.resume(it.documents)
+                        }
+                }
+            )
+
+            emit(postsDocSnap.map { docToPostClass(it) })
+
+            lastVisibleItem.transform { lastVisibleItem ->
+                if (lastVisibleItem == postsDocSnap.size) {
+                    postsDocSnap.addAll(
+                        suspendCoroutine<List<DocumentSnapshot>> { c ->
+                            Firebase.firestore.collection("posts")
+                                .orderBy("date", Query.Direction.DESCENDING)
+                                .startAfter(postsDocSnap.last())
+                                .limit(25)
+                                .get().addOnSuccessListener {
+                                    c.resume(it.documents)
+                                }
+                        }
+                    )
+                    emit(postsDocSnap.map { docToPostClass(it) })
+                }
+            }.collect { newPosts: List<Post> ->
+                emit(newPosts)
+            }
+        }
+
+/*    fun newPostFlow(): Flow<List<Post>> =
+        flow {
+            val postsDocSnap = mutableListOf<DocumentSnapshot>()
+            postsDocSnap.addAll(
+                suspendCoroutine<List<DocumentSnapshot>> { c ->
+                    Firebase.firestore.collection("posts")
+                        .orderBy("date", Query.Direction.DESCENDING)
+                        .limit(1).endBefore(postsDocSnap)
+                        .get().addOnSuccessListener {
+                            c.resume(it.documents)
+                        }
+                }
+            )
+
+            emit(postsDocSnap.map { docToPostClass(it) })
+        }*/
+
+    suspend fun newPostFlow(lastVisibleItem: Flow<Int>): Flow<Response<ArrayList<Post>>> = callbackFlow  {
+        // 2.- We create a reference to our data inside Firestore
+        val eventDocument =  FirebaseFirestore
+            .getInstance()
+            .collection("posts")
+            .orderBy("date", Query.Direction.DESCENDING)
+            .endBefore(lastVisibleItem)
+
+        // 3.- We generate a subscription that is going to let us listen for changes with
+        // .addSnapshotListener and then offer those values to the channel that will be collected in our viewmodel
+        val subscription = eventDocument.addSnapshotListener { snapshot, _ ->
+            if(snapshot!!.documents.isNotEmpty()){
+                val posts = ArrayList<Post>()
+                for (doc in snapshot) {
+                    posts.add(docToPostClass(doc))
+                }
+                trySend(Response.Success(posts)).isSuccess
+            }
+        }
+        //Finally if collect is not in use or collecting any data we cancel this channel to prevent any leak and remove the subscription listener to the database
+        awaitClose { subscription.remove() }
     }
 
     suspend fun addImageToStorage(imageUri: Uri, path: String = "posts"): Response<Uri> {
@@ -135,20 +203,6 @@ open class FirestoreRepository (
         }
     }
 
-    fun addUserInfoToDatabase(userId: String, avatarUri: String, username: String): Response<Boolean> {
-        return try {
-            val userDataRef = db.collection("userdata").document(userId)
-            val newUserData = hashMapOf(
-                "avatar" to avatarUri,
-                "username" to username
-            )
-            userDataRef.set(newUserData)
-            Response.Success(true)
-        } catch (e: Exception) {
-            Response.Failure(e)
-        }
-    }
-
     fun updateUserBio(userId: String, text: String): Response<Boolean> {
         return try {
             val userDataRef = db.collection("userdata").document(userId)
@@ -218,18 +272,25 @@ open class FirestoreRepository (
             val images = db.collection("posts").document(pid).get().await().data?.get("images") as ArrayList<String>
 
             //todo more elegant solution
+            //delete images from storage
             for (uri in images) {
                 val id: String = uri.replace("https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F","").split(".jpg?")[0]
                 FirebaseStorage.getInstance().reference.child(
                     "images/posts/$id.jpg").delete()
             }
 
-            //delete images from storage
             db.collection("posts").document(pid).delete().await()
             Response.Success(true)
         } catch (e: Exception) {
             Response.Failure(e)
         }
+    }
+
+    fun deleteImage(imageUri: String, dir: String){
+        val id: String = imageUri.replace("https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F","").split(".jpg?")[0]
+        FirebaseStorage.getInstance().reference.child(
+            "images/$dir/$id.jpg").delete()
+
     }
 
     fun editFirestorePostText(pid: String, text: String) : Response<Boolean> {
@@ -254,73 +315,6 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun loadNextPagePosts(lastVisible: DocumentSnapshot? = null,limit: Long  = 8):
-            Response<Pair<ArrayList<Post>, DocumentSnapshot>> {
-        return try {
-            lateinit var queryCursor: DocumentSnapshot
-
-
-            val postsQuery = if (lastVisible != null) {
-                db.collection("posts")
-                    .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                    .startAfter(lastVisible).limit(limit)
-            } else {
-                db.collection("posts")
-                    .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                    .limit(limit)
-            }
-
-            val posts = postsQuery.get().addOnSuccessListener { documentSnapshot ->
-                if (documentSnapshot.documents.isNotEmpty()) {
-                    queryCursor = documentSnapshot.documents[documentSnapshot.size() - 1]
-                } else if (documentSnapshot.documents.isEmpty()) {
-                    queryCursor = lastVisible!!
-                }
-
-            }.await()
-
-            val postsList = arrayListOf<Post>()
-            for (post in posts) {
-                val imageUris: ArrayList<String> = post.get("images") as ArrayList<String>
-                val text: String = post.get("text") as String
-                val timestamp: Timestamp = post.getTimestamp("date") as Timestamp
-                val user: String = post.get("user").toString()
-                val username: String = post.get("username").toString()
-                val avatar: String = post.get("avatar").toString()
-                val id = post.id
-                var comments: ArrayList<Comment>? = ArrayList()
-                val reactions: MutableMap<String, Int> =
-                    post.get("reactions") as MutableMap<String, Int>
-                when(val response = getTopRatedComments(post.id,8)) {
-                    is Response.Loading -> {
-                    }
-                    is Response.Success -> {
-                        comments = response.data
-
-                    }
-                    is Response.Failure -> {
-                        print(response.e)
-                    }
-                }
-
-                val photos: List<Photo> = imageUris.map { Photo(remoteUri = it) }
-
-                val newPost = Post(
-                    text, photos as ArrayList<Photo>, user, timestamp.toDate(), username, avatar, id,
-                    comments, reactions
-                )
-                postsList.add(newPost)
-            }
-            val pair: Pair<ArrayList<Post>, DocumentSnapshot> = postsList to queryCursor
-            return Response.Success(pair)
-        } catch (e: ArrayIndexOutOfBoundsException) {
-            Response.Failure(e)
-        } catch (e: Exception) {
-            Response.Failure(e)
-
-        }
-    }
-
 /*    fun getPostsFlow(lastVisibleItem: Flow<Int>): Flow<List<Post>> =
         FirebaseFirestore
             .getInstance().collection("posts")
@@ -338,18 +332,16 @@ open class FirestoreRepository (
                     docToPostClass(it)
                 }
             }
-
-
     }
 
 
-    suspend fun userPostsFlow(userId: String): Flow<Response<ArrayList<Post>>> = callbackFlow  {
+    suspend fun userPostsFlow(userId: String): Flow<Response<List<Post>>> = callbackFlow  {
         // 2.- We create a reference to our data inside Firestore
         val eventDocument =  FirebaseFirestore
             .getInstance()
             .collection("posts")
             .whereEqualTo("user", userId)
-            .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .orderBy("date", Query.Direction.DESCENDING)
 
         // 3.- We generate a subscription that is going to let us listen for changes with
         // .addSnapshotListener and then offer those values to the channel that will be collected in our viewmodel
@@ -366,13 +358,10 @@ open class FirestoreRepository (
         awaitClose { subscription.remove() }
     }
 
-
-
-    //TODO add current UID to repostiry
     suspend fun addFirestoreComment(pid: String, text: String, uid: String) : Response<Boolean> {
         return try {
-            var avatarUri = ""
-            var username = ""
+            var avatarUri: String
+            var username: String
 
             when(val response = getUserInfo(getUser()!!.uid)) {
                 is Response.Loading -> {
@@ -442,26 +431,12 @@ open class FirestoreRepository (
         }
     }
 
-    suspend fun getTopRatedComments(pid: String,number: Int)
-            : Response<ArrayList<Comment>> {
-        return try {
-            lateinit var queryCursor: DocumentSnapshot
+    fun deleteComment(cid: String) {
+        db.collection("comments").document(cid).delete()
+    }
 
-            val commentsQuery =
-                db.collection("comments").whereEqualTo("post",pid)
-                    .limit(number.toLong())
-
-            val comments = commentsQuery.get().addOnSuccessListener {}.await()
-
-            val commentsList = arrayListOf<Comment>()
-            for (comment in comments) {
-                val newComment = commentMapToClass(comment)
-                commentsList.add(newComment)
-            }
-            Response.Success(commentsList)
-        } catch (e: Exception) {
-            Response.Failure(e)
-        }
+    fun editComment(cid: String, newText: String){
+        db.collection("comments").document(cid).update("text",newText)
     }
 
     suspend fun getUserFriends(uid: String): Response<ArrayList<User>> {
@@ -473,18 +448,21 @@ open class FirestoreRepository (
             val friendRequestsRef = db.collection("friend-requests").whereEqualTo("recipient",uid)
             val requestsList = friendRequestsRef.get().await().documents
 
-            for (request in requestsList){
-                val requesterId = request.get("sender").toString()
-                when(val response = getUserInfo(requesterId)) {
-                    is Response.Loading -> {
-                    }
-                    is Response.Success -> {
-                        val (avatar,username) = response.data!!
-                        val friend = User(requesterId,username,avatar,false,request.id)
-                        friendList.add(friend)
-                    }
-                    is Response.Failure -> {
-                        print(response.e)
+            //only add requests for current user profile
+            if (uid == getUser()!!.uid) {
+                for (request in requestsList) {
+                    val requesterId = request.get("sender").toString()
+                    when (val response = getUserInfo(requesterId)) {
+                        is Response.Loading -> {
+                        }
+                        is Response.Success -> {
+                            val (avatar, username) = response.data!!
+                            val friend = User(requesterId, username, avatar, false, request.id)
+                            friendList.add(friend)
+                        }
+                        is Response.Failure -> {
+                            print(response.e)
+                        }
                     }
                 }
             }
@@ -662,6 +640,7 @@ open class FirestoreRepository (
                "photos" to remoteUris,
                "price" to model.price,
                "comment" to model.comment,
+               "registration" to model.reg
             )
 
             val mid = modelsRef.add(h).await().id
@@ -701,7 +680,7 @@ open class FirestoreRepository (
 
             //todo more elegant solution
             for (uri in images) {
-                val id: String = uri.toString().replace(
+                val id: String = uri.replace(
                     "https://firebasestorage.googleapis.com/v0/b/diecast-hangar.appspot.com/o/images%2Fposts%2F",
                     ""
                 ).split(".jpg?")[0]
@@ -733,6 +712,7 @@ open class FirestoreRepository (
                 "photos" , remoteUris,
                 "price" , model.price,
                 "comment" , model.comment,
+                "registration", model.reg
             )
 
             Response.Success(true)

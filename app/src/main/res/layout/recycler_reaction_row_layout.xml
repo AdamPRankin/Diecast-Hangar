@@ -4,27 +4,24 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
     <ImageView
         android:id="@+id/react_row_icon"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:src="@drawable/trash_can"
-        app:tint="@color/material_dynamic_tertiary40"/>
+        app:tint="?android:icon"
+        android:contentDescription="@null" />
 
 
     <TextView
         android:id="@+id/react_row_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="trash"
         android:textSize="16sp"
         android:layout_gravity="center"
         android:layout_marginEnd="16sp"
         android:layout_marginStart="16dp"
-        android:textColor="@color/material_dynamic_tertiary30"/>
+        android:textColor="?android:textColor"/>
 
         <Space
             android:layout_width="0dp"
@@ -36,9 +33,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:paddingEnd="16dp"
+        android:paddingStart="16dp"
         android:textSize="24sp"
-        android:text="4"
-        android:textColor="@color/material_dynamic_tertiary50" />
-    </LinearLayout>
+        android:textColor="?android:textColor" />
 
 </LinearLayout>

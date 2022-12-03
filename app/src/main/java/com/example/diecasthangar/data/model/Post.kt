@@ -1,6 +1,6 @@
 package com.example.diecasthangar.data.model
 
-import com.example.diecasthangar.domain.remote.getUser
+import com.example.diecasthangar.data.remote.getUser
 import java.util.Date
 
 data class Post(

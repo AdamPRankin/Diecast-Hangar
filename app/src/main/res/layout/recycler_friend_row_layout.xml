@@ -15,7 +15,7 @@
         android:layout_height="90dp"
         android:padding="4dp"
         app:strokeWidth="2dp"
-        app:strokeColor="@color/material_dynamic_tertiary40"
+        app:strokeColor="?android:icon"
         app:shapeAppearanceOverlay="@style/roundedImageView"
         />
 
@@ -58,7 +58,7 @@
             style="?attr/materialIconButtonFilledTonalStyle"
             android:src="@drawable/ic_content_save_black_24dp"
             android:layout_gravity="center_vertical"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             tools:ignore="RtlSymmetry"
             android:contentDescription="@string/accept" />
         <ImageButton
@@ -70,7 +70,7 @@
             android:layout_gravity="center_vertical"
             android:paddingEnd="16dp"
             tools:ignore="RtlSymmetry"
-            app:tint="@color/material_dynamic_tertiary40"
+            app:tint="?android:icon"
             android:contentDescription="@string/decline" />
         </LinearLayout>
     </LinearLayout>

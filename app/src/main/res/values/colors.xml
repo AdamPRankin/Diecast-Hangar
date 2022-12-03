@@ -7,4 +7,30 @@
     <color name="light_blue_A200">#FF40C4FF</color>
     <color name="light_blue_A400">#FF00B0FF</color>
     <color name="black_overlay">#66000000</color>
+
+    <color name="orange_crush_background">#f1e2c0</color>
+    <color name="orange_crush_background_floating">#faf5ea</color>
+    <color name="orange_crush_button">#d29e2d</color>
+    <color name="orange_crush_accent">#d29e2d</color>
+    <color name="orange_crush_text">#3f2f0e</color>
+
+    <color name="dark_crush_background">#151004</color>
+    <color name="dark_crush_background_floating">#2a2009</color>
+    <color name="dark_crush_button">#d29e2d</color>
+    <color name="dark_crush_accent">#d29e2d</color>
+    <color name="dark_crush_text">#f1e2c0</color>
+
+    <color name="spicy_toothpaste_background">#ffe4e4</color>
+    <color name="spicy_toothpaste_background_floating">#ffaeae</color>
+    <color name="spicy_toothpaste_button">#600000</color>
+    <color name="spicy_toothpaste_accent">#600000</color>
+    <color name="spicy_toothpaste_text">#300000</color>
+
+
+    <color name="dark_cinnamon_background">#300000</color>
+    <color name="dark_cinnamon_background_floating">#180000</color>
+    <color name="dark_cinnamon_button">#8f0101</color>
+    <color name="dark_cinnamon_accent">#8f0101</color>
+    <color name="dark_cinnamon_text">#ffe4e4</color>
+
 </resources>

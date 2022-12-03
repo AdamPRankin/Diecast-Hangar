@@ -6,12 +6,4 @@ open class User (
     val avatarUri: String,
     var friend: Boolean = false,
     var requestToken: String? = null
-    ){
-
-    fun getRequest(): String? {
-        if (!friend){
-            return requestToken
-        }
-        return ""
-    }
-}
+)

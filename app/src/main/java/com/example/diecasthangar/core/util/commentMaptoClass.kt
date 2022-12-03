@@ -10,7 +10,7 @@ fun commentMapToClass(comment: QueryDocumentSnapshot): Comment {
     val user: String = comment["user"].toString()
     val username: String = comment["username"].toString()
     val avatar: String = comment["avatar"].toString()
-    val id = comment["id"].toString()
+    val id = comment.id
     val postId: String = comment["post"] as String
     val reactions: MutableMap<String, Int> = comment["reactions"]
             as MutableMap<String, Int>

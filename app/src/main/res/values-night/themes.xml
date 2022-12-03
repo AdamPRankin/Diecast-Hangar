@@ -1,10 +1,65 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Base.Theme.DiecastHangar" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Customize your light theme here. -->
+        <item name="colorBackgroundFloating">@color/material_dynamic_primary20</item>
+        <item name="background">@color/material_dynamic_primary10</item>
+        <item name="android:buttonStyleToggle">@color/material_dynamic_primary60</item>
+        <item name="colorOutline">@color/material_dynamic_primary90</item>
+        <item name="android:textColor">@color/material_dynamic_primary90</item>
+        <item name="android:textColorHint">@color/material_dynamic_primary90</item>
+        <item name="android:colorAccent">@color/material_dynamic_primary60</item>
+
+        <!--toggle button group highlight -->
+        <item name="colorSecondaryContainer">@color/material_dynamic_primary60</item>
+
+        <item name="colorPrimary">@color/material_dynamic_primary60</item>
+
+
+        <item name="materialButtonStyle">@style/materialButtonStyleDynamic</item>
+        <item name="materialButtonOutlinedStyle">@style/outlinedButtonStyleDynamic</item>
+        <item name="borderlessButtonStyle">@style/borderlessButtonStyleDynamic</item>
+
+        <!-- main icon color -->
+        <item name="android:icon">@color/material_dynamic_primary60</item>
+        <item name="colorIconButton">@color/material_dynamic_primary60</item>
+        <item name="colorFabMain">@color/material_dynamic_primary60</item>
+        <item name="colorButton">@color/material_dynamic_primary60</item>
+        <item name ="switchStyle">@style/switchDynamic</item>
+        <item name="colorOnButton">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <!-- faint icon color -->
+        <item name="colorFaintButton">@color/material_dynamic_primary60</item>
     </style>
 
-    <style name="ThemeOverlay.DiecastHangar.FullscreenContainer" parent="">
+    <style name="materialButtonStyleDynamic" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/material_dynamic_primary60</item>
+        <item name="background">@color/material_dynamic_primary60</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:tint">@color/white</item>
+    </style>
+
+    <style name="borderlessButtonStyleDynamic" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/material_dynamic_primary60</item>
+        <item name="android:icon">@color/material_dynamic_primary60</item>
+    </style>
+
+    <style name="reactionStyleDynamic" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/material_dynamic_primary60</item>
+        <item name="android:icon">@color/material_dynamic_primary60</item>
+    </style>
+
+    <style name="outlinedButtonStyleDynamic" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/material_dynamic_primary60</item>
+    </style>
+
+    <style name="switchDynamic" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="colorSurfaceVariant">@color/material_dynamic_primary90</item>
+        <item name="colorOnPrimary">@color/material_dynamic_primary90</item>
+        <item name="colorPrimary">@color/material_dynamic_primary60</item>
+        <item name="colorOutline">@color/material_dynamic_primary60</item>
+    </style>
+
+    <style name="dynamicThemeOverlay.DiecastHangar.FullscreenContainer" parent="">
     </style>
 </resources>

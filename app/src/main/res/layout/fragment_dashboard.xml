@@ -4,9 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/material_dynamic_primary90"
-    tools:context=".ui.DashboardFragment">
-
+    android:background="?attr/background"
+    tools:context=".ui.dashboard.DashboardFragment">
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -26,9 +25,10 @@
             android:contentDescription="@string/profile_picture" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:layout_weight="0.2"
             android:orientation="vertical">
             <TextView
@@ -40,20 +40,23 @@
             android:id="@+id/dashboard_text_username"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-
             android:textSize="18sp"
             android:text="@string/username" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/button"
-            android:layout_width="0dp"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dash_btn_settings"
+            style="?attr/borderlessButtonStyle"
+            app:iconTint="?colorIconButton"
+            android:layout_width="64dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.5"
-            android:text="Le Button" />
+            app:icon="@drawable/airplane_cog"
+            app:iconSize="48dp"
+            android:scaleType="fitCenter"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
     </LinearLayout>
-
-    <!-- Buttons -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/post_recycler_view"
@@ -66,6 +69,7 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/dash_btn_add_post"
+        android:backgroundTint="?colorFabMain"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
@@ -75,6 +79,6 @@
         android:focusable="true"
         android:contentDescription="@string/new_post"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

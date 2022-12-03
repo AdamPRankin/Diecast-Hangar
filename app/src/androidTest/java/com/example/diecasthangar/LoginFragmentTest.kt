@@ -13,8 +13,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class LoginFragmentTest {
-    private val TAG = "LoginFragmentTest"
-
 
         @Test
         fun testEventFragment() {

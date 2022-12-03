@@ -8,7 +8,7 @@ class TestModel {
 
 
     @Test
-    fun testModel(){
+    fun testModel() {
 
         val newModel = Model(
             userID = "123",
@@ -18,7 +18,22 @@ class TestModel {
             airline = "delta",
             photos = arrayListOf(),
             comment = "hello",
-            id = null
+            id = null,
+            reg = "C-CCC"
+
+        )
+
+        val dupeModel = Model(
+            userID = "123",
+            manufacturer = "NG",
+            scale = "1:400",
+            frame = "787",
+            airline = "delta",
+            photos = arrayListOf(),
+            comment = "hello",
+            id = null,
+            reg = "C-CCC"
+
         )
 
         assertEquals("NG",newModel.mould)
@@ -28,6 +43,8 @@ class TestModel {
         assertEquals("hello", newModel.comment)
         assertEquals(null, newModel.id)
         assertEquals(0, newModel.price)
+
+        assertEquals(dupeModel,newModel)
 
     }
 }

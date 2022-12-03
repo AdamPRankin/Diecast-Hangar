@@ -4,28 +4,26 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
 import android.util.TypedValue
 import android.view.*
 import android.widget.PopupWindow
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.data.model.Model
-import com.example.diecasthangar.data.model.Post
-import com.example.diecasthangar.databinding.PopupEditPostBinding
+import com.example.diecasthangar.data.remote.getUser
+import com.example.diecasthangar.databinding.PopupEditDeleteBinding
 import com.example.diecasthangar.databinding.PopupViewModelPhotosBinding
 import com.example.diecasthangar.databinding.RecyclerModelRowLayoutBinding
-import com.example.diecasthangar.domain.remote.getUser
 import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
-import kotlin.math.roundToInt
 
 class ModelRecyclerAdapter(
     private val onItemEdited: (Model, Int) -> Unit,
     private val onItemDeleted: (Model) -> Unit,
 ): RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder>() {
-    var models = ArrayList<Model>()
+    private var models = ArrayList<Model>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val rowBinding = RecyclerModelRowLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -64,12 +62,12 @@ class ModelRecyclerAdapter(
         }
 
         if (model.userID == getUser()?.uid) {
-            holder.modelEditPopup.visibility = View.VISIBLE
-            holder.modelEditPopup.setOnClickListener {
+            holder.modelEditDeleteButton.visibility = View.VISIBLE
+            holder.modelEditDeleteButton.setOnClickListener {
                 val context = holder.itemView.context
                 val inflater: LayoutInflater  =
                     context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                val binding = PopupEditPostBinding.inflate(inflater)
+                val binding = PopupEditDeleteBinding.inflate(inflater)
                 val popup = PopupWindow(
                     binding.root,
                     WindowManager.LayoutParams.WRAP_CONTENT,
@@ -81,16 +79,27 @@ class ModelRecyclerAdapter(
                 // Removes default background.
                 popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-                popup.showAsDropDown(holder.modelEditPopup, 0, 0)
+                popup.showAsDropDown(holder.modelEditDeleteButton, 0, 0)
 
-                //TODO make sure displays onscreen
+
                 //check if the popup is below the screen, if so, adjust upwards
+                val displayMetrics = context.resources.displayMetrics
+                val height = displayMetrics.heightPixels
+                val popupHeightPx =
+                    TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP, 112f,
+                        context.resources.displayMetrics)
+                val values = IntArray(2)
+                holder.modelEditDeleteButton.getLocationOnScreen(values)
+                val positionOfIcon = values[1]
+                if (positionOfIcon >= (height - popupHeightPx)) {
+                    val yOffset = -1 * ( holder.modelEditDeleteButton.height + popupHeightPx.toInt())
+                    popup.update(holder.modelEditDeleteButton, 0, yOffset, popup.width, popup.height)
+
+                }
 
                 binding.postOptionsBtnDelete.setOnClickListener {
                     onItemDeleted(model)
-                    models.removeAt(position)
-                    notifyItemRemoved(position)
-                    notifyItemRangeChanged(position,models.size)
                     popup.dismiss()
                 }
                 binding.postOptionsBtnEdit.setOnClickListener {
@@ -115,7 +124,7 @@ class ModelRecyclerAdapter(
                 popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
                 val photoRecyclerView = binding.modelPopupRecyclerview
-                val photoAdapter = SideScrollImageRecyclerAdapter({ _ ->
+                val photoAdapter = SideScrollImageRecyclerAdapter({
                     //display only mode
                 },false)
                 photoRecyclerView.adapter = photoAdapter
@@ -143,7 +152,7 @@ class ModelRecyclerAdapter(
 
         val modelPhotoImageView = binding.modelRowImageView
         val modelBrandIcon = binding.modelRowBrandIcon
-        val modelEditPopup = binding.modelRowBtnEditPopup
+        val modelEditDeleteButton = binding.modelRowBtnEditPopup
 
 
         init {
@@ -155,6 +164,47 @@ class ModelRecyclerAdapter(
 
     override fun getItemCount(): Int {
         return models.size
+    }
+
+    fun setData(newModel: List<Model>) {
+        val diffCallback = ModelDiffCallback(models, newModel)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        models.clear()
+        models.addAll(newModel)
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    class ModelDiffCallback(oldList: List<Model>, newList: List<Model>) :
+        DiffUtil.Callback() {
+        private val oldModelList: List<Model>
+        private val newModelList: List<Model>
+
+        init {
+            oldModelList = oldList
+            newModelList = newList
+        }
+
+        override fun getOldListSize(): Int {
+            return oldModelList.size
+        }
+
+        override fun getNewListSize(): Int {
+            return newModelList.size
+        }
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldModelList[oldItemPosition].id === newModelList[newItemPosition].id
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val oldPost: Model = oldModelList[oldItemPosition]
+            val newPost: Model = newModelList[newItemPosition]
+            return oldPost == newPost
+        }
+
+        override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+            return super.getChangePayload(oldItemPosition, newItemPosition)
+        }
     }
 
 

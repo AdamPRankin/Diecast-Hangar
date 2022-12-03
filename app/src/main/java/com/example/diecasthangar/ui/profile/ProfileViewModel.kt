@@ -5,28 +5,19 @@ import android.util.Log
 import androidx.lifecycle.*
 import com.example.diecasthangar.data.model.Model
 import com.example.diecasthangar.data.model.Photo
-import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.data.model.User
 import com.example.diecasthangar.data.remote.FirestoreRepository
 import com.example.diecasthangar.data.remote.Response
-import com.example.diecasthangar.domain.remote.getUser
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.SetOptions.merge
+import com.example.diecasthangar.data.remote.getUser
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.merge
 
 
 class ProfileViewModel(uid: String) : ViewModel() {
-    //val postsLiveData: MutableLiveData<ArrayList<Post>> = MutableLiveData()
     private val friendsLiveData: MutableLiveData<ArrayList<User>> = MutableLiveData()
-    private val modelsLiveData: MutableLiveData<ArrayList<Model>?> = MutableLiveData()
     private val modelPhotosLiveData: MutableLiveData<ArrayList<Uri>> = MutableLiveData()
-    private val postsArrayList: ArrayList<Post> = ArrayList()
     private val repository = FirestoreRepository()
-    private var snapshot: DocumentSnapshot? = null
-    var postsLoading = true
     private var bio: MutableLiveData<String> = MutableLiveData("Loading...")
-    var profileUid = uid
+    private var profileUid = uid
     val avatarUri :MutableLiveData<String> = MutableLiveData("")
     val username :MutableLiveData<String> = MutableLiveData("")
     private val token :MutableLiveData<String> = MutableLiveData("")
@@ -115,10 +106,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
         return currentModelPhotosMutableLiveData
     }
 
-    fun getCurrentModelDeletedPhotosMutableLiveData(): MutableLiveData<ArrayList<Photo>> {
-        return currentModelDeletedPhotosMutableLiveData
-    }
-
     fun addCurrentModelDeletedPhoto(photo: Photo){
         val newDeletedModels = currentModelDeletedPhotosMutableLiveData.value?.let { ArrayList(it) } ?: arrayListOf()
         newDeletedModels.add(photo)
@@ -141,6 +128,16 @@ class ProfileViewModel(uid: String) : ViewModel() {
         currentModelDeletedPhotosMutableLiveData.value?.let { photos.removeAll(it.toSet()) }
         return photos
     }
+
+    fun removeCurrentDeletedModelPhotos(){
+        val photos = currentModelDeletedPhotosMutableLiveData.value
+        if (photos != null) {
+            for (photo in photos) {
+                repository.deleteImage(photo.remoteUri,"models")
+            }
+        }
+    }
+
     fun getFriendsMutableLiveData(): MutableLiveData<ArrayList<User>> {
         return friendsLiveData
     }
@@ -193,7 +190,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
         }
     }
 
-
     fun updateBio(text: String) {
         if (profileUid == getUser()!!.uid) {
             viewModelScope.launch {
@@ -226,7 +222,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 }
             }
         }
-
     }
 
     fun deletePost(pid: String){
@@ -234,7 +229,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
             repository.deletePostFromFirestore(pid)
         }
     }
-
 
     fun updatePhotos(photos: ArrayList<Uri>){
         modelPhotosLiveData.postValue(photos)
@@ -283,7 +277,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 }
             }
         }
-
     }
     fun addFriendFromToken(token: String){
         viewModelScope.launch {

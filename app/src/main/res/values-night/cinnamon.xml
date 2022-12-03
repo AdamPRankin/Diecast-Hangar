@@ -1,0 +1,66 @@
+<resources>
+
+    <!-- Cinnamon Crush application theme. -->
+    <style name="Cinnamon.Theme.DiecastHangar" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorBackgroundFloating">@color/dark_cinnamon_background_floating</item>
+        <item name="background">@color/dark_cinnamon_background</item>
+        <item name="android:buttonStyleToggle">@color/dark_cinnamon_text</item>
+        <item name="colorOutline">@color/dark_cinnamon_accent</item>
+        <item name="android:textColor">@color/dark_cinnamon_text</item>
+        <item name="android:textColorHint">@color/dark_cinnamon_text</item>
+        <item name="android:colorAccent">@color/dark_cinnamon_button</item>
+
+        <item name="colorSecondaryContainer">@color/dark_cinnamon_button</item>
+
+        <item name="colorPrimary">@color/dark_cinnamon_button</item>
+
+
+        <item name="materialButtonStyle">@style/materialButtonStyleCinnamon</item>
+        <item name="materialButtonOutlinedStyle">@style/outlinedButtonStyleCinnamon</item>
+        <item name="borderlessButtonStyle">@style/borderlessButtonStyleCinnamon</item>
+
+        <!-- main icon color -->
+        <item name="android:icon">@color/dark_cinnamon_button</item>
+        <item name="colorIconButton">@color/dark_cinnamon_button</item>
+        <item name="colorFabMain">@color/dark_cinnamon_button</item>
+        <item name="colorButton">@color/dark_cinnamon_button</item>
+        <item name ="switchStyle">@style/switchCinnamon</item>
+
+        <item name="colorOnButton">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <!-- faint icon color -->
+        <item name="colorFaintButton">@color/material_dynamic_tertiary60</item>
+    </style>
+
+    <style name="materialButtonStyleDarkCinnamon" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/dark_cinnamon_button</item>
+        <item name="background">@color/dark_cinnamon_button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:tint">@color/white</item>
+    </style>
+
+    <style name="borderlessButtonStyleDarkCinnamon" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/dark_cinnamon_button</item>
+        <item name="android:icon">@color/dark_cinnamon_button</item>
+    </style>
+
+    <style name="reactionStyleDarkCinnamon" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/dark_cinnamon_button</item>
+        <item name="android:icon">@color/dark_cinnamon_button</item>
+    </style>
+
+    <style name="outlinedButtonStyleDarkCinnamon" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/dark_cinnamon_button</item>
+    </style>
+
+    <style name="switchDarkCinnamon" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="colorSurfaceVariant">@color/dark_cinnamon_background_floating</item>
+        <item name="colorOnPrimary">@color/dark_cinnamon_background_floating</item>
+        <item name="colorPrimary">@color/dark_cinnamon_button</item>
+        <item name="colorOutline">@color/dark_cinnamon_accent</item>
+    </style>
+
+    <style name="CinnamonThemeOverlay.DiecastHangar.FullscreenContainer" parent="">
+    </style>
+</resources>

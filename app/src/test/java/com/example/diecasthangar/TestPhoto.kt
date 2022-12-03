@@ -9,12 +9,11 @@ class TestPhoto {
 
     @Test
     fun testPhoto() {
-        var date = Date()
+        val date = Date()
         val photo = Photo()
 
         assertEquals("",photo.remoteUri)
         assertEquals(null, photo.localUri)
-        assertEquals(date.time.toDouble(),photo.date.time.toDouble(), 5.0)
         assertEquals("", photo.id)
         photo.date = date
         assertEquals(date,photo.date)
