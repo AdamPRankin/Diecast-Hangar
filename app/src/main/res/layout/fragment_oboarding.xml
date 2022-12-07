@@ -5,14 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/material_dynamic_tertiary99"
-    tools:context=".ui.onboarding.LoginFragment"
+    tools:context=".ui.onboarding.OnboardingFragment"
     android:orientation="horizontal">
 
     <LinearLayout
         android:id="@+id/layout_register"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipChildren="false"
+        android:layout_height="wrap_content"        android:clipChildren="false"
         android:clipToPadding="false"
         android:orientation="vertical"
         android:padding="24dp"

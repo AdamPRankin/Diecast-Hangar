@@ -1,4 +1,4 @@
-package com.example.diecasthangar.ui.viewpost
+package com.example.diecasthangar.ui
 
 import com.example.diecasthangar.data.model.Reaction
 import com.example.diecasthangar.databinding.RecyclerReactionRowLayoutBinding

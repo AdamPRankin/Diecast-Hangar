@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/background"
+    tools:context=".ui.profile.ProfileFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:orientation="vertical">
+
+
+        <LinearLayout
+            android:id="@+id/profile_lay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+
+            <ImageView
+                android:id="@+id/profile_edit_avatar"
+                android:layout_width="109dp"
+                android:layout_height="109dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/user_avatar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="?colorButton"
+                tools:src="@drawable/image_edit"
+                android:visibility="gone"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/profile_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:textSize="24sp" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/profile_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/profile_text_bio"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="14sp"
+                    android:textColor="?android:textColor"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/profile_edit_text_bio"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="14sp"
+                    android:textColor="?android:textColor"
+                    android:visibility="gone"/>
+            </LinearLayout>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/profile_avatar"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="8dp"
+                android:contentDescription="@string/user_avatar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:src="@drawable/avatar_default"
+                app:strokeWidth="4dp"
+                app:strokeColor="?attr/colorOutline"
+                app:shapeAppearanceOverlay="@style/roundedImageView"
+                />
+            <ImageButton
+                android:id="@+id/profile_btn_edit"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:layout_marginStart="8dp"
+                android:background="@android:color/transparent"
+                app:backgroundTint="@android:color/transparent"
+                app:rippleColor="@android:color/transparent"
+                android:contentDescription="@string/edit"
+                android:src="@drawable/ic_account_edit_black_48dp"
+                android:layout_gravity="center"
+                android:outlineProvider="none"
+                app:tint="?colorButton">
+            </ImageButton>
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/profile_toggle_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_weight="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@id/profile_btn_posts"
+                >
+
+                <com.google.android.material.button.MaterialButton
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:id="@+id/profile_btn_models"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/models"
+                    android:textColor="?android:textColor"
+                    android:layout_weight="1"
+                    />
+                <com.google.android.material.button.MaterialButton
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:id="@+id/profile_btn_posts"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/posts"
+                    android:layout_weight="1"
+                    android:textColor="?android:textColor"
+                    />
+                <com.google.android.material.button.MaterialButton
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:id="@+id/profile_btn_friends"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/friends"
+                    android:layout_weight="1"
+                    android:textColor="?android:textColor"
+                    />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/profile_post_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_lay" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/profile_model_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_lay"
+            android:visibility="gone"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/profile_friend_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_lay"
+            android:visibility="gone"/>
+
+
+    </LinearLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_edit_profile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@drawable/add_48"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:focusable="true"
+        android:contentDescription="@string/new_post"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"/>
+
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:backgroundTint="@android:color/transparent"
+        app:rippleColor="@android:color/transparent"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/content_save"
+        android:layout_gravity="end"
+        android:outlineProvider="none"
+        app:tint="?colorButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_add_model"
+        android:backgroundTint="?colorFabMain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/airplane_plus"
+        android:layout_gravity="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/profile_btn_add_friend"
+        android:backgroundTint="?colorFabMain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/ic_account_plus_black_48dp"
+        android:layout_gravity="end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

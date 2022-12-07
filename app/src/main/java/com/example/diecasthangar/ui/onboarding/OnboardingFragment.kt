@@ -1,11 +1,8 @@
 package com.example.diecasthangar.ui.onboarding
 
 import android.app.AlertDialog
-import android.content.ContentValues.TAG
 import android.os.Bundle
-import android.text.Editable
 import android.text.InputType
-import android.util.Log
 import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
@@ -18,14 +15,11 @@ import android.widget.Toast.LENGTH_SHORT
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.diecasthangar.R
-import com.example.diecasthangar.data.remote.FirebaseAuthManager
 import com.example.diecasthangar.databinding.FragmentOboardingBinding
-import com.example.diecasthangar.ui.dashboard.DashboardFragment
 import com.example.diecasthangar.ui.UserViewModel
-import com.google.android.material.textfield.TextInputLayout
+import com.example.diecasthangar.ui.dashboard.DashboardFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.ktx.Firebase
 
 class OnboardingFragment : Fragment() {
@@ -105,7 +99,8 @@ class OnboardingFragment : Fragment() {
             }
             else{
                 Toast.makeText(view.context,"Authentication failed, please try again",
-                    Toast.LENGTH_SHORT).show()
+                    LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -130,22 +125,23 @@ class OnboardingFragment : Fragment() {
         layout.setPadding(10,10,10,10)
 
         builder.setView(layout)
-        builder.setPositiveButton("send") { dialog, which ->
+        builder.setPositiveButton("send") { dialog, _ ->
             val email: String = emailText.text.toString().trim()
             beginRecovery(email)
+            dialog.dismiss()
         }
-        builder.setNegativeButton("cancel") { dialog, which ->
+        builder.setNegativeButton("cancel") { dialog, _ ->
             dialog.dismiss()
         }.create().show()
     }
 
-    //todo authmanager/viewmodel
+    //todo auth manager/viewmodel
     private fun beginRecovery(email: String){
         val auth: FirebaseAuth = Firebase.auth
         auth.sendPasswordResetEmail(email).addOnCompleteListener {
-            Toast.makeText(view?.context,"Email sent", Toast.LENGTH_SHORT).show()
+            Toast.makeText(view?.context,"Email sent", LENGTH_SHORT).show()
         }.addOnFailureListener {
-            Toast.makeText(view?.context,"failed to send, please try again later", Toast.LENGTH_SHORT).show()
+            Toast.makeText(view?.context,"failed to send, please try again later", LENGTH_SHORT).show()
         }
     }
 

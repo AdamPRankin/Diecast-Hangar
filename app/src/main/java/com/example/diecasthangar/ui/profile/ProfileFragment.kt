@@ -1,23 +1,30 @@
 package com.example.diecasthangar.ui.profile
 
+import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.*
+import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -30,16 +37,21 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.diecasthangar.R
 import com.example.diecasthangar.data.model.Model
 import com.example.diecasthangar.data.model.Photo
+import com.example.diecasthangar.data.model.User
 import com.example.diecasthangar.data.remote.Response
 import com.example.diecasthangar.data.remote.getUser
 import com.example.diecasthangar.databinding.FragmentProfileBinding
 import com.example.diecasthangar.databinding.PopupAddFriendBinding
 import com.example.diecasthangar.databinding.PopupAddModelBinding
-import com.example.diecasthangar.ui.*
+import com.example.diecasthangar.ui.AddPostFragment
+import com.example.diecasthangar.ui.PostRecyclerAdapter
+import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
+import com.example.diecasthangar.ui.UserViewModel
 import com.example.diecasthangar.ui.viewpost.ViewPostFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.NonDisposableHandle.parent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.shouheng.compress.Compress
@@ -51,23 +63,35 @@ import java.io.File
 open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), LifecycleOwner {
     private val profileUserId = uid
     private var imageAdded = false
-    private val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(profileUserId) }
 
+    private lateinit var frameLayout: FrameLayout
+    private val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(profileUserId) }
     private var _binding: FragmentProfileBinding? = null
     // This property is only valid between onCreateView and
    // onDestroyView.
     private val binding get() = _binding!!
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
+
         super.onCreate(savedInstanceState)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
+        frameLayout = FrameLayout(requireActivity())
         val view = binding.root
+        ///val inflater =
+        //requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        frameLayout.addView(view)
+        val orientation = resources.configuration.orientation
+
         // Inflate the layout for this fragment
 
         val profileImageView: ImageView = binding.profileAvatar
@@ -75,13 +99,14 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val profileUsername: TextView = binding.profileName
         val profileBioText: TextView = binding.profileTextBio
         val profileBioEditText: EditText = binding.profileEditTextBio
-        val profileEditButton: FloatingActionButton = binding.profileBtnEdit
+        val profileEditButton: ImageButton = binding.profileBtnEdit
         val profileSaveButton: FloatingActionButton = binding.profileBtnSave
         val profileTogglePosts: Button = binding.profileBtnPosts
         val profileToggleModels: Button = binding.profileBtnModels
         val profileToggleFriends: Button = binding.profileBtnFriends
         val profileAddModelButton: FloatingActionButton = binding.profileBtnAddModel
         val profileAddFriendButton: FloatingActionButton = binding.profileBtnAddFriend
+        val profileLayout = binding.profileLay
 
         val photos = ArrayList<Photo>()
         val modelPhotoLauncher = registerForActivityResult(
@@ -128,15 +153,65 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
             }
         }
+        val postAdapter = PostRecyclerAdapter(
+            // avatar clicked
+            {
+                // do not need to do anything here as all posts are from current user
+            },
+            //edit post button click
+            { post ->
+                parentFragmentManager.beginTransaction()
+                    .add(R.id.container, AddPostFragment(post, true))
+                    .addToBackStack("home").hide(this).commit()
+            },
+            // delete post button click
+            { post ->
+                viewModel.deletePost(post.id)
+            },
+            //comment button clicked
+            { post ->
+                //todo update dashboardViewModel
+                parentFragmentManager.beginTransaction()
+                    .add(R.id.container, ViewPostFragment()).addToBackStack("home")
+                    .hide(this).commit()
+            },
+            //reaction selected
+            { pair ->
+                val (reaction, pid) = pair
+                viewModel.addReact(reaction, pid)
+            })
+        fun observePosts() {
+            viewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
+                when (result) {
+                    is Response.Loading -> {
+                    }
+                    is Response.Success -> {
+                        val posts = result.data
+                        if (posts != null) {
+                            postAdapter.setData(posts)
+                        }
+                    }
+                    is Response.Failure -> {
+                        Toast.makeText(
+                            context, "Failed to load posts, please try again later",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    else -> {}
+                }
+            }
+        }
+        observePosts()
 
-        fun editModel(model: Model,editing: Boolean = true) {
+        @SuppressLint("NotifyDataSetChanged")
+        fun editModel(model: Model, editing: Boolean = true) {
             val context = view.context
             viewModel.clearCurrentModelPhotos()
             if (editing) {
                 viewModel.addCurrentModelPhotos(model.photos)
             }
 
-            val addModelPopupInflater: LayoutInflater  =
+            val addModelPopupInflater: LayoutInflater =
                 context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val binding = PopupAddModelBinding.inflate(addModelPopupInflater)
             val popup = PopupWindow(
@@ -154,16 +229,22 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             // brand autocomplete
             val autoCompleteBrand = binding.addModelAutocompleteBrand
             val brands: Array<out String> = resources.getStringArray(R.array.brands_array)
-            autoCompleteBrand.setAdapter(ArrayAdapter(requireContext(),
-                android.R.layout.simple_list_item_1, brands).also { adapter ->
-                autoCompleteBrand.setAdapter(adapter)})
+            autoCompleteBrand.setAdapter(ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_list_item_1, brands
+            ).also { adapter ->
+                autoCompleteBrand.setAdapter(adapter)
+            })
 
             // scale autocomplete
             val autoCompleteScale = binding.addModelAutocompleteScale
             val scales: Array<out String> = resources.getStringArray(R.array.scales_array)
-            autoCompleteScale .setAdapter(ArrayAdapter(requireContext(),
-                android.R.layout.simple_list_item_1, scales).also { adapter ->
-                autoCompleteScale.setAdapter(adapter)})
+            autoCompleteScale.setAdapter(ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_list_item_1, scales
+            ).also { adapter ->
+                autoCompleteScale.setAdapter(adapter)
+            })
 
             binding.addModelImageView.setOnClickListener {
                 val intent =
@@ -177,7 +258,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 viewModel.addCurrentModelDeletedPhoto(deletedPhoto)
             }, canDeleteItems = true)
             photoRecyclerView.adapter = photoAdapter
-            photoRecyclerView.layoutManager = LinearLayoutManager(view.context,LinearLayoutManager.HORIZONTAL, false)
+            photoRecyclerView.layoutManager =
+                LinearLayoutManager(view.context, LinearLayoutManager.HORIZONTAL, false)
 
             if (editing) {
                 autoCompleteScale.setText(model.scale)
@@ -214,45 +296,20 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                         frame, airline, livery, newPhotos, comment, 0, model.id, model.reg
                     )
                     viewModel.updateModel(editedModel)
-                }
-                else{
+                } else {
                     val model = Model(
                         getUser()!!.uid, brand, brand, scale, frame, airline,
-                        livery, photos, comment, 0, null, reg)
+                        livery, photos, comment, 0, null, reg
+                    )
                     viewModel.uploadModel(model)
                 }
                 popup.dismiss()
             }
-            popup.showAsDropDown(profileImageView, 0, 0)
+            popup.showAtLocation(view, 0, 0,0)
         }
 
         val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
-        val postAdapter = PostRecyclerAdapter(
-            // avatar clicked
-            {
-            // do not need to do anything here as all posts are from current user
-            },
-            //edit post button click
-            { post ->
-            parentFragmentManager.beginTransaction()
-                .add(R.id.container, AddPostFragment(post, true))
-                .addToBackStack("home").hide(this).commit()
-            },
-            // delete post button click
-            { post ->
-                viewModel.deletePost(post.id)
-            },
-            //comment button clicked
-            { post ->
-                parentFragmentManager.beginTransaction()
-                    .add(R.id.container, ViewPostFragment(post)).addToBackStack("home")
-                    .hide(this).commit()
-            },
-            //reaction selected
-            { pair ->
-                val (reaction, pid) = pair
-                viewModel.addReact(reaction, pid)
-            })
+
         val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         postRecyclerView.layoutManager = postLayoutManager
         postRecyclerView.adapter = postAdapter
@@ -311,19 +368,23 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 profileAddModelButton.visibility = View.VISIBLE
             }
         }
-        //todo hide friend button if friends already
+
         profileToggleFriends.setOnClickListener {
             postRecyclerView.visibility = View.GONE
             modelsRecyclerView.visibility = View.GONE
             friendsRecyclerView.visibility = View.VISIBLE
             profileAddModelButton.visibility = View.GONE
             profileAddFriendButton.visibility = View.VISIBLE
+            //if not on own profile, and already friends,hide button
+            val currentUser = User(id = getUser()!!.uid, "", "")
+            if (friendRecyclerAdapter.users.contains(currentUser) && profileUserId != currentUser.id) {
+                profileAddFriendButton.visibility = View.GONE
+            }
         }
 
         if (profileUserId != getUser()!!.uid) {
             profileEditButton.visibility = View.GONE
-        }
-        else if (profileUserId == getUser()!!.uid) {
+        } else if (profileUserId == getUser()!!.uid) {
             profileEditButton.visibility = View.VISIBLE
         }
 
@@ -332,7 +393,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 //launch token generator popup
                 val context = view.context
 
-                val addFriendPopupInflater: LayoutInflater  =
+                val addFriendPopupInflater: LayoutInflater =
                     context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
                 val binding = PopupAddFriendBinding.inflate(addFriendPopupInflater)
                 val popup = PopupWindow(
@@ -348,6 +409,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
                 binding.addFriendCodeTextview.text = viewModel.getFriendRequestToken()
 
+                //add to clipboard on tap
+                binding.addFriendCodeTextview.setOnClickListener {
+                    val clipboard: ClipboardManager? =
+                        context.getSystemService() as ClipboardManager?
+                    val clip = ClipData.newPlainText("token", viewModel.getFriendRequestToken())
+                    clipboard?.setPrimaryClip(clip)
+                    val snackbar = Snackbar
+                        .make(view, "Copied to Clipboard", LENGTH_SHORT)
+                    snackbar.show()
+                }
+
                 binding.addFriendBtnAdd.setOnClickListener {
                     val token = binding.addFriendEnterCodeEditText.text.toString()
                     viewModel.addFriendFromToken(token)
@@ -361,8 +433,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
                 popup.showAsDropDown(profileImageView, 0, 0)
 
-            }
-            else if (profileUserId != getUser()!!.uid){
+            } else if (profileUserId != getUser()!!.uid) {
                 //directly send friend request
                 viewModel.sendFriendRequest(profileUserId)
                 val snackbar = Snackbar
@@ -375,7 +446,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             val context = view.context
             viewModel.clearCurrentModelPhotos()
 
-            val addModelPopupInflater: LayoutInflater  =
+            val addModelPopupInflater: LayoutInflater =
                 context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val binding = PopupAddModelBinding.inflate(addModelPopupInflater)
             val popup = PopupWindow(
@@ -393,16 +464,22 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             // brand autocomplete
             val autoCompleteBrand = binding.addModelAutocompleteBrand
             val brands: Array<out String> = resources.getStringArray(R.array.brands_array)
-            autoCompleteBrand.setAdapter(ArrayAdapter(requireContext(),
-                android.R.layout.simple_list_item_1, brands).also { adapter ->
-                autoCompleteBrand.setAdapter(adapter)})
+            autoCompleteBrand.setAdapter(ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_list_item_1, brands
+            ).also { adapter ->
+                autoCompleteBrand.setAdapter(adapter)
+            })
 
             // scale autocomplete
             val autoCompleteScale = binding.addModelAutocompleteScale
             val scales: Array<out String> = resources.getStringArray(R.array.scales_array)
-            autoCompleteScale .setAdapter(ArrayAdapter(requireContext(),
-                android.R.layout.simple_list_item_1, scales).also { adapter ->
-                autoCompleteScale.setAdapter(adapter)})
+            autoCompleteScale.setAdapter(ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_list_item_1, scales
+            ).also { adapter ->
+                autoCompleteScale.setAdapter(adapter)
+            })
 
             binding.addModelImageView.setOnClickListener {
                 val intent =
@@ -414,9 +491,10 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             val photoRecyclerView = binding.addModelRecyclerview
             val photoAdapter = SideScrollImageRecyclerAdapter({ deletedPhoto ->
                 viewModel.addCurrentModelDeletedPhoto(deletedPhoto)
-            },canDeleteItems = true)
+            }, canDeleteItems = true)
             photoRecyclerView.adapter = photoAdapter
-            photoRecyclerView.layoutManager = LinearLayoutManager(view.context,LinearLayoutManager.HORIZONTAL, false)
+            photoRecyclerView.layoutManager =
+                LinearLayoutManager(view.context, LinearLayoutManager.HORIZONTAL, false)
 
             viewModel.getSelectedModelMutableLiveData().observe(viewLifecycleOwner) { photosList ->
 
@@ -437,29 +515,12 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
                 val model = Model(
                     getUser()!!.uid, brand, brand, scale, frame, airline,
-                    livery, newPhotos, comment, 0, null, reg)
+                    livery, newPhotos, comment, 0, null, reg
+                )
                 viewModel.uploadModel(model)
                 popup.dismiss()
             }
             popup.showAsDropDown(profileImageView, 0, 0)
-        }
-
-        viewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
-            when (result) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val posts = result.data
-                    if (posts != null) {
-                        postAdapter.setData(posts)
-                    }
-                }
-
-                is Response.Failure -> {
-                    Toast.makeText(context, "Failed to load posts, please try again later",
-                        Toast.LENGTH_SHORT).show()
-                }
-            }
         }
 
         viewModel.fetchModels.observe(viewLifecycleOwner) { result ->
@@ -471,11 +532,15 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
 
                 is Response.Failure -> {
-                    Toast.makeText(context, "Failed to load models, please try again later",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context, "Failed to load models, please try again later",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
+
+
 
         //only grab friend requests if user is on their own profile
 /*        if (profileUserId == getUser()!!.uid) {
@@ -554,9 +619,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     val valueAccent = TypedValue()
                     requireContext().theme.resolveAttribute(android.R.attr.colorAccent, valueAccent, true)
                     val colorAccent = valueAccent.data
-
                     val valueBackground = TypedValue()
-                    requireContext().theme.resolveAttribute(android.R.attr.colorBackgroundFloating, valueBackground, true)
+                    requireContext().theme.resolveAttribute(android.R.attr.colorBackground, valueBackground, true)
                     val colorBackground = valueBackground.data
 
                     options.setCropGridColor(colorAccent)
@@ -590,39 +654,43 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 profileEditAvatar.visibility = View.VISIBLE
                 profileEditAvatar.setImageResource(R.drawable.image_edit)
                 profileImageView.visibility = View.GONE
+                profileLayout.visibility = View.VISIBLE
 
+            }
+            profileEditAvatar.setOnClickListener {
+                val intent =
+                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                launcher.launch(intent)
+            }
 
-                profileEditAvatar.setOnClickListener {
-                    val intent =
-                        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                    launcher.launch(intent)
+            profileSaveButton.setOnClickListener {
+                profileBioEditText.visibility = View.GONE
+                profileBioText.visibility = View.VISIBLE
+                profileEditAvatar.visibility = View.GONE
+                profileImageView.visibility = View.VISIBLE
+
+                if (orientation == ORIENTATION_LANDSCAPE){
+                    profileLayout.visibility = View.GONE
                 }
 
-                profileSaveButton.setOnClickListener {
-                    profileBioEditText.visibility = View.GONE
-                    profileBioText.visibility = View.VISIBLE
-                    profileEditAvatar.visibility = View.GONE
-                    profileImageView.visibility = View.VISIBLE
+                //wait to display button to prevent spam toggle
+                lifecycleScope.launch {
+                    delay(2000)
+                    profileEditButton.visibility = View.VISIBLE
+                }
+                profileSaveButton.visibility = View.GONE
 
-                    //wait to display button to prevent spam toggle
-                    lifecycleScope.launch {
-                        delay(2000)
-                        profileEditButton.visibility = View.VISIBLE
-                    }
-                    profileSaveButton.visibility = View.GONE
-
-                    // check if bio has been edited
-                    if (profileBioText.text.toString() != profileBioEditText.text.toString()) {
-                        profileBioText.text = profileBioEditText.text.toString()
-                        viewModel.updateBio(profileBioEditText.text.toString())
-                    }
-                    if (imageAdded) {
-                        viewModel.updateAvatar()
-                    }
+                // check if bio has been edited
+                if (profileBioText.text.toString() != profileBioEditText.text.toString()) {
+                    profileBioText.text = profileBioEditText.text.toString()
+                    viewModel.updateBio(profileBioEditText.text.toString())
+                }
+                if (imageAdded) {
+                    viewModel.updateAvatar()
                 }
             }
         }
-        return view
+        return frameLayout
     }
 
     override fun onPause() {
@@ -642,6 +710,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             }
         } else if (resultCode == UCrop.RESULT_ERROR) {
             val cropError: Throwable?  = data?.let { UCrop.getError(it) }
+            Log.e("CROP","Error cropping profile avatar: $cropError")
         }
         //super.onActivityResult(requestCode, resultCode, data)
     }
@@ -649,5 +718,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        //int orientation = this.getResources().getConfiguration().orientation;
+        super.onConfigurationChanged(newConfig)
+/*        frameLayout.removeAllViews()
+        val inflater =
+            requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val newView = inflater.inflate(R.layout.fragment_profile, frameLayout,false)
+        frameLayout.addView(newView)*/
     }
 }

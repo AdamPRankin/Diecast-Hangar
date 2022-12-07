@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Regal application theme. -->
+    <style name="Royal.Theme.DiecastHangar" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorBackgroundFloating">@color/royal_dark_background_floating</item>
+        <item name="background">@color/royal_dark_background</item>
+        <item name="android:buttonStyleToggle">@color/royal_dark_text</item>
+        <item name="colorOutline">@color/royal_dark_accent</item>
+        <item name="android:textColor">@color/royal_dark_text</item>
+        <item name="android:textColorHint">@color/royal_dark_text</item>
+        <item name="android:colorAccent">@color/royal_dark_button</item>
+
+        <item name="colorSecondaryContainer">@color/royal_dark_button</item>
+
+        <item name="colorPrimary">@color/royal_dark_button</item>
+
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:statusBarColor">@color/royal_dark_button</item>
+
+
+        <item name="materialButtonStyle">@style/materialButtonStyleRoyal</item>
+        <item name="materialButtonOutlinedStyle">@style/outlinedButtonStyleRoyal</item>
+        <item name="borderlessButtonStyle">@style/borderlessButtonStyleRoyal</item>
+
+        <!-- main icon color -->
+        <item name="android:icon">@color/royal_dark_button</item>
+        <item name="colorIconButton">@color/royal_dark_button</item>
+        <item name="colorFabMain">@color/royal_dark_button</item>
+        <item name="colorButton">@color/royal_dark_button</item>
+        <item name ="switchStyle">@style/switchRoyal</item>
+
+        <item name="colorOnButton">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <!-- faint icon color -->
+        <item name="colorFaintButton">@color/royal_dark_button</item>
+    </style>
+
+</resources>

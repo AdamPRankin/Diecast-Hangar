@@ -3,24 +3,19 @@ package com.example.diecasthangar.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.util.TypedValue
 import android.view.*
 import android.widget.*
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.iterator
 import androidx.core.view.size
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.diecasthangar.core.util.getReactIcon
-import com.example.diecasthangar.core.util.getTopReacts
-import com.example.diecasthangar.core.util.loadingDummyPost
-import com.example.diecasthangar.core.util.parseDate
+import com.example.diecasthangar.core.util.*
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.data.model.Reaction
 import com.example.diecasthangar.data.remote.getUser
@@ -28,14 +23,13 @@ import com.example.diecasthangar.databinding.PopupAddReactionBinding
 import com.example.diecasthangar.databinding.PopupEditDeleteBinding
 import com.example.diecasthangar.databinding.PopupShowReactionsBinding
 import com.example.diecasthangar.databinding.RecyclerPostRowLayoutBinding
-import com.example.diecasthangar.ui.viewpost.ReactionsRecyclerAdapter
-import com.google.android.material.badge.ExperimentalBadgeUtils
+import com.google.android.material.badge.BadgeDrawable
+import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.ceil
-import kotlin.math.roundToInt
 
 
-@ExperimentalBadgeUtils class PostRecyclerAdapter(
+class PostRecyclerAdapter(
     private val onAvatarClicked: (Post) -> Unit,
     private val onItemEdited: (Post) -> Unit,
     private val onItemDeleted: (Post) -> Unit,
@@ -65,21 +59,22 @@ import kotlin.math.roundToInt
         val textHeight = bounds.width()
         if (textHeight >= bodyText.maxHeight){
             holder.showMoreButton.visibility = View.VISIBLE
-            holder.showMoreButton.setOnClickListener{
-                holder.bodyTextView.maxHeight = Int.MAX_VALUE
-                holder.showMoreButton.visibility = View.GONE
-                holder.showLessButton.visibility = View.VISIBLE
-                holder.showLessButton.setOnClickListener {
-                    val pxValueOf150dp = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150f, holder.itemView.resources.displayMetrics)
-                    holder.bodyTextView.maxHeight = pxValueOf150dp.toInt()
-                    holder.showLessButton.visibility = View.GONE
-                    holder.showMoreButton.visibility = View.VISIBLE
-                }
-
-            }
         }
         else{
             holder.showMoreButton.visibility = View.GONE
+        }
+        //save max height
+        val maxHeight = bodyText.maxHeight
+        holder.showMoreButton.setOnClickListener{
+            holder.bodyTextView.maxHeight = Int.MAX_VALUE
+            holder.showMoreButton.visibility = View.GONE
+            holder.showLessButton.visibility = View.VISIBLE
+        }
+        holder.showLessButton.setOnClickListener {
+            //restore original height
+            holder.bodyTextView.maxHeight = maxHeight
+            holder.showLessButton.visibility = View.GONE
+            holder.showMoreButton.visibility = View.VISIBLE
         }
 
         val avatarUri = post.avatar
@@ -90,22 +85,22 @@ import kotlin.math.roundToInt
         }
 
         if (post.images.isNotEmpty()){
+            holder.postImageHolder.visibility = View.VISIBLE
             val firstImageUri: Uri = Uri.parse(post.images[0].remoteUri)
             Glide.with(holder.itemView.context).load(firstImageUri).into(holder.picImageview)
         }
-        if (post.images.isEmpty()){
+        else if (post.images.isEmpty()){
             holder.postImageHolder.visibility = View.GONE
         }
-        else {
-            //set visible explicitly to avoid recycle row reuse bugs when scrolling back up
-            holder.postImageHolder.visibility = View.VISIBLE
-        }
+
         //remove scroll buttons if only one image
         if (post.images.size < 2) {
             holder.leftImageButton.visibility = View.GONE
             holder.rightImageButton.visibility = View.GONE
         }
         else {
+            holder.leftImageButton.visibility = View.VISIBLE
+            holder.rightImageButton.visibility = View.VISIBLE
             holder.leftImageButton.setOnClickListener {
                 if (currentImagePosition == 0){
                     currentImagePosition = post.images.size-1
@@ -128,10 +123,10 @@ import kotlin.math.roundToInt
                 Glide.with(holder.itemView.context).load(imageUri).into(holder.picImageview)
             }
         }
+
+        //popup to display reaction add menu
         holder.reactButton.setOnClickListener {
-
             val context = holder.itemView.context
-
             val inflater: LayoutInflater  =
                     context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val binding = PopupAddReactionBinding.inflate(inflater)
@@ -150,66 +145,20 @@ import kotlin.math.roundToInt
             binding.reactionTakeoff.isFocusable = false
             binding.reactionLanding.isFocusable = false
 
+            //set listener for each con in the layout
            for (item in binding.reactsLinearLayout) {
                item.setOnClickListener {
+                   //todo use another method to get name
                    onReactSelected(Pair(item.contentDescription.toString(), post.id))
                    popup.dismiss()
                }
            }
 
-/*            popup.setOnDismissListener {
-                object : CountDownTimer(animationDuration.toLong(), 100) {
-                    override fun onTick(millisUntilFinished: Long) {}
-                    override fun onFinish() {
-                        popup.dismiss()
-                    }
-                }.start()
-            }*/
-
-/*            for (item in binding.reactsLinearLayout) {
-                item.setOnClickListener {  clickedButton ->
-                    onReactSelected(Pair(item.contentDescription.toString(),post.id))
-                    for (item in binding.reactsLinearLayout) {
-                        if (item.id != clickedButton.id){
-                            item.visibility = View.GONE
-                            // get the center for the clipping circle
-                            val k = IntArray(2)
-                            val h = clickedButton.getLocationInWindow(k)
-                            popup.update(h,popup.width,popup.height)
-                            popup.update()
-                            //popup.update(48,48)
-                            //popup.dismiss()
-                           val cx = item.width / 2
-                            val cy = item.height / 2
-
-                            // get the final radius for the clipping circle
-                            val finalRadius = hypot(cx.toDouble(), cy.toDouble()).toFloat()
-
-                            // create the animator for this view (the start radius is zero)
-                            val anim = ViewAnimationUtils.createCircularReveal(item, cx, cy, 0f, finalRadius)
-
-                            anim.addListener(object : AnimatorListenerAdapter() {
-
-                                override fun onAnimationEnd(animation: Animator) {
-                                    super.onAnimationEnd(animation)
-                                    item.visibility = View.INVISIBLE
-                                    popup.dismiss()
-                                }
-                            })
-                            anim.start()*//*
-                        }
-                    }
-                    popup.update()
-
-
-                }
-            }*/
-
-
             popup.showAsDropDown(holder.reactButton)
-            //todo activity context
             //check if the popup is below the screen, if so, adjust upwards
-            val displayMetrics = context.resources.displayMetrics
+
+            //use application context to get resources
+            val displayMetrics = context.applicationContext.resources.displayMetrics
             val height = displayMetrics.heightPixels
 
             val values = IntArray(2)
@@ -240,6 +189,7 @@ import kotlin.math.roundToInt
 
         holder.commentButton.setOnClickListener {
             onCommentBtnClicked(post)
+            //todo
         }
         val reacts: Map<String,Int> = post.reactions
 
@@ -282,23 +232,6 @@ import kotlin.math.roundToInt
                 reactsAdapter.reacts = reactions as ArrayList<Reaction>
                 reactsAdapter.notifyDataSetChanged()
 
-                //check if the popup is below the screen, if so, adjust upwards
-                val displayMetrics = context.resources.displayMetrics
-                val height = displayMetrics.heightPixels
-
-                val values = IntArray(2)
-                holder.reactButton.getLocationOnScreen(values)
-                val positionOfIcon = values[1]
-
-                // adjust for window padding
-                val px =
-                    TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f,
-                        context.resources.displayMetrics).roundToInt()
-
-                if (positionOfIcon >= (height - holder.reactButton.height)) {
-                    val yOffset = -1 * ( holder.reactButton.height + px)
-                    popup.update(holder.reactButton, 0, yOffset, popup.width, popup.height)
-                }
                 popup.showAtLocation(holder.itemView, Gravity.CENTER, 0, 0)
             }
         }
@@ -372,9 +305,6 @@ import kotlin.math.roundToInt
         val reactIcon1: ImageView = binding.postReacts1
         val reactIcon2: ImageView = binding.postReacts2
         val reactIcon3: ImageView = binding.postReacts3
-/*      val reactNumber1: TextView = binding.postReaction1Number
-        val reactNumber2: TextView = binding.postReaction2Number
-        val reactNumber3: TextView = binding.postReaction3Number*/
         val reactsLayout = binding.postReactionsLayout
 
         init {

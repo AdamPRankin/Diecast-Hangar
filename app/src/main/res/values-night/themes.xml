@@ -15,6 +15,9 @@
 
         <item name="colorPrimary">@color/material_dynamic_primary60</item>
 
+        <item name="android:statusBarColor">@android:color/transparent</item>
+
+
 
         <item name="materialButtonStyle">@style/materialButtonStyleDynamic</item>
         <item name="materialButtonOutlinedStyle">@style/outlinedButtonStyleDynamic</item>
@@ -42,15 +45,6 @@
     <style name="borderlessButtonStyleDynamic" parent="Widget.Material3.Button.TextButton">
         <item name="android:textColor">@color/material_dynamic_primary60</item>
         <item name="android:icon">@color/material_dynamic_primary60</item>
-    </style>
-
-    <style name="reactionStyleDynamic" parent="Widget.Material3.Button.TextButton">
-        <item name="android:textColor">@color/material_dynamic_primary60</item>
-        <item name="android:icon">@color/material_dynamic_primary60</item>
-    </style>
-
-    <style name="outlinedButtonStyleDynamic" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="android:textColor">@color/material_dynamic_primary60</item>
     </style>
 
     <style name="switchDynamic" parent="Widget.MaterialComponents.CompoundButton.Switch">

@@ -6,4 +6,11 @@ open class User (
     val avatarUri: String,
     var friend: Boolean = false,
     var requestToken: String? = null
-)
+){
+
+
+    override fun equals(other: Any?): Boolean {
+        return (other is User)
+                && this.id == other.id
+    }
+}

@@ -29,3 +29,29 @@ fun getReactIcon(type: String): Int {
     }
 
 }
+
+fun getReactName(resId: Int): String {
+    when (resId) {
+        R.drawable.airplane_landing -> {
+            return "landing"
+        }
+        R.drawable.airplane_takeoff -> {
+            return "takeoff"
+        }
+        R.drawable.fire -> {
+            return "fire"
+        }
+        R.drawable.trash_can -> {
+            return "trash"
+        }
+        R.drawable.walk -> {
+            return "walking"
+        }
+        R.drawable.airplane -> {
+            return "plane"
+        }
+        else -> {
+            return ""
+        }
+    }
+}

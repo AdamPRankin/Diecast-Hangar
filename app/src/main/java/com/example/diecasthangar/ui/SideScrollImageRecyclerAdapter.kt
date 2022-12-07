@@ -6,23 +6,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
 import com.example.diecasthangar.R
 import com.example.diecasthangar.data.model.Photo
 import com.example.diecasthangar.databinding.RecyclerHorizontalImageRowLayoutBinding
+import com.example.diecasthangar.databinding.RecyclerHorizontalImageRowLayoutFullscreenBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
 class SideScrollImageRecyclerAdapter(
     private val onItemDeleted: (Photo) -> Unit,
-    canDeleteItems: Boolean = false
+    canDeleteItems: Boolean = false,
+    val layout: String = "portrait"
 ): RecyclerView.Adapter<SideScrollImageRecyclerAdapter.ViewHolder>() {
     var photos = ArrayList<Photo>()
     private val canDelete = canDeleteItems
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = RecyclerHorizontalImageRowLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ViewHolder(binding)
+        return ViewHolder(RecyclerHorizontalImageRowLayoutBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false))
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {

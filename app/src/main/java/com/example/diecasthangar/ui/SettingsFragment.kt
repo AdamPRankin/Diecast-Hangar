@@ -6,16 +6,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatDelegate.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
 import com.example.diecasthangar.R
 import com.example.diecasthangar.databinding.FragmentSettingsBinding
-import com.example.diecasthangar.ui.dashboard.DashboardFragment
-import com.example.diecasthangar.ui.dashboard.DashboardViewModel
 import com.example.diecasthangar.ui.onboarding.AuthenticationViewModel
 import com.example.diecasthangar.ui.onboarding.OnboardingFragment
 
@@ -37,13 +33,18 @@ class SettingsFragment: Fragment(), LifecycleOwner {
         val logoutButton = binding.btnLogout
         val themesButton = binding.btnThemes
 
+        val darkButtonToggle = binding.darkModeToggleButton
         val darkModeOnButton = binding.darkModeOn
         val darkModeOffButton = binding.darkModeOff
         val darkModeAutoButton = binding.darkModeAuto
 
         val themesMenu = binding.themesMenu
+        val languageMenu = binding.languageMenu
 
-        val darkButtonToggle = binding.darkModeToggleButton
+        val languageButton = binding.btnLanguage
+        val englishButton = binding.languageEnglish
+        val ukrainianButton = binding.languageUkrainian
+        val gaelicButton = binding.languageGaelic
 
         logoutButton.setOnClickListener {
             authViewModel.logOutUser()
@@ -60,8 +61,11 @@ class SettingsFragment: Fragment(), LifecycleOwner {
         val sharedPreference =  requireActivity().getSharedPreferences("DIECAST_HANGAR", Context.MODE_PRIVATE)
         val editor = sharedPreference.edit()
         binding.buttonDynamicColors.setOnClickListener {
-            //set dynamic (default)
-            //set dark mode based on togglerino
+            editor.putString("THEME","dynamic").apply()
+            val intent = requireActivity().intent
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            requireActivity().finish()
+            startActivity(intent)
         }
 
         binding.buttonOrangeCrush.setOnClickListener {
@@ -72,8 +76,26 @@ class SettingsFragment: Fragment(), LifecycleOwner {
             requireActivity().finish()
             startActivity(intent)
         }
+        binding.buttonSpicyToothpaste.setOnClickListener {
 
-        //hightlight current selected option for night mode
+            editor.putString("THEME","cinnamon").apply()
+
+            val intent = requireActivity().intent
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            requireActivity().finish()
+            startActivity(intent)
+        }
+        binding.buttonRoyal.setOnClickListener {
+
+            editor.putString("THEME","royal").apply()
+
+            val intent = requireActivity().intent
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            requireActivity().finish()
+            startActivity(intent)
+        }
+
+        //highlight current selected option for night mode
         when (getDefaultNightMode()) {
             MODE_NIGHT_YES -> {
                 darkButtonToggle.check(R.id.dark_mode_on)
@@ -94,36 +116,49 @@ class SettingsFragment: Fragment(), LifecycleOwner {
                 darkButtonToggle.clearChecked()
             }
         }
-        binding.buttonSpicyToothpaste.setOnClickListener {
-
-            editor.putString("THEME","cinnamon").apply()
-
-            val intent = requireActivity().intent
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            requireActivity().finish()
-            startActivity(intent)
-        }
 
         darkModeAutoButton.setOnClickListener {
             darkButtonToggle.clearChecked()
             darkButtonToggle.check(R.id.dark_mode_auto)
-            editor.putString("DARK_MODE","auto").apply()
             setDefaultNightMode(MODE_NIGHT_FOLLOW_SYSTEM)
+            editor.putString("DARK_MODE","auto").apply()
+
         }
 
         darkModeOnButton.setOnClickListener {
             //workaround for bug in material 3 toggle button group implementation involving activity restart
             darkButtonToggle.clearChecked()
             darkButtonToggle.check(R.id.dark_mode_on)
-            editor.putString("DARK_MODE","on").apply()
             setDefaultNightMode(MODE_NIGHT_YES)
+            editor.putString("DARK_MODE","on").apply()
+
         }
 
         darkModeOffButton.setOnClickListener {
             darkButtonToggle.clearChecked()
             darkButtonToggle.check(R.id.dark_mode_off)
-            editor.putString("DARK_MODE","off").apply()
             setDefaultNightMode(MODE_NIGHT_NO)
+            editor.putString("DARK_MODE","off").apply()
+        }
+
+/*        languageButton.setOnClickListener {
+            if (languageMenu.visibility == View.VISIBLE){
+                languageMenu.visibility = View.GONE
+            }
+            else {
+                languageMenu.visibility = View.VISIBLE
+            }
+        }*/
+
+        englishButton.setOnClickListener {
+
+        }
+        gaelicButton.setOnClickListener {
+
+
+        }
+        ukrainianButton.setOnClickListener {
+
         }
 
         authViewModel.getUserState().observe(viewLifecycleOwner) {

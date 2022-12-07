@@ -1,3 +1,5 @@
+@file:Suppress("EqualsOrHashCode")
+
 package com.example.diecasthangar.data.model
 
 import com.example.diecasthangar.data.remote.getUser
@@ -12,7 +14,8 @@ data class Post(
     var avatar: String = "",
     val id: String = "",
     var comments: ArrayList<Comment>? = arrayListOf(),
-    val reactions: MutableMap<String, Int> = mutableMapOf()
+    val reactions: MutableMap<String, Int> = mutableMapOf(),
+    val announcement: Boolean = false
 ){
     fun addReact(name: String, number: Int = 1){
         if (reactions.containsKey(name)) {

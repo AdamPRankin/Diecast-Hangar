@@ -3,17 +3,19 @@ package com.example.diecasthangar.ui.viewpost
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.*
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.*
 import androidx.core.view.iterator
 import androidx.core.view.size
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -22,17 +24,16 @@ import com.example.diecasthangar.core.util.parseDate
 import com.example.diecasthangar.data.model.Post
 import com.example.diecasthangar.databinding.FragmentViewPostBinding
 import com.example.diecasthangar.databinding.PopupAddReactionBinding
-import com.example.diecasthangar.ui.CommentRecyclerAdapter
 import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
 import com.example.diecasthangar.ui.dashboard.DashboardViewModel
 import kotlin.math.ceil
 
 
-class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
+class ViewPostFragment() : Fragment(), LifecycleOwner {
     private var _binding: FragmentViewPostBinding? = null
     private val binding get() = _binding!!
-    private val dashViewModel: DashboardViewModel by viewModels()
-    private val currentPost = post
+
+
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateView(
@@ -42,17 +43,56 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
         _binding = FragmentViewPostBinding.inflate(inflater, container, false)
         val view = binding.root
 
-        val dateTextView: TextView = binding.viewPostDate
-        val avatarImageView: ImageView = binding.viewPostAvatar
-        val bodyTextView: TextView = binding.viewPostBody
-        val userTextView: TextView = binding.viewPostUsername
-        val picImageview: ImageView = binding.viewPostPicture
+        val dashViewModel: DashboardViewModel by activityViewModels()
+
+        val currentPost = dashViewModel.currentViewingPost
+        val c = 5
+
+/*        dashViewModel.selectedPost.observe(viewLifecycleOwner) {
+            currentPost = it
+        }*/
+        val dateTextView = binding.viewPostDate
+        val avatarImageView = binding.viewPostAvatar
+        val bodyTextView = binding.viewPostBody
+        val userTextView = binding.viewPostUsername
+        val picImageview = binding.viewPostPicture
         val commentRecyclerView: RecyclerView = binding.viewPostCommentRecycler
+        val photoContainer = binding.viewPostPhotoContainer
 
         val addCommentButton: Button = binding.viewPostCommentButton
         val commentEditText = binding.viewPostCommentEditText
         val photoRecyclerView = binding.viewPostPhotoRecycler
         val addReactButton = binding.viewPostBtnRect
+
+        val showMoreButton = binding.postBtnShowMore
+        val showLessButton = binding.postBtnShowLess
+
+
+        val bounds = Rect()
+        bodyTextView.paint.getTextBounds(
+            bodyTextView.text.toString(), 0,
+            bodyTextView.text.length, bounds
+        )
+        val textHeight = bounds.width()
+        if (textHeight >= bodyTextView.maxHeight) {
+            showMoreButton.visibility = View.VISIBLE
+        } else {
+            showMoreButton.visibility = View.GONE
+        }
+        //save max height
+        val maxHeight = bodyTextView.maxHeight
+        showMoreButton.setOnClickListener {
+            bodyTextView.maxHeight = Int.MAX_VALUE
+            showMoreButton.visibility = View.GONE
+            showLessButton.visibility = View.VISIBLE
+        }
+        showLessButton.setOnClickListener {
+            //restore original height
+            bodyTextView.maxHeight = maxHeight
+            showLessButton.visibility = View.GONE
+            showMoreButton.visibility = View.VISIBLE
+        }
+
 
         Glide.with(requireContext())
             .load(currentPost.avatar)
@@ -62,9 +102,10 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
         dateTextView.text = parseDate(currentPost.date)
         bodyTextView.text = currentPost.text
 
-        if (currentPost.images.size == 0){
+        if (currentPost.images.size == 0) {
             photoRecyclerView.visibility = View.GONE
             picImageview.visibility = View.GONE
+            photoContainer.visibility = View.GONE
         }
         if (currentPost.images.size == 1) {
             photoRecyclerView.visibility = View.GONE
@@ -73,15 +114,15 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
                 .load(currentPost.images[0].remoteUri)
                 .placeholder(R.drawable.ic_airplane_black_48dp)
                 .into(picImageview)
-        }
-        else {
+        } else {
             picImageview.visibility = View.GONE
             photoRecyclerView.visibility = View.VISIBLE
             val photoAdapter = SideScrollImageRecyclerAdapter({
-                //not deleting items
+                //deleting items disabled
             }, false)
             photoRecyclerView.adapter = photoAdapter
-            photoRecyclerView.layoutManager = LinearLayoutManager(view.context,LinearLayoutManager.HORIZONTAL, false)
+            photoRecyclerView.layoutManager =
+                LinearLayoutManager(view.context, LinearLayoutManager.HORIZONTAL, false)
 
             photoAdapter.photos = currentPost.images
         }
@@ -89,11 +130,11 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
         val commentAdapter = CommentRecyclerAdapter(
             // comment deleted
             { comment ->
-            dashViewModel.deleteComment(comment.id)
-        },
+                dashViewModel.deleteComment(comment.id)
+            },
             //comment edited
             { comment, text ->
-                dashViewModel.editComment(comment.id,text)
+                dashViewModel.editComment(comment.id, text)
             }
         )
         val commentLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
@@ -118,7 +159,7 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
 
         addReactButton.setOnClickListener {
 
-            val reactInflater: LayoutInflater  =
+            val reactInflater: LayoutInflater =
                 context?.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
             val reactPopupBinding = PopupAddReactionBinding.inflate(reactInflater)
             val popup = PopupWindow(
@@ -154,19 +195,20 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
             val iconPx =
                 TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP, 24f,
-                    requireContext().resources.displayMetrics)
+                    requireContext().resources.displayMetrics
+                )
             val paddingPx =
                 TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP, 8f,
-                    requireContext().resources.displayMetrics)
-
+                    requireContext().resources.displayMetrics
+                )
 
 
             //calculate popup height
             val numIcons = binding.root.size
-            val totalRowWidth = (iconPx * numIcons + paddingPx * (numIcons+1))
-            val numRows = ceil(totalRowWidth/screenWidth)
-            val popupHeight = iconPx * numRows + paddingPx * (numIcons+1)
+            val totalRowWidth = (iconPx * numIcons + paddingPx * (numIcons + 1))
+            val numRows = ceil(totalRowWidth / screenWidth)
+            val popupHeight = iconPx * numRows + paddingPx * (numIcons + 1)
 
             //add to button height and offset
             val buttonHeight = binding.viewPostBtnRect.height
@@ -183,6 +225,5 @@ class ViewPostFragment(post: Post) : Fragment(), LifecycleOwner {
         super.onDestroy()
         _binding = null
     }
-
 
 }

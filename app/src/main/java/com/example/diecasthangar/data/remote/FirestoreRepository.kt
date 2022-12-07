@@ -8,24 +8,22 @@ import com.example.diecasthangar.core.util.docToPostClass
 import com.example.diecasthangar.core.util.modelMapToClass
 import com.example.diecasthangar.data.model.*
 import com.google.android.gms.tasks.Tasks.await
-import com.google.firebase.Timestamp
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.tasks.await
-import kotlin.collections.ArrayList
-import kotlin.coroutines.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 open class FirestoreRepository (
-    private val db: FirebaseFirestore = Firebase.firestore
+    private val db: FirebaseFirestore = Firebase.firestore,
+    // Jan 1st 2022
+    private val SERVER_START: Long = 1641020400000
     )  {
 
     private fun Query.paginate(lastVisibleItem: Flow<Int>): Flow<List<DocumentSnapshot>> = flow {
@@ -92,14 +90,18 @@ open class FirestoreRepository (
             }
         }
 
-/*    fun newPostFlow(): Flow<List<Post>> =
+    fun getTopPosts(lastVisibleItem: Flow<Int>): Flow<List<Post>> =
         flow {
             val postsDocSnap = mutableListOf<DocumentSnapshot>()
+            val time = System.currentTimeMillis()
+            val currentHoursElapsed = kotlin.math.floor((time-SERVER_START) / 60.0 / 60.0 / 1000).toInt()
+            Log.e("INFO", currentHoursElapsed.toString())
             postsDocSnap.addAll(
                 suspendCoroutine<List<DocumentSnapshot>> { c ->
                     Firebase.firestore.collection("posts")
-                        .orderBy("date", Query.Direction.DESCENDING)
-                        .limit(1).endBefore(postsDocSnap)
+                        .whereArrayContains("recent", currentHoursElapsed)
+                        .orderBy("total-reacts", Query.Direction.DESCENDING)
+                        .limit(25)
                         .get().addOnSuccessListener {
                             c.resume(it.documents)
                         }
@@ -107,9 +109,72 @@ open class FirestoreRepository (
             )
 
             emit(postsDocSnap.map { docToPostClass(it) })
-        }*/
 
-    suspend fun newPostFlow(lastVisibleItem: Flow<Int>): Flow<Response<ArrayList<Post>>> = callbackFlow  {
+            lastVisibleItem.transform { lastVisibleItem ->
+                if (lastVisibleItem == postsDocSnap.size) {
+                    postsDocSnap.addAll(
+                        suspendCoroutine<List<DocumentSnapshot>> { c ->
+                            Firebase.firestore.collection("posts")
+                                .whereArrayContains("recent", currentHoursElapsed)
+                                .orderBy("date", Query.Direction.DESCENDING)
+                                .startAfter(postsDocSnap.last())
+                                .limit(25)
+                                .get().addOnSuccessListener {
+                                    c.resume(it.documents)
+                                }
+                        }
+                    )
+                    emit(postsDocSnap.map { docToPostClass(it) })
+                }
+            }.collect { newPosts: List<Post> ->
+                emit(newPosts)
+            }
+        }
+
+    fun newPostsFlow(): Flow<Response<List<Post>>> = callbackFlow  {
+        // 2.- We create a reference to our data inside Firestore
+
+        val eventDocument =  FirebaseFirestore
+            .getInstance()
+            .collection("posts")
+            .orderBy("date", Query.Direction.ASCENDING)
+            .endAt(System.currentTimeMillis())
+
+
+        // 3.- We generate a subscription that is going to let us listen for changes with
+        // .addSnapshotListener and then offer those values to the channel that will be collected in our viewmodel
+        val subscription = eventDocument.addSnapshotListener { snapshot, _ ->
+            val posts = ArrayList<Post>()
+            if(snapshot!!.documents.isNotEmpty()){
+                for (doc in snapshot) {
+                    posts.add(docToPostClass(doc))
+                }
+            }
+            trySend(Response.Success(posts)).isSuccess
+        }
+        //Finally if collect is not in use or collecting any data we cancel this channel to prevent any leak and remove the subscription listener to the database
+        awaitClose { subscription.remove() }
+    }
+/*
+    fun newPostFlow(): Flow<List<Post>> =
+        flow {
+            val postsDocSnap = mutableListOf<DocumentSnapshot>()
+            postsDocSnap.addAll(
+                suspendCoroutine<List<DocumentSnapshot>> { c ->
+                    Firebase.firestore.collection("posts")
+                        .orderBy("date", Query.Direction.ASCENDING)
+                        .startAfter(FieldValue.serverTimestamp())
+                        .get().addOnSuccessListener {
+                            c.resume(it.documents)
+                        }
+                }
+            )
+
+            emit(postsDocSnap.map { docToPostClass(it) })
+        }
+*/
+
+/*    suspend fun newPostFlow(lastVisibleItem: Flow<Int>): Flow<Response<ArrayList<Post>>> = callbackFlow  {
         // 2.- We create a reference to our data inside Firestore
         val eventDocument =  FirebaseFirestore
             .getInstance()
@@ -130,7 +195,7 @@ open class FirestoreRepository (
         }
         //Finally if collect is not in use or collecting any data we cancel this channel to prevent any leak and remove the subscription listener to the database
         awaitClose { subscription.remove() }
-    }
+    }*/
 
     suspend fun addImageToStorage(imageUri: Uri, path: String = "posts"): Response<Uri> {
 
@@ -144,6 +209,7 @@ open class FirestoreRepository (
             Response.Success(remoteUri)
         } catch (e: Exception) {
             Response.Failure(e)
+
         }
     }
 
@@ -195,6 +261,7 @@ open class FirestoreRepository (
         return try {
             db.collection("posts").document(id).update(
                 "reactions.$reaction",FieldValue.increment(1)).await()
+            db.collection("posts").document(id).update("total-reacts",FieldValue.increment(1)).await()
 
             Response.Success(true)
         } catch (e: Exception) {
@@ -249,6 +316,9 @@ open class FirestoreRepository (
                 remoteUris.add(remoteUri.toString())
             }
 
+            //used to track which posts are recent within 1 week
+            val timeFrameArray = getHoursArray()
+
             val postsRef = db.collection("posts")
 
             val hPost = hashMapOf(
@@ -258,13 +328,29 @@ open class FirestoreRepository (
                 "date" to FieldValue.serverTimestamp(),
                 "username" to post.username,
                 "avatar" to post.avatar,
-                "reactions" to hashMapOf<String,Int>()
+                "reactions" to hashMapOf<String,Int>(),
+                "total-reacts" to 0,
+                "recent" to timeFrameArray
             )
             val postID = postsRef.add(hPost).await().id
+            Log.d("info", "Post: $postID added")
             Response.Success(postID)
         } catch (e: Exception) {
             Response.Failure(e)
         }
+    }
+
+    //returns an array of hours since server start time
+    //used to get last week of posts from firebase to work around compound query limitations
+    private fun getHoursArray(): ArrayList<Int> {
+        val time = System.currentTimeMillis()
+        val withinTimeframeArray = arrayListOf<Int>()
+        val currentHoursElapsed = kotlin.math.floor((time-SERVER_START) / 60.0 / 60.0 / 1000).toInt()
+        // hours within 1 week
+        for (i in 0..168){
+            withinTimeframeArray.add(currentHoursElapsed+i)
+        }
+        return withinTimeframeArray
     }
 
     suspend fun deletePostFromFirestore(pid: String): Response<Boolean> {
@@ -334,7 +420,6 @@ open class FirestoreRepository (
             }
     }
 
-
     suspend fun userPostsFlow(userId: String): Flow<Response<List<Post>>> = callbackFlow  {
         // 2.- We create a reference to our data inside Firestore
         val eventDocument =  FirebaseFirestore
@@ -358,10 +443,78 @@ open class FirestoreRepository (
         awaitClose { subscription.remove() }
     }
 
+    suspend fun friendPostsFlow(userId: String): Flow<List<Post>> = callbackFlow  {
+        // 2.- We create a reference to our data inside Firestore
+        val eventDocument =  FirebaseFirestore
+            .getInstance()
+            .collection("posts")
+            .whereEqualTo("user", userId)
+            .orderBy("date", Query.Direction.DESCENDING)
+
+        // 3.- We generate a subscription that is going to let us listen for changes with
+        // .addSnapshotListener and then offer those values to the channel that will be collected in our viewmodel
+        val subscription = eventDocument.addSnapshotListener { snapshot, _ ->
+            if(snapshot!!.documents.isNotEmpty()){
+                val posts = ArrayList<Post>()
+                for (doc in snapshot) {
+                    posts.add(docToPostClass(doc))
+                }
+                trySend(posts).isSuccess
+            }
+        }
+        //Finally if collect is not in use or collecting any data we cancel this channel to prevent any leak and remove the subscription listener to the database
+        awaitClose { subscription.remove() }
+    }
+
+
+/*    suspend fun allFriendsPostsFlow(userId: String): Flow<Response<List<Post>>> = callbackFlow  {
+        // 2.- We create a reference to our data inside Firestore
+
+        when(val response = getUserFriends(userId)) {
+            is Response.Loading -> {
+            }
+            is Response.Success -> {
+                val friendIds = response.data
+                val tasks = arrayListOf<Task<QuerySnapshot>>()
+                if (friendIds != null) {
+                    for (friend in friendIds){
+                        val queryTask = db.collection("posts").whereEqualTo("user",friend.id)
+                        tasks.add(queryTask)
+                    }
+                }
+                // d????????
+
+                Tasks.whenAllSuccess(tasks).addOnSuccessListener{
+                    for (task in tasks) {
+                        val subscription = task.result.addSnapshotListener { snapshot, _ ->
+                            if (snapshot!!.documents.isNotEmpty()) {
+                                val posts = ArrayList<Post>()
+                                for (doc in snapshot) {
+                                    posts.add(docToPostClass(doc))
+                                }
+                                trySend(Response.Success(posts)).isSuccess
+                            }
+                        }
+                        awaitClose { subscription.remove() }
+                    }
+                }
+
+                }
+
+                    //Finally if collect is not in use or collecting any data we cancel this channel to prevent any leak and remove the subscription listener to the database
+
+            }
+            is Response.Failure -> {
+                print(response.e)
+            }
+        }
+
+        }*/
+
     suspend fun addFirestoreComment(pid: String, text: String, uid: String) : Response<Boolean> {
         return try {
-            var avatarUri: String
-            var username: String
+            val avatarUri: String
+            val username: String
 
             when(val response = getUserInfo(getUser()!!.uid)) {
                 is Response.Loading -> {
@@ -432,14 +585,16 @@ open class FirestoreRepository (
     }
 
     fun deleteComment(cid: String) {
+        //todo log
         db.collection("comments").document(cid).delete()
     }
 
     fun editComment(cid: String, newText: String){
+        //todo log
         db.collection("comments").document(cid).update("text",newText)
     }
 
-    suspend fun getUserFriends(uid: String): Response<ArrayList<User>> {
+    suspend fun getUserFriends(uid: String, requests: Boolean = true): Response<ArrayList<User>> {
         return try {
             val friendsRef = db.collection("userfriends").document(uid)
             val friendIdList = friendsRef.get().await().data?.get("friends") as ArrayList<String>
@@ -449,7 +604,7 @@ open class FirestoreRepository (
             val requestsList = friendRequestsRef.get().await().documents
 
             //only add requests for current user profile
-            if (uid == getUser()!!.uid) {
+            if (uid == getUser()!!.uid && requests) {
                 for (request in requestsList) {
                     val requesterId = request.get("sender").toString()
                     when (val response = getUserInfo(requesterId)) {

@@ -14,7 +14,7 @@ fun modelMapToClass(model: DocumentSnapshot): Model {
     val photoStrings: ArrayList<String> = model["photos"] as ArrayList<String>
     val livery: String = model["livery"] as String
     val comment: String = model["comment"] as String
-    val price: Int = 0
+    val price = 0
     val id = model.id
     val reg = model["registration"] ?: ""
 

@@ -16,7 +16,8 @@
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
             android:hint="@string/comment"
-            android:inputType="text">
+            android:inputType="text"
+            android:autofillHints="">
         </EditText>
         <com.google.android.material.button.MaterialButton
             android:id="@+id/edit_comment_edit_button"

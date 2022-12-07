@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:id="@+id/reaction_layout">
+    android:id="@+id/reaction_layout"
+    tools:ignore="HardcodedText">
 
     <LinearLayout
         android:id="@+id/reacts_linear_layout"
@@ -22,7 +24,7 @@
             android:layout_marginEnd="8dp"
             android:src="@drawable/airplane"
             app:tint="?android:icon"
-            android:contentDescription="@string/plane" />
+            android:contentDescription="plane" />
         <ImageView
             android:id="@+id/reaction_landing"
             android:layout_width="wrap_content"
@@ -30,7 +32,7 @@
             android:layout_marginEnd="8dp"
             android:src="@drawable/airplane_landing"
             app:tint="?android:icon"
-            android:contentDescription="@string/landing" />
+            android:contentDescription="landing" />
         <ImageView
             android:id="@+id/reaction_takeoff"
             android:layout_width="wrap_content"
@@ -38,7 +40,7 @@
             android:layout_marginEnd="8dp"
             android:src="@drawable/airplane_takeoff"
             app:tint="?android:icon"
-            android:contentDescription="@string/takeoff" />
+            android:contentDescription="takeoff" />
         <ImageView
             android:id="@+id/reaction_walking"
             android:layout_width="wrap_content"
@@ -46,7 +48,7 @@
             android:layout_marginEnd="8dp"
             android:src="@drawable/walk"
             app:tint="?android:icon"
-            android:contentDescription="@string/walking" />
+            android:contentDescription="walking" />
         <ImageView
             android:id="@+id/reaction_fire"
             android:layout_width="wrap_content"
@@ -54,7 +56,7 @@
             android:layout_marginEnd="8dp"
             android:src="@drawable/fire"
             app:tint="?android:icon"
-            android:contentDescription="@string/fire" />
+            android:contentDescription="fire" />
         <ImageView
             android:id="@+id/reaction_trash"
             android:layout_width="wrap_content"
@@ -62,7 +64,7 @@
             android:layout_marginEnd="8dp"
             android:src="@drawable/trash_can"
             app:tint="?android:icon"
-            android:contentDescription="@string/trash" />
+            android:contentDescription="trash" />
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

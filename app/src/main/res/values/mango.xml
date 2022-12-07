@@ -16,6 +16,7 @@
         <item name="colorSecondaryContainer">@color/orange_crush_button</item>
 
         <item name="colorPrimary">@color/orange_crush_button</item>
+        <item name="android:statusBarColor">@color/orange_crush_button</item>
 
 
         <item name="materialButtonStyle">@style/materialButtonStyleMango</item>
@@ -45,11 +46,6 @@
     </style>
 
     <style name="borderlessButtonStyleMango" parent="Widget.Material3.Button.TextButton">
-        <item name="android:textColor">@color/orange_crush_button</item>
-        <item name="android:icon">@color/orange_crush_button</item>
-    </style>
-
-    <style name="reactionStyleMango" parent="Widget.Material3.Button.TextButton">
         <item name="android:textColor">@color/orange_crush_button</item>
         <item name="android:icon">@color/orange_crush_button</item>
     </style>

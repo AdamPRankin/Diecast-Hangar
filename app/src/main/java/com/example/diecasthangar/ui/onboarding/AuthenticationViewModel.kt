@@ -16,7 +16,7 @@ class AuthenticationViewModel: ViewModel()  {
 
     //todo change to response<boolean> ?
     private val userLoggedIn : MutableLiveData<Boolean> = MutableLiveData()
-    val authError: MutableLiveData<String> = MutableLiveData()
+    private val authError: MutableLiveData<String> = MutableLiveData()
 
     fun getUserState(): MutableLiveData<Boolean> {
         return userLoggedIn

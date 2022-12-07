@@ -12,6 +12,7 @@ import java.util.*
  * @param fullDateFlag if true, returns the entire date string
  * @param date: the date to be formatted
  * @param now: the date to be compared with: should generally bt the current date
+ * @return the formatted date
  */
 fun parseDate(date: Date, fullDateFlag: Boolean = false,now: LocalDateTime = LocalDateTime.now()): String {
 

@@ -2,10 +2,14 @@ package com.example.diecasthangar.ui.profile
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.util.TypedValue
 import android.view.*
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.PopupWindow
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,6 +21,7 @@ import com.example.diecasthangar.data.remote.getUser
 import com.example.diecasthangar.databinding.PopupEditDeleteBinding
 import com.example.diecasthangar.databinding.PopupViewModelPhotosBinding
 import com.example.diecasthangar.databinding.RecyclerModelRowLayoutBinding
+import com.example.diecasthangar.ui.FullScreenImageRecyclerAdapter
 import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
 
 class ModelRecyclerAdapter(
@@ -44,7 +49,7 @@ class ModelRecyclerAdapter(
         }
 
         holder.modelComment.text = model.comment
-        holder.modelTitle.text = "${model.scale} ${model.airline} ${model.frame}"
+        holder.modelTitle.text = "${model.scale} ${model.airline} ${model.frame} ${model.reg}"
         holder.modelLivery.text = model.livery
         holder.modelBrand.text = model.manufacturer
 
@@ -62,6 +67,7 @@ class ModelRecyclerAdapter(
         }
 
         if (model.userID == getUser()?.uid) {
+            //show delete button only for model owner
             holder.modelEditDeleteButton.visibility = View.VISIBLE
             holder.modelEditDeleteButton.setOnClickListener {
                 val context = holder.itemView.context
@@ -109,7 +115,22 @@ class ModelRecyclerAdapter(
             }
         }
 
-        if (model.photos.size > 1) {
+        //check if in landscape to enable fullscreen mode on photo viewer
+        val orientation = holder.itemView.resources.configuration.orientation
+        val height =
+            when (orientation) {
+                ORIENTATION_PORTRAIT -> {
+                    WRAP_CONTENT
+                }
+                ORIENTATION_LANDSCAPE -> {
+                    MATCH_PARENT
+                }
+                else -> {
+                    WRAP_CONTENT
+                }
+            }
+
+        if (model.photos.size > 0) {
             holder.modelPhotoImageView.setOnClickListener {
                 val context = holder.itemView.context
                 val inflater: LayoutInflater  =
@@ -118,26 +139,34 @@ class ModelRecyclerAdapter(
                 val popup = PopupWindow(
                     binding.root,
                     WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.WRAP_CONTENT
+                    height
 
                 )
                 popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
                 val photoRecyclerView = binding.modelPopupRecyclerview
-                val photoAdapter = SideScrollImageRecyclerAdapter({
-                    //display only mode
-                },false)
-                photoRecyclerView.adapter = photoAdapter
-                photoRecyclerView.layoutManager = LinearLayoutManager(holder.itemView.context,
-                    LinearLayoutManager.HORIZONTAL, false)
-                photoAdapter.photos = model.photos
+                if (orientation == ORIENTATION_PORTRAIT ) {
+                    val photoAdapter =  SideScrollImageRecyclerAdapter({
+                        //display only mode
+                    }, false)
+                    photoRecyclerView.adapter = photoAdapter
+                    photoRecyclerView.layoutManager = LinearLayoutManager(holder.itemView.context,
+                        LinearLayoutManager.HORIZONTAL, false)
+                    photoAdapter.photos = model.photos
+                }
+                else {
+                    val photoAdapter =  FullScreenImageRecyclerAdapter()
+                    photoRecyclerView.adapter = photoAdapter
+                    photoRecyclerView.layoutManager = LinearLayoutManager(holder.itemView.context,
+                        LinearLayoutManager.HORIZONTAL, false)
+                    photoAdapter.photos = model.photos
+
+                }
                 popup.showAtLocation(holder.itemView, Gravity.CENTER, 0, 0)
-
-
-
                 binding.modelPopupExit.setOnClickListener {
                     popup.dismiss()
                 }
+
             }
         }
     }

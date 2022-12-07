@@ -1,4 +1,4 @@
-package com.example.diecasthangar.ui
+package com.example.diecasthangar.ui.viewpost
 
 import android.content.Context
 import android.graphics.Color

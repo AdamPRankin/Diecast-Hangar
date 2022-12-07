@@ -4,7 +4,7 @@ package com.example.diecasthangar.core.util
  * Given an input map, return a list of pairs containing the top 3 pairs by value
  * starts with dummy elements for posts with fewer than 3 react types
  *
- * @param reactionsthe map to be sorted
+ * @param reactions the map to be sorted
  */
 fun getTopReacts(reactions: Map<String, Int>, limit: Int): List<Pair<String, Int>> {
     val baseReacts = hashMapOf(

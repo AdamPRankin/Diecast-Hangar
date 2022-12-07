@@ -1,15 +1,21 @@
 package com.example.diecasthangar.ui.dashboard
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.LayoutManager
@@ -23,16 +29,26 @@ import com.example.diecasthangar.ui.AddPostFragment
 import com.example.diecasthangar.ui.PostRecyclerAdapter
 import com.example.diecasthangar.ui.SettingsFragment
 import com.example.diecasthangar.ui.UserViewModel
-import com.example.diecasthangar.ui.viewpost.ViewPostFragment
 import com.example.diecasthangar.ui.profile.ProfileFragment
+import com.example.diecasthangar.ui.viewpost.ViewPostFragment
+import com.google.android.gms.common.util.DeviceProperties.isTablet
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.launch
+
 
 class DashboardFragment : Fragment(), LifecycleOwner {
-    val dashViewModel by viewModels<DashboardViewModel>()
+
     private var _binding: FragmentDashboardBinding? = null
     private val binding get() = _binding!!
+    private lateinit var frameLayout: FrameLayout
+    private var currentTab: String = "all"
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null){
+            currentTab = savedInstanceState.getString("TAB") ?: "all"
+
+        }
         super.onCreate(savedInstanceState)
     }
     @SuppressLint("NotifyDataSetChanged")
@@ -40,31 +56,77 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
+        frameLayout = FrameLayout(requireActivity())
         val view = binding.root
+        frameLayout.addView(view)
+        val dashViewModel: DashboardViewModel by activityViewModels()
+        val fragContainer =
+            if (isTablet(requireContext())){
+                R.id.right_container
+            } else {
+                R.id.container
+            }
+
 
         val picView = binding.dashboardProfilePic
         val usernameTextView = binding.dashboardTextUsername
         val postRecyclerView = binding.postRecyclerView
+
+        val hotRecyclerView = binding.postFriendsRecyclerView
         val settingsButton = binding.dashBtnSettings
 
-        settingsButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .add(R.id.container, SettingsFragment()).addToBackStack("home").hide(this)
-                .commit()
+        val allPostsButton = binding.btnAllPosts
+        val hotPostsButton = binding.btnHotPosts
+        val officialPostsButton = binding.btnAnnouncementPosts
+        val dashButtonTabToggle = binding.dashTabToggleButton
+
+        fun swapToHotTab() {
+            dashButtonTabToggle.check(R.id.btn_hot_posts)
+            postRecyclerView.visibility = View.GONE
+            hotRecyclerView.visibility = View.VISIBLE
         }
+
+        fun swapToAllTab() {
+            dashButtonTabToggle.check(R.id.btn_all_posts)
+            postRecyclerView.visibility = View.VISIBLE
+            hotRecyclerView.visibility = View.GONE
+        }
+
+        fun swapToOfficialTab(){
+            //todo
+            dashButtonTabToggle.check(R.id.btn_announcement_posts)
+        }
+
+        fun navigateToViewPostFragment(){
+            parentFragmentManager.beginTransaction()
+                .add(fragContainer, ViewPostFragment()).addToBackStack("home")
+                .hide(this).commit()
+
+            //todo tablet mode
+        }
+
+
+        when (currentTab) {
+            "hot" -> swapToHotTab()
+            "all" -> swapToAllTab()
+            "official" -> swapToOfficialTab()
+            //else -> swapToAllTab()
+        }
+
+
 
         val postAdapter = PostRecyclerAdapter(
             // avatar clicked, go to user profile
             { post ->
                 val uid = post.user
                 parentFragmentManager.beginTransaction()
-                    .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
+                    .add(fragContainer, ProfileFragment(uid)).addToBackStack("home")
                     .hide(this).commit()
             },
             // post edited, go to post fragment
             { post ->
                 parentFragmentManager.beginTransaction()
-                    .add(R.id.container, AddPostFragment(post, true))
+                    .add(fragContainer, AddPostFragment(post, true))
                     .addToBackStack("home").hide(this).commit()
             },
             // post deleted
@@ -73,9 +135,9 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             },
             //comment button clicked
             { post ->
-                parentFragmentManager.beginTransaction()
-                    .add(R.id.container, ViewPostFragment(post)).addToBackStack("home")
-                    .hide(this).commit()
+                dashViewModel.selectedPost.value = post
+                dashViewModel.currentViewingPost = post
+                navigateToViewPostFragment()
             },
             //reaction clicked
             { pair ->
@@ -84,9 +146,35 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             }
         )
 
+        hotPostsButton.setOnClickListener {
+            postRecyclerView.visibility = View.GONE
+            hotRecyclerView.visibility = View.VISIBLE
+            currentTab = "hot"
+        }
+
+        allPostsButton.setOnClickListener {
+            postRecyclerView.visibility = View.VISIBLE
+            hotRecyclerView.visibility = View.GONE
+            currentTab = "all"
+        }
+
+        officialPostsButton.setOnClickListener {
+            postRecyclerView.visibility = View.GONE
+            hotRecyclerView.visibility = View.GONE
+            currentTab = "official"
+        }
+
+
+        settingsButton.setOnClickListener {
+            navigate(SettingsFragment())
+/*            parentFragmentManager.beginTransaction()
+                .add(fragContainer, SettingsFragment()).addToBackStack("home").hide(this)
+                .commit()*/
+        }
+
         val postLayoutManager: LayoutManager = LinearLayoutManager(view.context)
-        postRecyclerView.layoutManager = postLayoutManager
-        postRecyclerView.adapter = postAdapter
+        postRecyclerView?.layoutManager = postLayoutManager
+        postRecyclerView?.adapter = postAdapter
 
         // Using the activityViewModels() Kotlin property delegate from the
         // fragment-ktx artifact to retrieve the ViewModel in the activity scope
@@ -97,21 +185,102 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             usernameTextView.text = userViewModel.getUsername()
         }
 
-        userViewModel.getAvatarUri().observe(viewLifecycleOwner) { uri ->
-            val avatarUri = uri.toString()
-            Glide.with(view)
-                .load(avatarUri)
-                .placeholder(R.drawable.avatar_default)
-                .diskCacheStrategy(DiskCacheStrategy.DATA)
-                .into(picView)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                userViewModel.getAvatarUri().observe(viewLifecycleOwner) { uri ->
+                    val avatarUri = uri.toString()
+                    Glide.with(view)
+                        .load(avatarUri)
+                        .placeholder(R.drawable.avatar_default)
+                        .diskCacheStrategy(DiskCacheStrategy.DATA)
+                        .into(picView)
+                }
+            }
         }
 
-        dashViewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
-            when (result) {
+
+
+
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                dashViewModel.allPosts.collect {
+                    postAdapter.setData(it)
+                }
+/*                dashViewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
+                    when (result) {
+                        is Response.Loading -> {
+                        }
+                        is Response.Success<*> -> {
+                            result.data?.let { postAdapter.setData(it as List<Post>) }
+                        }
+                        is Response.Failure -> {
+                            val toast = Toast.makeText(
+                                requireContext(),
+                                "Failed to load posts, please try again later",
+                                Toast.LENGTH_SHORT
+                            )
+                            toast.show()
+                        }
+                    }
+                }*/
+            }
+        }
+
+
+
+        val friendPostAdapter = PostRecyclerAdapter(
+            // avatar clicked, go to user profile
+            { post ->
+                val uid = post.user
+                parentFragmentManager.beginTransaction()
+                    .add(fragContainer, ProfileFragment(uid)).addToBackStack("home")
+                    .hide(this).commit()
+            },
+            // post edited, go to post fragment
+            { post ->
+                parentFragmentManager.beginTransaction()
+                    .add(fragContainer, AddPostFragment(post, true))
+                    .addToBackStack("home").hide(this).commit()
+            },
+            // post deleted
+            { post ->
+                dashViewModel.deletePost(post.id)
+            },
+            //comment button clicked
+            { post ->
+                dashViewModel.currentViewingPost = post
+                navigateToViewPostFragment()
+            },
+            //reaction clicked
+            { pair ->
+                val (reaction, pid) = pair
+                dashViewModel.addReact(reaction, pid)
+            }
+        )
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                dashViewModel.topPosts.collect {
+                    friendPostAdapter.setData(it)
+                }
+            }
+        }
+
+        val friendPostLayoutManager: LayoutManager = LinearLayoutManager(view.context)
+        hotRecyclerView.layoutManager = friendPostLayoutManager
+        hotRecyclerView.adapter = friendPostAdapter
+
+/*        dashViewModel.fetchAllFriendPosts.observe(viewLifecycleOwner) { posts ->
+
+                friendPostAdapter.posts.set(posts as List<Post>)
+
+                friendPostAdapter.notifyDataSetChanged()
+*//*            when (result) {
                 is Response.Loading -> {
                 }
                 is Response.Success<*> -> {
-                    result.data?.let { postAdapter.setData(it as List<Post>) }
+
                 }
                 is Response.Failure -> {
                     val toast = Toast.makeText(
@@ -121,40 +290,31 @@ class DashboardFragment : Fragment(), LifecycleOwner {
                     )
                     toast.show()
                 }
+            }*//*
             }
-        }
+        }*/
 
-        dashViewModel.getLocalEditedPost().observe(viewLifecycleOwner) { pair ->
-            // find current post and update with edited version
-            val index = postAdapter.posts.indexOf(pair.first)
-            if (index != -1) {
-                postAdapter.posts[index] = pair.second
-                postAdapter.notifyItemChanged(index)
-            }
-        }
-
-        dashViewModel.getLocalAddedPost().observe(viewLifecycleOwner) { post ->
-            postAdapter.posts.add(0,post)
-            postAdapter.notifyItemInserted(0)
-        }
 
         val addPostButton = view.findViewById<FloatingActionButton>(R.id.dash_btn_add_post)
 
-        addPostButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .add(R.id.container, AddPostFragment()).addToBackStack("home")
+        addPostButton.setOnClickListener { //navigate(AddPostFragment())
+           parentFragmentManager.beginTransaction()
+                .add(fragContainer, AddPostFragment()).addToBackStack("home")
                 .hide(this).commit()
         }
 
         picView.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .add(R.id.container, ProfileFragment()).addToBackStack("home")
+           // navigate(ProfileFragment())
+           parentFragmentManager.beginTransaction()
+                .add(fragContainer, ProfileFragment()).addToBackStack("home")
                 .hide(this).commit()
+
+
         }
 
         //keep track of furthest scrolled position and trigger post load when needed
-        val lm = postRecyclerView.layoutManager as LinearLayoutManager
-        postRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        val lm = postRecyclerView?.layoutManager as LinearLayoutManager
+        postRecyclerView?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val lastVisible = lm.findLastVisibleItemPosition() + 1
@@ -164,7 +324,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             }
         })
 
-        return view
+        return frameLayout
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -184,4 +344,40 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         super.onDestroy()
         _binding = null
     }
+
+    fun navigate(fragment: Fragment){
+        if (!isTablet(requireContext())) {
+            val c = isTablet(requireContext())
+            parentFragmentManager.beginTransaction()
+                .add(R.id.container, fragment).addToBackStack("home")
+                .hide(this).commit()
+        }
+
+        else {
+            parentFragmentManager.beginTransaction()
+                .add(R.id.right_container, fragment).addToBackStack("home")
+                .commit()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        //int orientation = this.getResources().getConfiguration().orientation;
+        super.onConfigurationChanged(newConfig)
+/*        frameLayout.removeAllViews()
+        val inflater =
+            requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val newView = inflater.inflate(R.layout.fragment_profile, frameLayout,false)
+        frameLayout.addView(newView)*/
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        //save UI state
+        outState.putString("TAB", currentTab)
+        super.onSaveInstanceState(outState)
+        //outState.putString("avatar-uri", )
+
+    }
+
+
 }

@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Diecast Hangar</string>
-    <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="next">Next</string>
     <string name="previous">Previous</string>
@@ -112,4 +111,13 @@
     <string name="dynamic">Dynamic</string>
     <string name="cinnamon_style">Cinnamon style</string>
     <string name="show_less">show less</string>
+    <string name="spicy_toothpaste">Spicy Toothpaste</string>
+    <string name="english">English</string>
+    <string name="all">All</string>
+    <string name="friends_c">Friends</string>
+    <string name="official">Official</string>
+    <string name="action_settings">action_settings</string>
+    <string name="language">Language</string>
+    <string name="royal">Royal</string>
+    <string name="hot">Hot</string>
 </resources>

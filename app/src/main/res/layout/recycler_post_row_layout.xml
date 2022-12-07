@@ -2,10 +2,10 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_margin="8dp"
+    android:background="?colorBackgroundFloating">
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/post_btn_edit_popup"
@@ -188,6 +188,8 @@
                     app:tint="?android:icon"
                     android:contentDescription="@null">
                 </ImageView>
+
+
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -191,7 +191,7 @@
         android:layout_marginBottom="16dp"
         android:visibility="gone"/>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <ImageButton
         android:id="@+id/profile_btn_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -202,11 +202,13 @@
         android:src="@drawable/ic_account_edit_black_48dp"
         android:layout_gravity="end"
         android:outlineProvider="none"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         app:tint="?colorButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-    </com.google.android.material.floatingactionbutton.FloatingActionButton>
+    </ImageButton>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/profile_btn_save"

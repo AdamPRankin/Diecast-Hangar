@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="?background">
 
     <LinearLayout
         android:id="@+id/main_settings_layout"
@@ -20,6 +21,7 @@
             android:layout_gravity="center"
             android:padding="16dp"
             android:text="@string/themes"
+            android:textColor="?colorPrimary"
             app:icon="@drawable/image_edit"
             app:iconSize="48dp"
             app:iconGravity="textEnd">
@@ -38,6 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:background="?colorBackgroundFloating"
             android:visibility="gone">
             <LinearLayout
                 android:layout_width="match_parent"
@@ -49,6 +52,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="18sp"
                     android:text="@string/dark_mode"
+                    android:textColor="?colorPrimary"
                     android:layout_marginEnd="8dp"
                     android:layout_marginStart="8dp"/>
                 <com.google.android.material.button.MaterialButtonToggleGroup
@@ -61,6 +65,7 @@
                     android:paddingEnd="8dp"
                     app:singleSelection="true"
                     app:selectionRequired="true"
+
                     >
 
                     <com.google.android.material.button.MaterialButton
@@ -221,7 +226,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp">
                 <com.google.android.material.textview.MaterialTextView
-                    android:text="Spicy Toothpaste"
+                    android:text="@string/spicy_toothpaste"
                     android:textSize="20sp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -249,6 +254,57 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
+            <LinearLayout
+                android:id="@+id/theme_royal"
+                android:theme="@style/Royal.Theme.DiecastHangar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="?background"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_royal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/select"/>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp">
+                    <com.google.android.material.textview.MaterialTextView
+                        android:text="@string/royal"
+                        android:textSize="20sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:background="?colorBackgroundFloating"
+                        />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp">
+                    <com.google.android.material.textview.MaterialTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Regal purple theme"
+                        android:padding="8dp"
+                        android:layout_gravity="center"
+                        android:background="?colorBackgroundFloating"
+                        tools:ignore="HardcodedText"/>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
             <com.google.android.material.divider.MaterialDivider
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -256,12 +312,96 @@
                 app:dividerInsetEnd="16dp"
                 app:dividerColor="?colorPrimary"/>
         </LinearLayout>
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_language"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="36sp"
+            android:textColor="?colorPrimary"
+            android:layout_gravity="center"
+            android:padding="16dp"
+            android:text="@string/language"
+            app:icon="@drawable/translate"
+            app:iconSize="48dp"
+            app:iconGravity="textEnd">
+
+        </com.google.android.material.button.MaterialButton>
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:dividerInsetStart="16dp"
+            app:dividerInsetEnd="16dp"
+            app:dividerColor="?colorPrimary"/>
+        <LinearLayout
+            android:id="@+id/language_menu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+
+       <LinearLayout
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:background="?colorBackgroundFloating">
+
+           <com.google.android.material.button.MaterialButton
+               style="?attr/materialButtonOutlinedStyle"
+               android:id="@+id/language_english"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"
+               android:text="English"
+               android:textColor="?android:textColor"
+               android:layout_weight="1"
+               android:layout_marginStart="8dp"
+               android:layout_marginEnd="8dp"
+               tools:ignore="HardcodedText" />
+           <com.google.android.material.button.MaterialButton
+               style="?attr/materialButtonOutlinedStyle"
+               android:id="@+id/language_gaelic"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"
+               android:text="Ghàidhlig"
+               android:layout_weight="1"
+               android:textColor="?android:textColor"
+               android:layout_marginStart="8dp"
+               android:layout_marginEnd="8dp"
+               tools:ignore="HardcodedText" />
+
+           <com.google.android.material.button.MaterialButton
+               style="?attr/materialButtonOutlinedStyle"
+               android:id="@+id/language_ukrainian"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"
+               android:text="українська"
+               android:layout_weight="1"
+               android:textColor="?android:textColor"
+               android:layout_marginStart="8dp"
+               android:layout_marginEnd="8dp"
+               tools:ignore="HardcodedText" />
+
+
+       </LinearLayout>
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dividerInsetStart="16dp"
+                app:dividerInsetEnd="16dp"
+                app:dividerColor="?colorPrimary"/>
+       </LinearLayout>
+
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_logout"
             style="?attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="36sp"
+            android:textColor="?colorPrimary"
             android:layout_gravity="center"
             android:padding="16dp"
             android:text="@string/log_off"
