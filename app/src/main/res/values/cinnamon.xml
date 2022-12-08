@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Cinnamon Crush application theme. -->
+    <style name="Cinnamon.Theme.DiecastHangar" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorBackgroundFloating">@color/spicy_toothpaste_background_floating</item>
+        <item name="background">@color/spicy_toothpaste_background</item>
+        <item name="android:buttonStyleToggle">@color/spicy_toothpaste_text</item>
+        <item name="colorOutline">@color/spicy_toothpaste_accent</item>
+        <item name="android:textColor">@color/spicy_toothpaste_text</item>
+        <item name="android:textColorHint">@color/spicy_toothpaste_text</item>
+        <item name="android:colorAccent">@color/spicy_toothpaste_button</item>
+
+        <item name="colorSecondaryContainer">@color/spicy_toothpaste_button</item>
+
+        <item name="colorPrimary">@color/spicy_toothpaste_button</item>
+        <item name="android:statusBarColor">@color/spicy_toothpaste_button</item>
+
+        <item name="radioButtonStyle">@style/outlinedButtonStyleMango</item>
+
+
+        <item name="materialButtonStyle">@style/materialButtonStyleCinnamon</item>
+        <item name="materialButtonOutlinedStyle">@style/outlinedButtonStyleCinnamon</item>
+        <item name="borderlessButtonStyle">@style/borderlessButtonStyleCinnamon</item>
+
+        <!-- main icon color -->
+        <item name="android:icon">@color/spicy_toothpaste_button</item>
+        <item name="colorIconButton">@color/spicy_toothpaste_button</item>
+        <item name="colorFabMain">@color/spicy_toothpaste_button</item>
+        <item name="colorButton">@color/spicy_toothpaste_button</item>
+        <item name ="switchStyle">@style/switchCinnamon</item>
+
+        <item name="colorOnButton">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+
+        <!-- faint icon color -->
+        <item name="colorFaintButton">@color/spicy_toothpaste_button</item>
+    </style>
+
+    <style name="materialButtonStyleCinnamon" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/spicy_toothpaste_button</item>
+        <item name="background">@color/spicy_toothpaste_button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:tint">@color/white</item>
+    </style>
+
+    <style name="borderlessButtonStyleCinnamon" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/spicy_toothpaste_button</item>
+        <item name="android:icon">@color/spicy_toothpaste_button</item>
+    </style>
+
+    <style name="outlinedButtonStyleCinnamon" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/spicy_toothpaste_button</item>
+    </style>
+
+    <style name="switchCinnamon" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="colorSurfaceVariant">@color/spicy_toothpaste_background_floating</item>
+        <item name="colorOnPrimary">@color/spicy_toothpaste_background_floating</item>
+        <item name="colorPrimary">@color/spicy_toothpaste_button</item>
+        <item name="colorOutline">@color/spicy_toothpaste_accent</item>
+    </style>
+
+</resources>

@@ -1,0 +1,65 @@
+<resources>
+
+    <!-- Orange Crush Darkmode application theme. -->
+    <style name="Mango.Theme.DiecastHangar" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorBackgroundFloating">@color/dark_crush_background_floating</item>
+        <item name="background">@color/dark_crush_background</item>
+        <item name="android:buttonStyleToggle">@color/dark_crush_text</item>
+        <item name="colorOutline">@color/dark_crush_accent</item>
+        <item name="android:textColor">@color/dark_crush_text</item>
+        <item name="android:textColorHint">@color/dark_crush_text</item>
+        <item name="android:colorAccent">@color/dark_crush_button</item>
+
+        <!--toggle button group highlight -->
+        <item name="colorSecondaryContainer">@color/dark_crush_button</item>
+
+        <item name="colorPrimary">@color/dark_crush_button</item>
+        <item name="android:statusBarColor">@color/dark_crush_button</item>
+
+
+        <item name="materialButtonStyle">@style/materialButtonStyleMango</item>
+        <item name="materialButtonOutlinedStyle">@style/outlinedButtonStyleMango</item>
+        <item name="borderlessButtonStyle">@style/borderlessButtonStyleMango</item>
+
+        <!-- main icon color -->
+        <item name="android:icon">@color/dark_crush_button</item>
+        <item name="colorIconButton">@color/dark_crush_button</item>
+        <item name="colorFabMain">@color/dark_crush_button</item>
+        <item name="colorButton">@color/dark_crush_button</item>
+        <item name ="switchStyle">@style/switchDarkCrush</item>
+        <item name="colorOnButton">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <!-- faint icon color -->
+        <item name="colorFaintButton">@color/dark_crush_button</item>
+
+        <item name="floatingActionButtonTertiaryStyle">@style/materialButtonStyleMangoDark</item>
+    </style>
+
+    <style name="materialButtonStyleMangoDark" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/dark_crush_button</item>
+        <item name="background">@color/dark_crush_button</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:tint">@color/white</item>
+
+    </style>
+
+    <style name="borderlessButtonStyleMango" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/dark_crush_button</item>
+        <item name="android:icon">@color/dark_crush_button</item>
+    </style>
+
+    <style name="outlinedButtonStyleMango" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/dark_crush_button</item>
+    </style>
+
+    <style name="switchDarkCrush" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="colorSurfaceVariant">@color/dark_crush_background_floating</item>
+        <item name="colorOnPrimary">@color/dark_crush_background_floating</item>
+        <item name="colorPrimary">@color/dark_crush_button</item>
+        <item name="colorOutline">@color/dark_crush_accent</item>
+    </style>
+
+    <style name="MangoThemeOverlay.DiecastHangar.FullscreenContainer" parent="">
+    </style>
+</resources>

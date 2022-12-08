@@ -1,0 +1,20 @@
+<resources>
+    <declare-styleable name="FullscreenAttrs">
+        <attr name="fullscreenBackgroundColor" format="color" />
+        <attr name="color60" format="color" />
+        <attr name="color40" format="color" />
+        <attr name="color30" format="color" />
+        <attr name="colorOnButton" format="color"/>
+        <attr name="colorButton" format="color"/>
+        <attr name="colorFaintButton" format="color"/>
+        <attr name="colorIconButton" format="color"/>
+        <attr name="colorText" format="color"/>
+        <attr name="colorFabMain" format="color"/>
+
+
+
+
+
+
+    </declare-styleable>
+</resources>

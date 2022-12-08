@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/friend_row_avatar"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
+        android:padding="4dp"
+        app:strokeWidth="2dp"
+        app:strokeColor="?android:icon"
+        app:shapeAppearanceOverlay="@style/roundedImageView"
+        />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/friend_row_username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:layout_marginStart="16dp"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+        android:orientation="vertical">
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/friend_row_request"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:layout_gravity="center"
+            android:text="@string/incoming_request"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"/>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_gravity="center">
+        <ImageButton
+            android:id="@+id/friend_row_btn_accept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?attr/materialIconButtonFilledTonalStyle"
+            android:src="@drawable/ic_content_save_black_24dp"
+            android:layout_gravity="center_vertical"
+            app:tint="?android:icon"
+            tools:ignore="RtlSymmetry"
+            android:contentDescription="@string/accept" />
+        <ImageButton
+            android:id="@+id/friend_row_btn_decline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?attr/materialIconButtonFilledTonalStyle"
+            android:src="@drawable/ic_trash_can_black_24dp"
+            android:layout_gravity="center_vertical"
+            android:paddingEnd="16dp"
+            tools:ignore="RtlSymmetry"
+            app:tint="?android:icon"
+            android:contentDescription="@string/decline" />
+        </LinearLayout>
+    </LinearLayout>
+    </LinearLayout>
+
+
+</com.google.android.material.card.MaterialCardView>
