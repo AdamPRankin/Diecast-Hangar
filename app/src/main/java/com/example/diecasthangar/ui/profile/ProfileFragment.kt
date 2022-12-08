@@ -13,13 +13,12 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
 import android.util.TypedValue
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.*
 import android.widget.*
 import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.result.ActivityResult
@@ -43,10 +42,9 @@ import com.example.diecasthangar.data.remote.getUser
 import com.example.diecasthangar.databinding.FragmentProfileBinding
 import com.example.diecasthangar.databinding.PopupAddFriendBinding
 import com.example.diecasthangar.databinding.PopupAddModelBinding
-import com.example.diecasthangar.ui.AddPostFragment
-import com.example.diecasthangar.ui.PostRecyclerAdapter
-import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
-import com.example.diecasthangar.ui.UserViewModel
+import com.example.diecasthangar.databinding.PopupViewModelPhotosBinding
+import com.example.diecasthangar.ui.*
+import com.example.diecasthangar.ui.dashboard.DashboardViewModel
 import com.example.diecasthangar.ui.viewpost.ViewPostFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -64,18 +62,23 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
     private val profileUserId = uid
     private var imageAdded = false
 
-    private lateinit var frameLayout: FrameLayout
     private val viewModel: ProfileViewModel by viewModels { ProfileViewModel.Factory(profileUserId) }
     private var _binding: FragmentProfileBinding? = null
     // This property is only valid between onCreateView and
    // onDestroyView.
     private val binding get() = _binding!!
+    private var currentTab: String = "posts"
+    private val dashViewModel: DashboardViewModel by activityViewModels()
+    private var editing = false
+
+    //todo use for popup
+    private val handler = Handler(Looper.getMainLooper())
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-
-
+        if (savedInstanceState != null) {
+            currentTab = savedInstanceState.getString("TAB") ?: "posts"
+        }
         super.onCreate(savedInstanceState)
     }
 
@@ -85,13 +88,15 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
-        frameLayout = FrameLayout(requireActivity())
+        //frameLayout = FrameLayout(requireActivity())
         val view = binding.root
-        ///val inflater =
-        //requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        frameLayout.addView(view)
-        val orientation = resources.configuration.orientation
+        requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        return view
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        val orientation = resources.configuration.orientation
         // Inflate the layout for this fragment
 
         val profileImageView: ImageView = binding.profileAvatar
@@ -107,6 +112,71 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         val profileAddModelButton: FloatingActionButton = binding.profileBtnAddModel
         val profileAddFriendButton: FloatingActionButton = binding.profileBtnAddFriend
         val profileLayout = binding.profileLay
+
+
+        val postRecyclerView = binding.profilePostRecycler
+        val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
+        postRecyclerView.layoutManager = postLayoutManager
+
+        val friendsRecyclerView = binding.profileFriendRecycler
+        val friendsLayoutManager = LinearLayoutManager(context)
+        friendsRecyclerView.layoutManager = friendsLayoutManager
+
+        val postAdapter = PostRecyclerAdapter(
+            // avatar clicked
+            {
+                // do not need to do anything here as all posts are from current user
+            },
+            //edit post button click
+            { post ->
+                parentFragmentManager.beginTransaction()
+                    .add(R.id.container, AddPostFragment(post, true))
+                    .addToBackStack("home").hide(this).commit()
+            },
+            // delete post button click
+            { post ->
+                viewModel.deletePost(post.id)
+            },
+            //comment button clicked
+            { post ->
+
+                dashViewModel.currentViewingPost = post
+                parentFragmentManager.beginTransaction()
+                    .add(R.id.container, ViewPostFragment()).addToBackStack("home")
+                    .hide(this).commit()
+            },
+            //reaction selected
+            { pair ->
+                val (reaction, pid) = pair
+                viewModel.addReact(reaction, pid)
+            })
+        postRecyclerView.adapter = postAdapter
+
+
+
+        val friendRecyclerAdapter = FriendRecyclerAdapter(
+            //accept friend button clicked
+            { user ->
+                viewModel.addFriend(user)
+            },
+            //decline friend button clicked
+            { user ->
+                val token = user.requestToken
+                //TODO decline
+
+            },
+            //go to friend profile
+            { user ->
+                val uid = user.id
+                parentFragmentManager.beginTransaction()
+                    .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
+                    .remove(this).commit()
+            }
+        )
+
+        friendsRecyclerView.adapter = friendRecyclerAdapter
+
+
 
         val photos = ArrayList<Photo>()
         val modelPhotoLauncher = registerForActivityResult(
@@ -153,33 +223,9 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
             }
         }
-        val postAdapter = PostRecyclerAdapter(
-            // avatar clicked
-            {
-                // do not need to do anything here as all posts are from current user
-            },
-            //edit post button click
-            { post ->
-                parentFragmentManager.beginTransaction()
-                    .add(R.id.container, AddPostFragment(post, true))
-                    .addToBackStack("home").hide(this).commit()
-            },
-            // delete post button click
-            { post ->
-                viewModel.deletePost(post.id)
-            },
-            //comment button clicked
-            { post ->
-                //todo update dashboardViewModel
-                parentFragmentManager.beginTransaction()
-                    .add(R.id.container, ViewPostFragment()).addToBackStack("home")
-                    .hide(this).commit()
-            },
-            //reaction selected
-            { pair ->
-                val (reaction, pid) = pair
-                viewModel.addReact(reaction, pid)
-            })
+
+
+
         fun observePosts() {
             viewModel.fetchPosts.observe(viewLifecycleOwner) { result ->
                 when (result) {
@@ -194,8 +240,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     is Response.Failure -> {
                         Toast.makeText(
                             context, "Failed to load posts, please try again later",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                            LENGTH_SHORT).show()
+                        Log.e("loading","Post failed to load: ${result.e}")
                     }
                     else -> {}
                 }
@@ -205,6 +251,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
 
         @SuppressLint("NotifyDataSetChanged")
         fun editModel(model: Model, editing: Boolean = true) {
+            this.editing = true
             val context = view.context
             viewModel.clearCurrentModelPhotos()
             if (editing) {
@@ -304,15 +351,63 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     viewModel.uploadModel(model)
                 }
                 popup.dismiss()
+                this.editing = false
             }
             popup.showAtLocation(view, 0, 0,0)
         }
 
-        val postRecyclerView = view.findViewById<RecyclerView>(R.id.profile_post_recycler)
 
-        val postLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
-        postRecyclerView.layoutManager = postLayoutManager
-        postRecyclerView.adapter = postAdapter
+        fun showModelPhotoPopup(model: Model){
+            viewModel.currentModelViewing = model
+            val height =
+                when (orientation) {
+                    Configuration.ORIENTATION_PORTRAIT -> {
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    }
+                    ORIENTATION_LANDSCAPE -> {
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    }
+                    else -> {
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    }
+                }
+            val context = view.context
+            val popupInflater: LayoutInflater  =
+                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val popupBinding = PopupViewModelPhotosBinding.inflate(popupInflater)
+            val popup = PopupWindow(
+                popupBinding.root,
+                WindowManager.LayoutParams.MATCH_PARENT,
+                height
+
+            )
+            //popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+            val photoRecyclerView = popupBinding.modelPopupRecyclerview
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                val photoAdapter =  SideScrollImageRecyclerAdapter({
+                    //display only mode
+                }, false)
+                photoRecyclerView.adapter = photoAdapter
+                photoRecyclerView.layoutManager = LinearLayoutManager(context,
+                    LinearLayoutManager.HORIZONTAL, false)
+                photoAdapter.photos = model.photos
+            }
+            else {
+                val photoAdapter =  FullScreenImageRecyclerAdapter()
+                photoRecyclerView.adapter = photoAdapter
+                photoRecyclerView.layoutManager = LinearLayoutManager(context,
+                    LinearLayoutManager.HORIZONTAL, false)
+                photoAdapter.photos = model.photos
+
+            }
+            popupBinding.modelPopupExit.setOnClickListener {
+                viewModel.currentModelViewing = null
+                popup.dismiss()
+            }
+            popup.showAtLocation(view, Gravity.CENTER, 0, 0)
+        }
+
 
         val modelsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_model_recycler)
         val modelAdapter = ModelRecyclerAdapter(
@@ -324,42 +419,17 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             { model ->
                 viewModel.deleteModel(model.id!!)
             },
+            { model ->
+                // fullscreen display model photos
+                showModelPhotoPopup(model)
+            }
         )
+
         val modelLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
         modelsRecyclerView.layoutManager = modelLayoutManager
         modelsRecyclerView.adapter = modelAdapter
-        val friendsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_friend_recycler)
-        val friendRecyclerAdapter = FriendRecyclerAdapter(
-            //accept friend button clicked
-            { user ->
-                viewModel.addFriend(user)
-            },
-            //decline friend button clicked
-            { user ->
-                val token = user.requestToken
-                //TODO decline
 
-            },
-            //go to friend profile
-            { user ->
-                val uid = user.id
-                parentFragmentManager.beginTransaction()
-                    .add(R.id.container, ProfileFragment(uid)).addToBackStack("home")
-                    .remove(this).commit()
-            }
-        )
-        val friendLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context)
-        friendsRecyclerView.adapter = friendRecyclerAdapter
-        friendsRecyclerView.layoutManager = friendLayoutManager
-
-        profileTogglePosts.setOnClickListener {
-            postRecyclerView.visibility = View.VISIBLE
-            modelsRecyclerView.visibility = View.GONE
-            friendsRecyclerView.visibility = View.GONE
-            profileAddModelButton.visibility = View.GONE
-            profileAddFriendButton.visibility = View.GONE
-        }
-        profileToggleModels.setOnClickListener {
+        fun swapToModelsTab(){
             postRecyclerView.visibility = View.GONE
             modelsRecyclerView.visibility = View.VISIBLE
             friendsRecyclerView.visibility = View.GONE
@@ -367,9 +437,19 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             if (profileUserId == getUser()!!.uid) {
                 profileAddModelButton.visibility = View.VISIBLE
             }
+            currentTab = "models"
         }
 
-        profileToggleFriends.setOnClickListener {
+        fun swapToPostsTab(){
+            postRecyclerView.visibility = View.VISIBLE
+            modelsRecyclerView.visibility = View.GONE
+            friendsRecyclerView.visibility = View.GONE
+            profileAddModelButton.visibility = View.GONE
+            profileAddFriendButton.visibility = View.GONE
+            currentTab = "posts"
+        }
+
+        fun swapToFriendsTab(){
             postRecyclerView.visibility = View.GONE
             modelsRecyclerView.visibility = View.GONE
             friendsRecyclerView.visibility = View.VISIBLE
@@ -380,7 +460,25 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             if (friendRecyclerAdapter.users.contains(currentUser) && profileUserId != currentUser.id) {
                 profileAddFriendButton.visibility = View.GONE
             }
+            currentTab = "friends"
         }
+
+        when (currentTab) {
+            "models" -> swapToModelsTab()
+            "posts" -> swapToPostsTab()
+            "friends" -> swapToFriendsTab()
+            //else -> swapToAllTab()
+        }
+        profileToggleFriends.setOnClickListener {
+            swapToFriendsTab()
+        }
+        profileToggleModels.setOnClickListener {
+            swapToModelsTab()
+        }
+        profileTogglePosts.setOnClickListener {
+            swapToPostsTab()
+        }
+
 
         if (profileUserId != getUser()!!.uid) {
             profileEditButton.visibility = View.GONE
@@ -443,6 +541,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
         }
 
         profileAddModelButton.setOnClickListener {
+            this.editing = true
             val context = view.context
             viewModel.clearCurrentModelPhotos()
 
@@ -519,6 +618,8 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 )
                 viewModel.uploadModel(model)
                 popup.dismiss()
+                viewModel.currentModelEditing = null
+                this.editing = false
             }
             popup.showAsDropDown(profileImageView, 0, 0)
         }
@@ -539,7 +640,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
             }
         }
-
 
 
         //only grab friend requests if user is on their own profile
@@ -690,7 +790,13 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                 }
             }
         }
-        return frameLayout
+
+        if (viewModel.currentModelViewing != null){
+            binding.root.post{
+                showModelPhotoPopup(viewModel.currentModelViewing!!)
+            }
+        }
+        super.onViewCreated(view, savedInstanceState)
     }
 
     override fun onPause() {
@@ -721,7 +827,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
 
         //int orientation = this.getResources().getConfiguration().orientation;
         super.onConfigurationChanged(newConfig)
@@ -730,5 +835,14 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val newView = inflater.inflate(R.layout.fragment_profile, frameLayout,false)
         frameLayout.addView(newView)*/
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        //save UI state
+        outState.putString("TAB", currentTab)
+        outState.putBoolean("editing", editing)
+        super.onSaveInstanceState(outState)
+        //outState.putString("avatar-uri", )
+
     }
 }

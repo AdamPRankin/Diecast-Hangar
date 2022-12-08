@@ -19,8 +19,12 @@ class SettingsFragment: Fragment(), LifecycleOwner {
     private val authViewModel by viewModels<AuthenticationViewModel>()
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
+    private var themesOpen = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null){
+            themesOpen = savedInstanceState.getBoolean("themes")
+        }
         super.onCreate(savedInstanceState)
     }
 
@@ -50,12 +54,18 @@ class SettingsFragment: Fragment(), LifecycleOwner {
             authViewModel.logOutUser()
         }
 
+        if (themesOpen){
+            themesMenu.visibility = View.VISIBLE
+        }
+
         themesButton.setOnClickListener {
             if (themesMenu.visibility == View.VISIBLE){
                 themesMenu.visibility = View.GONE
+                themesOpen = false
             }
             else {
                 themesMenu.visibility = View.VISIBLE
+                themesOpen = true
             }
         }
         val sharedPreference =  requireActivity().getSharedPreferences("DIECAST_HANGAR", Context.MODE_PRIVATE)
@@ -180,5 +190,14 @@ class SettingsFragment: Fragment(), LifecycleOwner {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        //save UI state
+        outState.putBoolean("themes", themesOpen)
+        super.onSaveInstanceState(outState)
+        //outState.putString("avatar-uri", )
+
     }
 }

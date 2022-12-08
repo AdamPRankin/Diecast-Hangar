@@ -30,15 +30,18 @@ class DashboardViewModel: ViewModel() {
     private val localEditedPost: MutableLiveData<Pair<Post,Post>> = MutableLiveData()
 
     val lastVisibleItem = MutableStateFlow(1)
-
     //todo paginate
     val lastVisibleItemTop = MutableStateFlow(1)
+    val lastVisibleItemNews = MutableStateFlow(1)
 
-    private val _allPosts = MutableStateFlow(listOf<Post>())
+    private val _allPosts = MutableStateFlow(listOf<Post>(loadingDummyPost()))
     val allPosts: StateFlow<List<Post>> = _allPosts
 
-    private val _topPosts = MutableStateFlow(listOf<Post>())
+    private val _topPosts = MutableStateFlow(listOf<Post>(loadingDummyPost()))
     val topPosts: StateFlow<List<Post>> = _topPosts
+
+    private val _newsPosts = MutableStateFlow(listOf<Post>(loadingDummyPost()))
+    val newsPosts: StateFlow<List<Post>> = _newsPosts
 
     val selectedPost = MutableLiveData<Post>()
 
@@ -51,71 +54,21 @@ class DashboardViewModel: ViewModel() {
             repository.getPosts(lastVisibleItem).collect { posts ->
                    _allPosts.value = posts
                 }
-
-
         }
-
         //get top posts
         viewModelScope.launch {
             repository.getTopPosts(lastVisibleItemTop).collect { posts ->
                 _topPosts.value = posts
             }
         }
-
-    }
-
-
-
-
-    fun getPostListLiveData() {
-        //return repository.getPostsListLiveData()
-    }
-
-    @OptIn(FlowPreview::class)
-    val fetchAllFriendPosts = liveData(Dispatchers.IO) {
-
-        try{
-            when(val response = repository.getUserFriends(getUser()!!.uid)) {
-                is Response.Loading -> {
-                }
-                is Response.Success -> {
-                    val friends = response.data!!
-/*                    repository.friendPostsFlow(friends[2].id).collect {
-                        emit(it)
-                    }*/
-                    val flowsList = arrayListOf<Flow<List<Post>>>()
-                    for (friend in friends) {
-                        val friendFlow = repository.friendPostsFlow(friend.id)
-                        flowsList.add(friendFlow)
-                    }
-                    val merged = flowsList.merge()
-                    merged.collect {
-                        emit(it)
-                    }
-                }
-                is Response.Failure -> {
-                    print(response.e)
-                }
+        //get news posts
+        viewModelScope.launch {
+            repository.getNewsPosts(lastVisibleItemNews).collect { posts ->
+                val cc = posts
+                _newsPosts.value = posts
             }
-        }catch (e: Exception){
-            emit(Response.Failure(e))
-            e.message?.let { Log.e("ERROR:", it) }
         }
     }
-
-
-/*    val fetchFriendPosts = liveData(Dispatchers.IO) {
-        emit(Response.Loading)
-        try{
-            repository.allFriendsPostsFlow(getUser()!!.uid).collect {
-                emit(Response.Success(it))
-            }
-
-        }catch (e: Exception){
-            emit(Response.Failure(e))
-            e.message?.let { Log.e("ERROR:", it) }
-        }
-    }*/
 
      fun getCurrentCommentMutableLiveData(): MutableLiveData<ArrayList<Comment>> {
          return commentsLiveData
@@ -180,7 +133,15 @@ class DashboardViewModel: ViewModel() {
 
     fun addReact(react: String, pid: String){
         viewModelScope.launch {
-            repository.addReaction(react,pid)
+            when (val result = repository.addReaction(react,pid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                }
+                is Response.Failure -> {
+                    Log.e("FIREBASE","Error adding react: ${result.e}")
+                }
+            }
         }
     }
 
@@ -190,9 +151,27 @@ class DashboardViewModel: ViewModel() {
 
     fun deleteComment(cid: String){
         repository.deleteComment(cid)
+        when (val result = repository.deleteComment(cid)) {
+            is Response.Loading -> {
+            }
+            is Response.Success -> {
+            }
+            is Response.Failure -> {
+                Log.e("FIREBASE","Error deleting comment: ${result.e}")
+            }
+        }
     }
 
     fun editComment(cid: String, text: String){
         repository.editComment(cid,text)
+        when (val result = repository.editComment(cid,text)) {
+            is Response.Loading -> {
+            }
+            is Response.Success -> {
+            }
+            is Response.Failure -> {
+                Log.e("FIREBASE","Error editing comment: ${result.e}")
+            }
+        }
     }
 }

@@ -6,11 +6,14 @@ import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.media.Image
 import android.util.TypedValue
 import android.view.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.ImageButton
 import android.widget.PopupWindow
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +30,7 @@ import com.example.diecasthangar.ui.SideScrollImageRecyclerAdapter
 class ModelRecyclerAdapter(
     private val onItemEdited: (Model, Int) -> Unit,
     private val onItemDeleted: (Model) -> Unit,
+    private val onModelView: (Model) -> Unit,
 ): RecyclerView.Adapter<ModelRecyclerAdapter.ViewHolder>() {
     private var models = ArrayList<Model>()
 
@@ -87,7 +91,6 @@ class ModelRecyclerAdapter(
 
                 popup.showAsDropDown(holder.modelEditDeleteButton, 0, 0)
 
-
                 //check if the popup is below the screen, if so, adjust upwards
                 val displayMetrics = context.resources.displayMetrics
                 val height = displayMetrics.heightPixels
@@ -115,58 +118,9 @@ class ModelRecyclerAdapter(
             }
         }
 
-        //check if in landscape to enable fullscreen mode on photo viewer
-        val orientation = holder.itemView.resources.configuration.orientation
-        val height =
-            when (orientation) {
-                ORIENTATION_PORTRAIT -> {
-                    WRAP_CONTENT
-                }
-                ORIENTATION_LANDSCAPE -> {
-                    MATCH_PARENT
-                }
-                else -> {
-                    WRAP_CONTENT
-                }
-            }
-
         if (model.photos.size > 0) {
             holder.modelPhotoImageView.setOnClickListener {
-                val context = holder.itemView.context
-                val inflater: LayoutInflater  =
-                    context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                val binding = PopupViewModelPhotosBinding.inflate(inflater)
-                val popup = PopupWindow(
-                    binding.root,
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    height
-
-                )
-                popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-                val photoRecyclerView = binding.modelPopupRecyclerview
-                if (orientation == ORIENTATION_PORTRAIT ) {
-                    val photoAdapter =  SideScrollImageRecyclerAdapter({
-                        //display only mode
-                    }, false)
-                    photoRecyclerView.adapter = photoAdapter
-                    photoRecyclerView.layoutManager = LinearLayoutManager(holder.itemView.context,
-                        LinearLayoutManager.HORIZONTAL, false)
-                    photoAdapter.photos = model.photos
-                }
-                else {
-                    val photoAdapter =  FullScreenImageRecyclerAdapter()
-                    photoRecyclerView.adapter = photoAdapter
-                    photoRecyclerView.layoutManager = LinearLayoutManager(holder.itemView.context,
-                        LinearLayoutManager.HORIZONTAL, false)
-                    photoAdapter.photos = model.photos
-
-                }
-                popup.showAtLocation(holder.itemView, Gravity.CENTER, 0, 0)
-                binding.modelPopupExit.setOnClickListener {
-                    popup.dismiss()
-                }
-
+                onModelView(model)
             }
         }
     }
@@ -178,11 +132,9 @@ class ModelRecyclerAdapter(
         val modelBrand = binding.modelRowBrandTextview
         val modelLivery = binding.modelRowLiveryTextview
         val modelTitle = binding.modelRowTitleTextview
-
         val modelPhotoImageView = binding.modelRowImageView
         val modelBrandIcon = binding.modelRowBrandIcon
         val modelEditDeleteButton = binding.modelRowBtnEditPopup
-
 
         init {
             binding.root.setOnClickListener(this)

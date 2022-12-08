@@ -1,6 +1,7 @@
 package com.example.diecasthangar.ui
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.diecasthangar.data.remote.Response
@@ -15,7 +16,6 @@ class UserViewModel: ViewModel() {
 
     private var username: String = ""
     private val avatarUri: MutableLiveData<String> = MutableLiveData("")
-
 
     private val repository = FirestoreRepository()
     private var user = Firebase.auth.currentUser
@@ -41,10 +41,6 @@ class UserViewModel: ViewModel() {
         avatarUri.value = uri.toString()
     }
 
-    fun setUsername(username: String){
-        this.username = username
-    }
-
     fun getUserData() {
         user = Firebase.auth.currentUser
         CoroutineScope(Dispatchers.IO).launch {
@@ -60,6 +56,7 @@ class UserViewModel: ViewModel() {
                 }
                 is Response.Failure -> {
                     print(response.e)
+                    Log.e("FIREBASE","Error getting data: ${response.e}")
                 }
                 else -> {}
             }

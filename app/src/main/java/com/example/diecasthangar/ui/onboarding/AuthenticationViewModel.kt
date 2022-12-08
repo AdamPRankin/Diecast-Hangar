@@ -1,5 +1,6 @@
 package com.example.diecasthangar.ui.onboarding
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.diecasthangar.data.remote.FirebaseAuthManager
@@ -14,7 +15,6 @@ import kotlinx.coroutines.launch
 class AuthenticationViewModel: ViewModel()  {
     private val authManager = FirebaseAuthManager()
 
-    //todo change to response<boolean> ?
     private val userLoggedIn : MutableLiveData<Boolean> = MutableLiveData()
     private val authError: MutableLiveData<String> = MutableLiveData()
 
@@ -30,7 +30,6 @@ class AuthenticationViewModel: ViewModel()  {
         CoroutineScope(Dispatchers.IO).launch {
             when (val result =authManager.registerUser(email = email, password = password, username = username)){
                 is Response.Loading -> {
-
                 }
                 is Response.Success -> {
                     userLoggedIn.postValue(true)
@@ -38,6 +37,7 @@ class AuthenticationViewModel: ViewModel()  {
                 is Response.Failure -> {
                     userLoggedIn.postValue(false)
                     parseError(result)
+                    Log.e("AUTH","Error registering: ${result.e}")
                 }
             }
         }
@@ -53,6 +53,7 @@ class AuthenticationViewModel: ViewModel()  {
                 else if (it.isCanceled){
                     userLoggedIn.postValue(false)
                     authError.postValue("Failed to Log In. Please check password")
+                    Log.e("AUTH","Error logging in: $it")
                 }
             }
         }

@@ -22,6 +22,8 @@ class ProfileViewModel(uid: String) : ViewModel() {
     val username :MutableLiveData<String> = MutableLiveData("")
     private val token :MutableLiveData<String> = MutableLiveData("")
     private var addFriendFromTokenResponse :MutableLiveData<String> = MutableLiveData("")
+    var currentModelViewing: Model? = null
+    var currentModelEditing: Model? = null
 
     private val currentModelPhotosMutableLiveData: MutableLiveData<ArrayList<Photo>> = MutableLiveData()
     private val currentModelDeletedPhotosMutableLiveData: MutableLiveData<ArrayList<Photo>> = MutableLiveData()
@@ -34,7 +36,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
             }
         }catch (e: Exception){
             emit(Response.Failure(e))
-            e.message?.let { Log.e("ERROR:", it) }
+            e.message?.let { Log.e("PROFILE", it) }
         }
     }
 
@@ -46,7 +48,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
             }
         }catch (e: Exception){
             emit(Response.Failure(e))
-            e.message?.let { Log.e("ERROR:", it) }
+            e.message?.let { Log.e("PROFILE", it) }
         }
     }
 
@@ -151,7 +153,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     bio.postValue(response.data!!)
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to load bio: ${response.e}")
                 }
             }
         }
@@ -168,7 +170,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     username.postValue(name)
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to load info: ${response.e}")
                 }
             }
         }
@@ -184,7 +186,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     friendsLiveData.postValue(friendsList)
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to load friends: ${response.e}")
                 }
             }
         }
@@ -200,7 +202,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
                     }
                     is Response.Failure -> {
-                        print(response.e)
+                        Log.e("PROFILE", "failed to update bio: ${response.e}")
                     }
                 }
             }
@@ -217,7 +219,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
                     }
                     is Response.Failure -> {
-                        print(response.e)
+                        Log.e("PROFILE", "failed to update avatar: ${response.e}")
                     }
                 }
             }
@@ -226,7 +228,16 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
     fun deletePost(pid: String){
         viewModelScope.launch {
-            repository.deletePostFromFirestore(pid)
+            when (val response = repository.deletePostFromFirestore(pid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+
+                }
+                is Response.Failure -> {
+                    Log.e("PROFILE", "failed to delete post: ${response.e}")
+                }
+            }
         }
     }
 
@@ -243,7 +254,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     repository.deleteFriendRequest(friend.requestToken!!)
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to add friend: ${response.e}")
                 }
             }
         }
@@ -258,7 +269,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to send request: ${response.e}")
                 }
             }
         }
@@ -273,7 +284,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     token.postValue(response.data ?: "could not generate token, try again later")
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to push token: ${response.e}")
                 }
             }
         }
@@ -287,7 +298,7 @@ class ProfileViewModel(uid: String) : ViewModel() {
                     addFriendFromTokenResponse.postValue("friend added")
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to add friend: ${response.e}")
                     addFriendFromTokenResponse.postValue("invalid token")
                 }
             }
@@ -300,12 +311,10 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 is Response.Loading -> {
                 }
                 is Response.Success -> {
-                    //get model ID and add to model
-                    val newModel = response.data
-                    //localAddedModel.postValue(newModel!!)
+
                 }
                 is Response.Failure -> {
-                    print(response.e)
+                    Log.e("PROFILE", "failed to upload model: ${response.e}")
                 }
             }
         }
@@ -313,12 +322,28 @@ class ProfileViewModel(uid: String) : ViewModel() {
 
     fun deleteModel(mid: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            repository.deleteModel(mid)
+            when (val response =repository.deleteModel(mid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                }
+                is Response.Failure -> {
+                    Log.e("PROFILE", "failed to delete model: ${response.e}")
+                }
+            }
         }
     }
     fun addReact(react: String, pid: String){
         viewModelScope.launch {
-            repository.addReaction(react,pid)
+            when (val response = repository.addReaction(react,pid)) {
+                is Response.Loading -> {
+                }
+                is Response.Success -> {
+                }
+                is Response.Failure -> {
+                    Log.e("PROFILE", "failed to add react: ${response.e}")
+                }
+            }
         }
     }
 
@@ -329,15 +354,15 @@ class ProfileViewModel(uid: String) : ViewModel() {
                 async(Dispatchers.IO) {
                     //add photo to database iff it is not already there
                     if (photo.remoteUri == "") {
-                        when (val result = repository.addImageToStorage(photo.localUri!!)) {
+                        when (val response = repository.addImageToStorage(photo.localUri!!)) {
                             is Response.Loading -> {
                             }
                             is Response.Success -> {
-                                val remoteUri = result.data!!
+                                val remoteUri = response.data!!
                                 photo.remoteUri = remoteUri.toString()
                             }
                             is Response.Failure -> {
-                                print(result.e)
+                                Log.e("PROFILE", "failed to update model: ${response.e}")
                             }
                         }
                     }
@@ -347,7 +372,6 @@ class ProfileViewModel(uid: String) : ViewModel() {
             model.photos = photos
             repository.editFirestoreModel(model)
         }
-
     }
 
         //use this to create a viewModel with uid parameter

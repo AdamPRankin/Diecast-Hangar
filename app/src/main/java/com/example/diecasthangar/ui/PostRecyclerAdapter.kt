@@ -189,7 +189,6 @@ class PostRecyclerAdapter(
 
         holder.commentButton.setOnClickListener {
             onCommentBtnClicked(post)
-            //todo
         }
         val reacts: Map<String,Int> = post.reactions
 
@@ -301,7 +300,7 @@ class PostRecyclerAdapter(
         val showLessButton: Button = binding.postBtnShowLess
         val commentButton: Button = binding.postBtnComment
         val reactButton: Button = binding.postBtnReact
-        val editPostPopupButton: FloatingActionButton = binding.postBtnEditPopup
+        val editPostPopupButton: ImageButton = binding.postBtnEditPopup
         val reactIcon1: ImageView = binding.postReacts1
         val reactIcon2: ImageView = binding.postReacts2
         val reactIcon3: ImageView = binding.postReacts3

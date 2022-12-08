@@ -53,8 +53,6 @@ class MainActivity : AppCompatActivity(), NavigationHost {
         config.setLocale(locale)
         applicationContext.resources.updateConfiguration(config, null)*/
 
-        //todo save backstack
-
         val currentUser = Firebase.auth.currentUser
         val dashContainer =
             if (isTablet(this)){

@@ -15,7 +15,7 @@ data class Post(
     val id: String = "",
     var comments: ArrayList<Comment>? = arrayListOf(),
     val reactions: MutableMap<String, Int> = mutableMapOf(),
-    val announcement: Boolean = false
+    val news: Boolean = false
 ){
     fun addReact(name: String, number: Int = 1){
         if (reactions.containsKey(name)) {

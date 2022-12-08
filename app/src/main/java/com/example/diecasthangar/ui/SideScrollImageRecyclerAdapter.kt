@@ -4,6 +4,7 @@ import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
@@ -61,8 +62,8 @@ class SideScrollImageRecyclerAdapter(
 
         private var view: View = binding.root
 
-        val photoImageView: ImageView = view.findViewById(R.id.add_post_row_image)
-        val deleteButton: FloatingActionButton = binding.photoDelete
+        val photoImageView: ImageView = binding.addPostRowImage
+        val deleteButton: ImageButton = binding.photoDelete
 
         init {
             view.setOnClickListener(this)

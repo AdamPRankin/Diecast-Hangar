@@ -2,6 +2,10 @@
 
 package com.example.diecasthangar.data.model
 
+import android.os.Parcel
+import android.os.Parcelable.Creator
+
+
 @Suppress("EqualsOrHashCode")
 data class Model(
     val userID: String,

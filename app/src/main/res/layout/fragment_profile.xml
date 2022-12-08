@@ -199,7 +199,7 @@
         app:backgroundTint="@android:color/transparent"
         app:rippleColor="@android:color/transparent"
         android:contentDescription="@string/edit"
-        android:src="@drawable/ic_account_edit_black_48dp"
+        android:src="@drawable/ic_account_edit_black_36dp"
         android:layout_gravity="end"
         android:outlineProvider="none"
         android:layout_marginTop="8dp"

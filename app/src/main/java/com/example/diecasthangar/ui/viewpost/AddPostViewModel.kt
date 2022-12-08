@@ -1,6 +1,7 @@
 package com.example.diecasthangar.ui.viewpost
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -57,7 +58,7 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
                                     photo.remoteUri = remoteUri.toString()
                                 }
                                 is Response.Failure -> {
-                                    print(result.e)
+                                    Log.e("FIREBASE","Error uploading photo: ${result.e}")
                                 }
                             }
                         }
@@ -77,6 +78,7 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
                     }
                     is Response.Failure -> {
                         print(result.e)
+                        Log.e("FIREBASE","Error updating post: ${result.e}")
                     }
                 }
             }
@@ -91,7 +93,7 @@ class AddPostViewModel(post: Post?, editing: Boolean = false): ViewModel() {
                 is Response.Success -> {
                 }
                 is Response.Failure -> {
-                    print(result.e)
+                    Log.e("FIREBASE","Error editing post: ${result.e}")
                 }
             }
         }
