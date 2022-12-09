@@ -34,7 +34,8 @@ class PostRecyclerAdapter(
     private val onItemEdited: (Post) -> Unit,
     private val onItemDeleted: (Post) -> Unit,
     private val onCommentBtnClicked: (Post) -> Unit,
-    private val onReactSelected: (Pair<String, String>) -> Unit
+    private val onReactSelected: (Pair<String, String>) -> Unit,
+    private val onPhotoClicked: (Post) -> Unit,
     ): RecyclerView.Adapter<PostRecyclerAdapter.ViewHolder>() {
     var posts =  arrayListOf(loadingDummyPost())
 
@@ -122,6 +123,10 @@ class PostRecyclerAdapter(
                 val imageUri: Uri = Uri.parse(post.images[currentImagePosition].remoteUri)
                 Glide.with(holder.itemView.context).load(imageUri).into(holder.picImageview)
             }
+        }
+
+        holder.picImageview.setOnClickListener {
+            onPhotoClicked(post)
         }
 
         //popup to display reaction add menu

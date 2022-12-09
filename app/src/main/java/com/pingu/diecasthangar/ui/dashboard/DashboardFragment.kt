@@ -3,10 +3,9 @@ package com.pingu.diecasthangar.ui.dashboard
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
+import android.os.Handler
+import android.os.Looper
+import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -20,24 +19,20 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.pingu.diecasthangar.R
 import com.pingu.diecasthangar.databinding.FragmentDashboardBinding
-import com.pingu.diecasthangar.ui.AddPostFragment
-import com.pingu.diecasthangar.ui.PostRecyclerAdapter
-import com.pingu.diecasthangar.ui.SettingsFragment
-import com.pingu.diecasthangar.ui.UserViewModel
 import com.pingu.diecasthangar.ui.profile.ProfileFragment
 import com.pingu.diecasthangar.ui.viewpost.ViewPostFragment
 import com.google.android.gms.common.util.DeviceProperties.isTablet
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.pingu.diecasthangar.core.util.FullscreenPhotoViewer
+import com.pingu.diecasthangar.ui.*
 import kotlinx.coroutines.launch
-
 
 class DashboardFragment : Fragment(), LifecycleOwner {
 
     private var _binding: FragmentDashboardBinding? = null
     private val binding get() = _binding!!
-    private lateinit var frameLayout: FrameLayout
     private var currentTab: String = "all"
-
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (savedInstanceState != null){
@@ -54,6 +49,7 @@ class DashboardFragment : Fragment(), LifecycleOwner {
         val view = binding.root
         //frameLayout.addView(view)
         val dashViewModel: DashboardViewModel by activityViewModels()
+        val orientation = resources.configuration.orientation
         val isTablet: Boolean = isTablet(requireContext())
         val fragContainer =
             if (isTablet){
@@ -123,6 +119,26 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             //else -> swapToAllTab()
         }
 
+        val fullscreenPhotoViewer = FullscreenPhotoViewer(
+            //popup open, save photos
+            {
+                dashViewModel.currentPopupPhotos = it
+            },
+            //popup closed, null photos
+            {
+                dashViewModel.currentPopupPhotos = null
+            }
+        )
+
+        if (dashViewModel.currentPopupPhotos != null){
+            handler.post{
+                fullscreenPhotoViewer.showPhotoPopup(
+                    dashViewModel.currentPopupPhotos!!,
+                    orientation,view)
+            }
+
+        }
+
         val postAdapter = PostRecyclerAdapter(
             // avatar clicked, go to user profile
             { post ->
@@ -147,6 +163,11 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             { pair ->
                 val (reaction, pid) = pair
                 dashViewModel.addReact(reaction, pid)
+            },
+            //photo clicked, enlarge photos
+            { post ->
+                //showPostPhotoPopup(post)
+                fullscreenPhotoViewer.showPhotoPopup(post.images,orientation,view)
             }
         )
 
@@ -178,14 +199,16 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             },
             //comment button clicked
             { post ->
-                dashViewModel.selectedPost.value = post
-                dashViewModel.currentViewingPost = post
                 navigateToFragment(ViewPostFragment(post))
             },
             //reaction clicked
             { pair ->
                 val (reaction, pid) = pair
                 dashViewModel.addReact(reaction, pid)
+            },
+            //photo clicked, enlarge photos
+            { post ->
+                fullscreenPhotoViewer.showPhotoPopup(post.images,orientation,view)
             }
         )
 
@@ -205,15 +228,19 @@ class DashboardFragment : Fragment(), LifecycleOwner {
             },
             //comment button clicked
             { post ->
-                dashViewModel.currentViewingPost = post
                 navigateToFragment(ViewPostFragment(post))
             },
             //reaction clicked
             { pair ->
                 val (reaction, pid) = pair
                 dashViewModel.addReact(reaction, pid)
+            },
+            //photo clicked, enlarge photos
+            { post ->
+                fullscreenPhotoViewer.showPhotoPopup(post.images,orientation,view)
             }
         )
+
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

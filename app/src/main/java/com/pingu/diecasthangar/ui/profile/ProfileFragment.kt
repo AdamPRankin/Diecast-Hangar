@@ -48,6 +48,8 @@ import com.pingu.diecasthangar.ui.dashboard.DashboardViewModel
 import com.pingu.diecasthangar.ui.viewpost.ViewPostFragment
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import com.pingu.diecasthangar.core.util.FullscreenPhotoViewer
+import com.pingu.diecasthangar.data.model.Post
 import com.pingu.diecasthangar.ui.*
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.delay
@@ -71,7 +73,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
     private val dashViewModel: DashboardViewModel by activityViewModels()
     private var editing = false
 
-    //todo use for popup
     private val handler = Handler(Looper.getMainLooper())
 
 
@@ -140,6 +141,28 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
                     .hide(this).commit()
             }
         }
+
+        val fullscreenPhotoViewer = FullscreenPhotoViewer(
+            //popup open, save photos
+            {
+                dashViewModel.currentPopupPhotos = it
+            },
+            //popup closed, null photos
+            {
+                dashViewModel.currentPopupPhotos = null
+            }
+        )
+
+        //restore popup photos display after screen rotate etc
+        //todo bundle
+        if (dashViewModel.currentPopupPhotos != null){
+            handler.post{
+                fullscreenPhotoViewer.showPhotoPopup(
+                    dashViewModel.currentPopupPhotos!!,
+                    orientation,view)
+            }
+        }
+
         val postAdapter = PostRecyclerAdapter(
             // avatar clicked
             {
@@ -155,17 +178,19 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             },
             //comment button clicked
             { post ->
-                dashViewModel.currentViewingPost = post
                 navigateToFragment(ViewPostFragment(post))
             },
             //reaction selected
             { pair ->
                 val (reaction, pid) = pair
                 viewModel.addReact(reaction, pid)
-            })
+            },
+            //photo tapped, show popup
+            { post ->
+                fullscreenPhotoViewer.showPhotoPopup(post.images,orientation,view)
+            }
+        )
         postRecyclerView.adapter = postAdapter
-
-
 
         val friendRecyclerAdapter = FriendRecyclerAdapter(
             //accept friend button clicked
@@ -363,59 +388,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             popup.showAtLocation(view, 0, 0,0)
         }
 
-
-        fun showModelPhotoPopup(model: Model){
-            viewModel.currentModelViewing = model
-            val height =
-                when (orientation) {
-                    Configuration.ORIENTATION_PORTRAIT -> {
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    }
-                    ORIENTATION_LANDSCAPE -> {
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    }
-                    else -> {
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    }
-                }
-            val context = view.context
-            val popupInflater: LayoutInflater  =
-                context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            val popupBinding = PopupViewModelPhotosBinding.inflate(popupInflater)
-            val popup = PopupWindow(
-                popupBinding.root,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                height
-
-            )
-            //popup.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-            val photoRecyclerView = popupBinding.modelPopupRecyclerview
-            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                val photoAdapter =  SideScrollImageRecyclerAdapter({
-                    //display only mode
-                }, false)
-                photoRecyclerView.adapter = photoAdapter
-                photoRecyclerView.layoutManager = LinearLayoutManager(context,
-                    LinearLayoutManager.HORIZONTAL, false)
-                photoAdapter.photos = model.photos
-            }
-            else {
-                val photoAdapter =  FullScreenImageRecyclerAdapter()
-                photoRecyclerView.adapter = photoAdapter
-                photoRecyclerView.layoutManager = LinearLayoutManager(context,
-                    LinearLayoutManager.HORIZONTAL, false)
-                photoAdapter.photos = model.photos
-
-            }
-            popupBinding.modelPopupExit.setOnClickListener {
-                viewModel.currentModelViewing = null
-                popup.dismiss()
-            }
-            popup.showAtLocation(view, Gravity.CENTER, 0, 0)
-        }
-
-
         val modelsRecyclerView = view.findViewById<RecyclerView>(R.id.profile_model_recycler)
         val modelAdapter = ModelRecyclerAdapter(
             //model edited
@@ -428,7 +400,7 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             },
             { model ->
                 // fullscreen display model photos
-                showModelPhotoPopup(model)
+                fullscreenPhotoViewer.showPhotoPopup(model.photos,orientation,view)
             }
         )
 
@@ -648,46 +620,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             }
         }
 
-
-        //only grab friend requests if user is on their own profile
-/*        if (profileUserId == getUser()!!.uid) {
-            viewModel.fetchFriendsAndRequests.observe(viewLifecycleOwner) { result ->
-                when (result) {
-                    is Response.Loading -> {
-                    }
-                    is Response.Success -> {
-                        val users = result.data
-                        friendRecyclerAdapter.users = users ?: arrayListOf()
-                        modelAdapter.notifyDataSetChanged()
-
-                    }
-
-                    is Response.Failure -> {
-
-                    }
-                }
-            }
-        }
-        else {
-            //different user, just grab friends
-            viewModel.fetchFriends.observe(viewLifecycleOwner) { result ->
-                when (result) {
-                    is Response.Loading -> {
-                    }
-                    is Response.Success -> {
-                        val users = result.data
-                        friendRecyclerAdapter.users = users ?: arrayListOf()
-                        modelAdapter.notifyDataSetChanged()
-
-                    }
-
-                    is Response.Failure -> {
-
-                    }
-                }
-            }
-        }*/
-
         viewModel.getFriendsMutableLiveData().observe(viewLifecycleOwner) { friendsList ->
             friendRecyclerAdapter.users = friendsList
             friendRecyclerAdapter.notifyDataSetChanged()
@@ -798,12 +730,6 @@ open class ProfileFragment(uid: String = getUser()!!.uid): Fragment(), Lifecycle
             }
         }
 
-        //restore photo viewer popup after screen rotate
-        if (viewModel.currentModelViewing != null){
-            binding.root.post{
-                showModelPhotoPopup(viewModel.currentModelViewing!!)
-            }
-        }
         super.onViewCreated(view, savedInstanceState)
     }
 

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pingu.diecasthangar.core.util.loadingDummyPost
 import com.pingu.diecasthangar.data.model.Comment
+import com.pingu.diecasthangar.data.model.Photo
 import com.pingu.diecasthangar.data.model.Post
 import com.pingu.diecasthangar.data.remote.FirestoreRepository
 import com.pingu.diecasthangar.data.remote.Response
@@ -25,7 +26,6 @@ class DashboardViewModel: ViewModel() {
     private val localEditedPost: MutableLiveData<Pair<Post, Post>> = MutableLiveData()
 
     val lastVisibleItem = MutableStateFlow(1)
-    //todo paginate
     val lastVisibleItemTop = MutableStateFlow(1)
     val lastVisibleItemNews = MutableStateFlow(1)
 
@@ -37,13 +37,12 @@ class DashboardViewModel: ViewModel() {
 
     private val _newsPosts = MutableStateFlow(listOf(loadingDummyPost()))
     val newsPosts: StateFlow<List<Post>> = _newsPosts
-
     val selectedPost = MutableLiveData<Post>()
 
-    var currentViewingPost: Post
+    var currentPopupPhotos: ArrayList<Photo>? = null
 
     init {
-        currentViewingPost = loadingDummyPost()
+
         //get all posts
         viewModelScope.launch {
             repository.getPosts(lastVisibleItem).collect { posts ->
@@ -59,7 +58,6 @@ class DashboardViewModel: ViewModel() {
         //get news posts
         viewModelScope.launch {
             repository.getNewsPosts(lastVisibleItemNews).collect { posts ->
-                val cc = posts
                 _newsPosts.value = posts
             }
         }
@@ -86,7 +84,6 @@ class DashboardViewModel: ViewModel() {
     fun loadComments(pid: String) {
         commentsLiveData.postValue(arrayListOf())
         viewModelScope.launch {
-            //todo load all, load by rating etc
             when(val response = repository.getFireStoreCommentsPage(pid,null,50)) {
                 is Response.Loading -> {
                 }

@@ -110,11 +110,10 @@ class ModelRecyclerAdapter(
             }
         }
 
-        if (model.photos.size > 0) {
-            holder.modelPhotoImageView.setOnClickListener {
-                onModelView(model)
-            }
+        holder.modelPhotoImageView.setOnClickListener {
+            onModelView(model)
         }
+
     }
 
     inner class ViewHolder(binding: RecyclerModelRowLayoutBinding): RecyclerView.ViewHolder(binding.root),
