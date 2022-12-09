@@ -5,7 +5,7 @@ plugins {
     //id 'com.google.gms.google-services'
 }
 android {
-    namespace 'com.example.diecasthangar'
+    namespace 'com.pingu.diecasthangar'
     compileSdk 33
 
     sourceSets {
@@ -18,7 +18,7 @@ android {
 
 
     defaultConfig {
-        applicationId "com.example.diecasthangar"
+        applicationId "com.pingu.diecasthangar"
         minSdk 21
         targetSdk 33
         versionCode 1

@@ -1,6 +1,6 @@
-package com.example.diecasthangar
+package com.pingu.diecasthangar
 
-import com.example.diecasthangar.core.util.getTopReacts
+import com.pingu.diecasthangar.core.util.getTopReacts
 import org.junit.Test
 import kotlin.test.assertEquals
 

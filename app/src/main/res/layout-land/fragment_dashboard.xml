@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/background"
-    tools:context=".ui.dashboard.DashboardFragment">
+    tools:context="com.pingu.diecasthangar.ui.dashboard.DashboardFragment">
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -99,17 +99,20 @@
                 android:textColor="?android:textColor"
                 android:state_checked="false"
                 />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/dash_btn_settings"
-                style="?attr/borderlessButtonStyle"
-                app:iconTint="?colorIconButton"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                app:icon="@drawable/airplane_cog"
-                app:iconSize="48dp"
-                android:scaleType="fitCenter"
-                android:layout_weight="0.1"/>
+
         </com.google.android.material.button.MaterialButtonToggleGroup>
+        <ImageButton
+            android:id="@+id/dash_btn_settings"
+            style="?attr/borderlessButtonStyle"
+            app:iconTint="?colorIconButton"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="4dp"
+            app:icon="@drawable/airplane_cog"
+            android:src="@drawable/airplane_cog"
+            app:iconSize="48dp"
+            android:scaleType="fitCenter"
+            app:tint="?colorPrimary" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
