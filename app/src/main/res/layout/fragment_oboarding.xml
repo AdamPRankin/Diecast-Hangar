@@ -5,8 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/material_dynamic_tertiary99"
-    tools:context=".ui.onboarding.OnboardingFragment"
-    android:orientation="horizontal">
+    tools:context="com.pingu.diecasthangar.ui.onboarding.OnboardingFragment"
+    android:orientation="horizontal"
+    android:backgroundTint="?background">
 
     <LinearLayout
         android:id="@+id/layout_register"
@@ -23,7 +24,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="48dp"
             android:layout_marginBottom="16dp"
-            app:srcCompat="@color/material_dynamic_primary40"
+            app:srcCompat="@drawable/squeek"
             android:contentDescription="@string/app_logo" />
 
 
@@ -31,6 +32,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="?colorPrimary"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="132dp"
             android:text="@string/app_name"
@@ -45,7 +47,7 @@
             android:text="@string/login"
             android:layout_gravity="center"
             android:textSize="16sp"
-            android:textColor="@color/material_dynamic_tertiary40"
+            android:textColor="?colorPrimary"
             android:paddingEnd="16dp"
             android:paddingStart="16dp"
             android:paddingTop="16dp"
@@ -57,11 +59,12 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:hint="@string/prompt_email"
-            android:textColor="@color/material_dynamic_tertiary40">
+            android:textColor="?colorPrimary">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/reg_email_edit_text"
             android:layout_width="match_parent"
+            android:textColor="?colorPrimary"
             android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -70,11 +73,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
+            android:textColor="?colorPrimary"
             android:hint="@string/hint_username">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/reg_username_edit_text"
                 android:layout_width="match_parent"
+                android:textColor="?colorPrimary"
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -84,12 +89,14 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:hint="@string/hint_password"
+            android:textColor="?colorPrimary"
             app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/reg_password_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="?colorPrimary"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -126,7 +133,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="48dp"
             android:layout_marginBottom="16dp"
-            app:srcCompat="@color/material_dynamic_primary40"
+            app:srcCompat="@drawable/squeek"
             android:contentDescription="@string/app_logo" />
 
         <TextView
@@ -136,6 +143,7 @@
             android:layout_marginBottom="132dp"
             android:text="@string/app_name"
             android:textAllCaps="true"
+            android:textColor="?colorPrimary"
             android:textSize="16sp"
             android:textStyle="bold"/>
         <TextView
@@ -145,7 +153,7 @@
             android:text="@string/register"
             android:layout_gravity="center"
             android:textSize="16sp"
-            android:textColor="@color/material_dynamic_tertiary40"
+            android:textColor="?colorPrimary"
             android:paddingEnd="16dp"
             android:paddingStart="16dp"
             android:paddingTop="16dp"
@@ -156,11 +164,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
+            android:textColor="?colorPrimary"
             android:hint="@string/prompt_email">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/login_email_edit_text"
                 android:layout_width="match_parent"
+                android:textColor="?colorPrimary"
                 android:layout_height="wrap_content" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -171,6 +181,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
+            android:textColor="?colorPrimary"
             android:hint="@string/hint_password"
             app:errorEnabled="true">
 
@@ -178,6 +189,7 @@
                 android:id="@+id/login_password_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="?colorPrimary"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -198,8 +210,9 @@
                 android:layout_height="wrap_content"
                 android:textAlignment="textEnd"
                 android:layout_below="@id/login_button"
+                android:textColor="?colorPrimary"
                 android:text="@string/forgot_password"
-                android:textColor="@color/material_dynamic_neutral40"
+
 
                 />
 

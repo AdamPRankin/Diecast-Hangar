@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/background"
-    tools:context=".ui.dashboard.DashboardFragment">
+    tools:context="com.pingu.diecasthangar.ui.dashboard.DashboardFragment">
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -44,18 +44,16 @@
                 android:text="@string/username" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
+        <ImageButton
             android:id="@+id/dash_btn_settings"
             style="?attr/borderlessButtonStyle"
             app:iconTint="?colorIconButton"
-            android:layout_width="64dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            app:icon="@drawable/airplane_cog"
-            app:iconSize="48dp"
+            android:padding="8dp"
+            android:src="@drawable/airplane_cog"
             android:scaleType="fitCenter"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"/>
+            app:tint="?colorPrimary" />
     </LinearLayout>
 
     <LinearLayout

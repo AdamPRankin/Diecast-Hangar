@@ -1,4 +1,4 @@
-package com.example.diecasthangar
+package com.pingu.diecasthangar
 
 import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.lifecycle.Lifecycle
@@ -6,7 +6,7 @@ import androidx.test.espresso.Espresso
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.matcher.ViewMatchers
-import com.example.diecasthangar.ui.onboarding.OnboardingFragment
+import com.pingu.diecasthangar.ui.onboarding.OnboardingFragment
 import org.junit.Test
 
 class OnboardingFragmentTest {

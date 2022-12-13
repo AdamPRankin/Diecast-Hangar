@@ -1,6 +1,6 @@
-package com.example.diecasthangar
+package com.pingu.diecasthangar
 
-import com.example.diecasthangar.data.model.Photo
+import com.pingu.diecasthangar.data.model.Photo
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals

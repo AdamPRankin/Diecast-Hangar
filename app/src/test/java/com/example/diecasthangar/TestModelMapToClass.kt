@@ -1,4 +1,4 @@
-package com.example.diecasthangar
+package com.pingu.diecasthangar
 
 import org.junit.Test
 
